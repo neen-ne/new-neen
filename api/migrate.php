@@ -67,6 +67,44 @@ try {
         $db->exec('ALTER TABLE diamond_recharge_orders ADD COLUMN payment_reference VARCHAR(150) NULL AFTER delivery_status');
     }
 
+    $diamondPackages = [
+        ['name' => '100 Diamonds', 'diamond_amount' => 100, 'price' => '1.00'],
+        ['name' => '300 Diamonds', 'diamond_amount' => 300, 'price' => '2.50'],
+        ['name' => '500 Diamonds', 'diamond_amount' => 500, 'price' => '4.50'],
+        ['name' => '1,000 Diamonds', 'diamond_amount' => 1000, 'price' => '8.00'],
+        ['name' => '3,000 Diamonds', 'diamond_amount' => 3000, 'price' => '22.00'],
+        ['name' => '5,000 Diamonds', 'diamond_amount' => 5000, 'price' => '40.00'],
+    ];
+    $findDiamondPackage = $db->prepare(
+        'SELECT id FROM diamond_packages
+         WHERE name = :name AND diamond_amount = :diamond_amount
+           AND currency_code = :currency_code LIMIT 1',
+    );
+    $insertDiamondPackage = $db->prepare(
+        'INSERT INTO diamond_packages
+            (name, diamond_amount, price, currency_code, is_active, created_by, updated_by, created_at, updated_at)
+         VALUES (:name, :diamond_amount, :price, \'JOD\', 1, NULL, NULL, UTC_TIMESTAMP(), UTC_TIMESTAMP())',
+    );
+    $db->beginTransaction();
+    try {
+        foreach ($diamondPackages as $package) {
+            $findDiamondPackage->execute([
+                'name' => $package['name'],
+                'diamond_amount' => $package['diamond_amount'],
+                'currency_code' => 'JOD',
+            ]);
+            if ($findDiamondPackage->fetchColumn() === false) {
+                $insertDiamondPackage->execute($package);
+            }
+        }
+        $db->commit();
+    } catch (Throwable $exception) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        throw $exception;
+    }
+
     $db->beginTransaction();
     try {
         $db->exec(

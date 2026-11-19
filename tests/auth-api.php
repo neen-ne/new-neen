@@ -2680,8 +2680,8 @@ try {
         [
             'name' => 'Test diamond package',
             'diamond_amount' => '50',
-            'price' => '3.25',
-            'currency_code' => 'USD',
+            'price' => '2.50',
+            'currency_code' => 'JOD',
         ],
         $csrf,
         'POST',
@@ -2690,10 +2690,25 @@ try {
         $status === 201
         && $diamondPackage['data']['package']['is_active'] === false
         && $diamondPackage['data']['package']['diamond_amount'] === 50
-        && $diamondPackage['data']['package']['price'] === '3.25',
+        && $diamondPackage['data']['package']['price'] === '2.50'
+        && $diamondPackage['data']['package']['currency_code'] === 'JOD',
         'Administrators can create inactive packages with explicitly configured terms',
     );
     $diamondPackageId = $diamondPackage['data']['package']['id'];
+    [$status, $updatedJodPackage] = request(
+        $baseUrl,
+        '/api/admin/diamonds/packages/' . $diamondPackageId,
+        $cookies,
+        ['price' => '4.50'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue(
+        $status === 200
+        && $updatedJodPackage['data']['package']['price'] === '4.50'
+        && $updatedJodPackage['data']['package']['currency_code'] === 'JOD',
+        'JOD package prices preserve two decimal places for 2.50 and 4.50 amounts',
+    );
     [$status] = request(
         $baseUrl,
         '/api/admin/diamonds/packages/' . $diamondPackageId,
@@ -2760,6 +2775,8 @@ try {
         && $diamondOrderResponse['data']['order']['order_status'] === 'pending'
         && $diamondOrderResponse['data']['order']['payment_status'] === 'pending'
         && $diamondOrderResponse['data']['order']['delivery_status'] === 'not_started'
+        && $diamondOrderResponse['data']['order']['price'] === '4.50'
+        && $diamondOrderResponse['data']['order']['currency_code'] === 'JOD'
         && $diamondOrderResponse['data']['order']['payment_reference'] === 'InstaPay transfer 987654321',
         'Submitting a valid recharge records a sanitized payment reference with separate payment and delivery states',
     );

@@ -11,6 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Exo+2:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Oxanium:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
+    <script src="payment-config.js" defer></script>
     <script src="script.js" defer></script>
     <script src="diamonds-recharge.js" defer></script>
   </head>
@@ -63,6 +64,15 @@
                 </select>
                 <small data-diamond-package-status>Packages and prices are read from the NEEN database.</small>
               </div>
+              <aside class="payment-instructions" data-jordan-payment-instructions aria-labelledby="jordan-payment-title" hidden>
+                <p class="eyebrow" id="jordan-payment-title">JORDAN MANUAL TRANSFER <span>/ تحويل يدوي في الأردن</span></p>
+                <p>Pay only the exact amount shown for the selected package. Payment is checked manually; an order is not payment confirmation.</p>
+                <dl>
+                  <div><dt>Exact amount / المبلغ بالضبط</dt><dd data-jordan-payment-amount></dd></div>
+                </dl>
+                <p class="review-disclaimer" data-jordan-payment-setup-warning hidden></p>
+                <dl data-jordan-payment-methods></dl>
+              </aside>
               <div class="form-field">
                 <label for="player-id">2. Player ID / UID <span>Required</span></label>
                 <input id="player-id" type="text" inputmode="numeric" autocomplete="off" minlength="6" maxlength="20" pattern="[0-9]{6,20}" title="Enter a player ID containing 6 to 20 digits." placeholder="Enter your numeric player ID" required />
@@ -70,8 +80,8 @@
               </div>
               <div class="form-field">
                 <label for="payment-reference">3. Transaction reference / payment proof <span>Optional</span></label>
-                <input id="payment-reference" type="text" autocomplete="off" maxlength="150" placeholder="Wallet transfer number or InstaPay reference" />
-                <small>Enter the payment transaction ID or sender number if you have already paid. Do not enter a password or one-time code.</small>
+                <input id="payment-reference" type="text" autocomplete="off" maxlength="150" placeholder="Wallet or CliQ transaction reference" />
+                <small>After paying, enter the transaction reference number for manual review. Leave blank if you have not paid. Never enter a password or one-time code.</small>
               </div>
               <button class="button button-primary review-button" type="submit" disabled><span>Review order</span><span class="button-arrow" aria-hidden="true">↗</span></button>
               <p class="form-error" data-diamond-error role="alert" hidden></p>

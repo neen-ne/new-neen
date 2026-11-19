@@ -30,6 +30,7 @@ final class DiamondRecharge
         if ($name === '' || strlen($name) > 120 || $amount < 1 || !$this->validPrice($price) || !preg_match('/\A[A-Z]{3}\z/', $currency)) {
             throw new ApiException('VALIDATION_ERROR', 'Diamond package details are invalid.', 422);
         }
+        $price = $this->normalizePrice($price);
         $statement = $this->db->prepare(
             'INSERT INTO diamond_packages
                 (name, diamond_amount, price, currency_code, is_active, created_by, updated_by, created_at, updated_at)
@@ -69,7 +70,7 @@ final class DiamondRecharge
                 if (!is_string($value) || !$this->validPrice($value)) {
                     throw new ApiException('VALIDATION_ERROR', 'Diamond package price is invalid.', 422);
                 }
-                $values[$field] = number_format((float) $value, 2, '.', '');
+                $values[$field] = $this->normalizePrice($value);
             } elseif ($field === 'currency_code') {
                 if (!is_string($value) || !preg_match('/\A[A-Z]{3}\z/', $value)) {
                     throw new ApiException('VALIDATION_ERROR', 'Diamond package currency is invalid.', 422);
@@ -380,6 +381,9 @@ final class DiamondRecharge
         if (array_key_exists('is_active', $package)) {
             $package['is_active'] = (bool) $package['is_active'];
         }
+        if (isset($package['price']) && is_string($package['price']) && $this->validPrice($package['price'])) {
+            $package['price'] = $this->normalizePrice($package['price']);
+        }
         return $package;
     }
 
@@ -496,6 +500,12 @@ final class DiamondRecharge
     {
         return preg_match('/\A(?:0|[1-9][0-9]{0,7})(?:\.[0-9]{1,2})?\z/', $price) === 1
             && (float) $price > 0;
+    }
+
+    private function normalizePrice(string $price): string
+    {
+        [$whole, $fraction] = array_pad(explode('.', $price, 2), 2, '');
+        return $whole . '.' . str_pad($fraction, 2, '0');
     }
 
     private function now(): string

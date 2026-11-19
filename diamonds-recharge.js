@@ -4,6 +4,10 @@
   const packageStatus = document.querySelector("[data-diamond-package-status]");
   const playerInput = document.querySelector("#player-id");
   const paymentReferenceInput = document.querySelector("#payment-reference");
+  const jordanPaymentPanel = document.querySelector("[data-jordan-payment-instructions]");
+  const jordanPaymentAmount = jordanPaymentPanel?.querySelector("[data-jordan-payment-amount]");
+  const jordanPaymentMethods = jordanPaymentPanel?.querySelector("[data-jordan-payment-methods]");
+  const jordanPaymentSetupWarning = jordanPaymentPanel?.querySelector("[data-jordan-payment-setup-warning]");
   const review = document.querySelector("[data-diamond-review]");
   const confirmation = document.querySelector("[data-diamond-confirmation]");
   const orders = document.querySelector("[data-diamond-orders]");
@@ -14,6 +18,11 @@
     || !(packageSelect instanceof HTMLSelectElement)
     || !(packageStatus instanceof HTMLElement)
     || !(playerInput instanceof HTMLInputElement)
+    || !(paymentReferenceInput instanceof HTMLInputElement)
+    || !(jordanPaymentPanel instanceof HTMLElement)
+    || !(jordanPaymentAmount instanceof HTMLElement)
+    || !(jordanPaymentMethods instanceof HTMLElement)
+    || !(jordanPaymentSetupWarning instanceof HTMLElement)
     || !(review instanceof HTMLElement)
     || !(confirmation instanceof HTMLElement)
     || !(orders instanceof HTMLElement)
@@ -41,6 +50,11 @@
   let pendingIdempotencyKey = null;
   let isSignedIn = false;
   let requestInFlight = false;
+  const jordanWalletMethods = Array.isArray(window.NEEN_TOPUP_CONFIG?.paymentMethods)
+    ? window.NEEN_TOPUP_CONFIG.paymentMethods.filter(
+      (method) => method?.countryId === "JO" && method.enabled === true,
+    )
+    : [];
 
   const request = async (path, options = {}) => {
     const response = await fetch(path, {
@@ -83,13 +97,64 @@
 
   const selectedPackage = () => packages.find((item) => String(item.id) === packageSelect.value);
 
+  const formatPrice = (value, currencyCode) => {
+    const match = /^([0-9]+)(?:\.([0-9]{1,2}))?$/.exec(String(value));
+    const amount = match ? `${match[1]}.${(match[2] ?? "").padEnd(2, "0")}` : String(value);
+    return `${amount} ${currencyCode}`;
+  };
+
+  const renderJordanPaymentInstructions = () => {
+    const item = selectedPackage();
+    jordanPaymentPanel.hidden = item?.currency_code !== "JOD";
+    jordanPaymentMethods.replaceChildren();
+    jordanPaymentSetupWarning.hidden = true;
+    if (jordanPaymentPanel.hidden) return;
+
+    jordanPaymentAmount.textContent = formatPrice(item.price, item.currency_code);
+    let setupIncomplete = jordanWalletMethods.length === 0;
+    for (const method of jordanWalletMethods) {
+      const row = document.createElement("div");
+      const title = document.createElement("dt");
+      title.textContent = `${method.name} / ${method.localName}`;
+      const details = document.createElement("dd");
+      const identifierIsSet =
+        typeof method.paymentIdentifier === "string" && method.paymentIdentifier.trim() !== "";
+      const beneficiaryIsSet =
+        method.beneficiaryRequired !== true
+        || (typeof method.beneficiaryName === "string" && method.beneficiaryName.trim() !== "");
+      const methodIsReady = method.setupRequired !== true && identifierIsSet && beneficiaryIsSet;
+
+      if (methodIsReady) {
+        details.textContent = `Recipient / المستلم: ${method.paymentIdentifier}\nBeneficiary / اسم المستفيد: ${method.beneficiaryName || "Not required"}`;
+      } else {
+        setupIncomplete = true;
+        details.textContent = "Recipient details are not configured yet. / لم يتم إعداد بيانات المستلم بعد.";
+      }
+
+      if (Array.isArray(method.instructions)) {
+        details.textContent += `\n${method.instructions.join("\n")}`;
+      }
+      if (typeof method.confirmationMethod === "string" && method.confirmationMethod.trim() !== "") {
+        details.textContent += `\n${method.confirmationMethod}`;
+      }
+      row.append(title, details);
+      jordanPaymentMethods.append(row);
+    }
+
+    if (setupIncomplete) {
+      jordanPaymentSetupWarning.textContent =
+        "Do not transfer money while recipient details are missing. Before going live, set each paymentIdentifier and beneficiaryName in payment-config.js and set setupRequired to false. / لا تحوّل أي مبلغ قبل إضافة رقم المحفظة أو اسم كليك واسم المستفيد في payment-config.js.";
+      jordanPaymentSetupWarning.hidden = false;
+    }
+  };
+
   const loadPackages = async () => {
     const { packages: activePackages } = await request("/api/diamonds/packages");
     if (!Array.isArray(activePackages)) throw new Error("The server package catalog is invalid.");
     packages = activePackages;
     packageSelect.replaceChildren(new Option("Select a package", ""));
     for (const item of packages) {
-      const label = `${item.name} · ${item.diamond_amount} Diamonds · ${item.price} ${item.currency_code}`;
+      const label = `${item.name} · ${item.diamond_amount} Diamonds · ${formatPrice(item.price, item.currency_code)}`;
       packageSelect.add(new Option(label, String(item.id)));
     }
     packageSelect.disabled = packages.length === 0;
@@ -97,6 +162,7 @@
       ? "No active diamond packages are available."
       : `${packages.length} active server-configured package${packages.length === 1 ? "" : "s"}.`;
     form.querySelector('button[type="submit"]').disabled = packages.length === 0;
+    renderJordanPaymentInstructions();
   };
 
   const renderOrders = (items) => {
@@ -120,7 +186,7 @@
       status.textContent = order.order_status.replaceAll("_", " ");
       heading.append(number, status);
       const detail = document.createElement("p");
-      detail.textContent = `${order.package_name} · ${order.diamond_amount} Diamonds · ${order.price} ${order.currency_code} · Player ID ${order.player_id}`;
+      detail.textContent = `${order.package_name} · ${order.diamond_amount} Diamonds · ${formatPrice(order.price, order.currency_code)} · Player ID ${order.player_id}`;
       const states = document.createElement("small");
       states.textContent = `Payment: ${order.payment_status.replaceAll("_", " ")} · Delivery: ${order.delivery_status.replaceAll("_", " ")}`;
       card.append(heading, detail, states);
@@ -158,6 +224,8 @@
     }
   };
 
+  packageSelect.addEventListener("change", renderJordanPaymentInstructions);
+
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     clearError(errorMessage);
@@ -173,7 +241,7 @@
     }
     selectedSummary.package.textContent = item.name;
     selectedSummary.amount.textContent = String(item.diamond_amount);
-    selectedSummary.price.textContent = `${item.price} ${item.currency_code}`;
+    selectedSummary.price.textContent = formatPrice(item.price, item.currency_code);
     selectedSummary.player.textContent = playerInput.value;
     selectedSummary.reference.textContent = paymentReferenceInput.value.trim() || "Not provided";
     form.hidden = true;

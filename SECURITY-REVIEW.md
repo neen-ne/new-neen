@@ -12,7 +12,7 @@
 - Root `.htaccess` now disables directory indexes and denies direct access to dotfiles, `.git/`, `docs/`, `tests/`, `*.sql`, and `*.md`. `api/.htaccess` denies `migrate.php`, SQL files, and `api/src/*`; `api/src/.htaccess` denies direct access to its implementation files.
 - The email ownership issue is intentionally retained for this phase because SMTP-backed verification is not configured. It is documented as a pre-launch limitation in `README.md`; add email verification and gate account access before public launch.
 - When mail delivery is configured, password reset tokens are random, stored as hashes, expire, are invalidated after use, and cause existing sessions to be revoked after a successful reset. Requests require CSRF protection and return an enumeration-safe response.
-- `payment-config.js` contains no secrets, private keys, payment credentials, or live payment endpoint; its payment methods are disabled and identifiers are null.
+- `payment-config.js` contains no secrets, private keys, recipient credentials, or live payment endpoint. Jordan manual methods are flagged for setup, with recipient identifiers and beneficiary names unset; transfers must not be accepted until verified details are configured.
 
 ## Unused heavy assets
 
