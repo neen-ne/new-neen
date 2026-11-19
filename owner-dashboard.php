@@ -53,7 +53,7 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#FFF2F7" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>Owner Dashboard — NEEN</title>
+    <title data-i18n="documentTitle">Owner Dashboard — NEEN</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Oxanium:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -64,12 +64,12 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
   </head>
   <body class="admin-body owner-body">
     <div class="admin-shell owner-shell" id="owner-app" data-current-user="<?= (int) $owner['user_id'] ?>">
-      <aside class="admin-sidebar owner-sidebar" aria-label="Owner navigation">
-        <a class="admin-brand" href="index.html" aria-label="NEEN Home">
+      <aside class="admin-sidebar owner-sidebar" aria-label="Owner navigation" data-i18n-aria-label="ownerNavLabel">
+        <a class="admin-brand" href="index.html" aria-label="NEEN Home" data-i18n-aria-label="homeLabel">
           <span class="admin-brand-wordmark">NEEN<span>.</span></span>
-          <span class="admin-brand-label">OWNER CONTROL ROOM</span>
+          <span class="admin-brand-label" data-i18n="ownerControlRoom">OWNER CONTROL ROOM</span>
         </a>
-        <nav class="admin-nav" aria-label="Dashboard sections">
+        <nav class="admin-nav" aria-label="Dashboard sections" data-i18n-aria-label="sectionsLabel">
           <button type="button" class="admin-nav-item is-active" data-section="overview" aria-current="page"><span class="admin-nav-index">01</span><span data-i18n="overview">Overview</span></button>
           <button type="button" class="admin-nav-item" data-section="users"><span class="admin-nav-index">02</span><span data-i18n="users">Users</span></button>
           <button type="button" class="admin-nav-item" data-section="wallet"><span class="admin-nav-index">03</span><span data-i18n="wallet">Wallet &amp; Transactions</span></button>
@@ -81,13 +81,12 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
 
       <main class="admin-main">
         <header class="admin-topbar">
-          <div class="admin-topbar-title"><p class="admin-eyebrow">NEEN / OWNER OPERATIONS</p><h1 data-i18n="ownerDashboard">Owner Dashboard</h1></div>
+          <div class="admin-topbar-title"><p class="admin-eyebrow" data-i18n="ownerOperations">NEEN / OWNER OPERATIONS</p><h1 data-i18n="ownerDashboard">Owner Dashboard</h1></div>
           <div class="owner-header-actions">
-            <label class="owner-language-label" for="owner-language" data-i18n="language">Language</label>
-            <select id="owner-language" data-owner-language aria-label="Dashboard language"><option value="en">English</option><option value="ar">العربية</option></select>
+            <button class="owner-language-toggle" type="button" data-language-toggle data-i18n-aria-label="switchLanguage">عربي</button>
             <div class="admin-identity">
               <span class="admin-avatar" aria-hidden="true"><?= $escape(strtoupper(substr($owner['username'], 0, 1))) ?></span>
-              <span class="admin-identity-copy"><strong><?= $escape($owner['username']) ?></strong><small>Owner</small></span>
+              <span class="admin-identity-copy"><strong dir="ltr"><?= $escape($owner['username']) ?></strong><small data-i18n="ownerRole">Owner</small></span>
               <button class="admin-logout" type="button" data-logout data-i18n="signOut">Sign out</button>
             </div>
           </div>
@@ -95,47 +94,47 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
 
         <div class="admin-content owner-content">
           <section class="admin-section is-active" data-panel="overview" aria-labelledby="overview-title">
-            <div class="admin-section-heading"><div><p class="admin-eyebrow">LIVE DATABASE / 01</p><h2 id="overview-title" data-i18n="overview">Overview</h2></div><p data-i18n="overviewDesc">Current account, wallet, event, game, and order data from the connected database.</p></div>
-            <div class="owner-stat-grid" data-owner-stats aria-live="polite"><p class="admin-state">Loading live statistics…</p></div>
+            <div class="admin-section-heading"><div><p class="admin-eyebrow"><span data-i18n="liveDatabase">LIVE DATABASE</span> / 01</p><h2 id="overview-title" data-i18n="overview">Overview</h2></div><p data-i18n="overviewDesc">Current account, wallet, event, game, and order data from the connected database.</p></div>
+            <div class="owner-stat-grid" data-owner-stats aria-live="polite"><p class="admin-state" data-i18n="loadingStats">Loading live statistics…</p></div>
             <div class="owner-chart-grid">
-              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow">30 DAYS</p><h3 data-i18n="newAccounts">New accounts</h3></div></div><div class="owner-chart" data-chart="users"></div></article>
-              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow">30 DAYS</p><h3 data-i18n="coinActivity">Coins activity</h3></div></div><div class="owner-chart" data-chart="wallet_transactions"></div></article>
-              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow">30 DAYS</p><h3 data-i18n="rechargeOrders">Recharge orders</h3></div></div><div class="owner-chart" data-chart="diamond_orders"></div></article>
-              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow">30 DAYS</p><h3 data-i18n="eventVotes">Event votes</h3></div></div><div class="owner-chart" data-chart="event_votes"></div></article>
+              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="thirtyDays">30 DAYS</p><h3 data-i18n="newAccounts">New accounts</h3></div></div><div class="owner-chart" data-chart="users"></div></article>
+              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="thirtyDays">30 DAYS</p><h3 data-i18n="coinActivity">Coins activity</h3></div></div><div class="owner-chart" data-chart="wallet_transactions"></div></article>
+              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="thirtyDays">30 DAYS</p><h3 data-i18n="rechargeOrders">Recharge orders</h3></div></div><div class="owner-chart" data-chart="diamond_orders"></div></article>
+              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="thirtyDays">30 DAYS</p><h3 data-i18n="eventVotes">Event votes</h3></div></div><div class="owner-chart" data-chart="event_votes"></div></article>
             </div>
             <div class="owner-overview-grid">
-              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow">LATEST</p><h3 data-i18n="recentUsers">Recent registrations</h3></div><button type="button" class="admin-text-button" data-open-section="users" data-i18n="viewUsers">View users ↗</button></div><div data-recent-users><p class="admin-state">Loading registrations…</p></div></article>
-              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow">LATEST</p><h3 data-i18n="recentOrders">Recent diamond orders</h3></div><a class="admin-text-button" href="events-admin.php" data-i18n="openAdmin">Open admin modules ↗</a></div><div data-recent-orders><p class="admin-state">Loading orders…</p></div></article>
-              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow">LATEST</p><h3 data-i18n="recentActivity">Recent admin activity</h3></div><button type="button" class="admin-text-button" data-open-section="activity" data-i18n="viewActivity">View activity ↗</button></div><div data-recent-activity><p class="admin-state">Loading audit records…</p></div></article>
+              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="latest">LATEST</p><h3 data-i18n="recentUsers">Recent registrations</h3></div><button type="button" class="admin-text-button" data-open-section="users" data-i18n="viewUsers">View users ↗</button></div><div data-recent-users><p class="admin-state" data-i18n="loadingUsers">Loading registrations…</p></div></article>
+              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="latest">LATEST</p><h3 data-i18n="recentOrders">Recent diamond orders</h3></div><a class="admin-text-button" href="events-admin.php" data-i18n="openAdmin">Open admin modules ↗</a></div><div data-recent-orders><p class="admin-state" data-i18n="loadingOrders">Loading orders…</p></div></article>
+              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="latest">LATEST</p><h3 data-i18n="recentActivity">Recent admin activity</h3></div><button type="button" class="admin-text-button" data-open-section="activity" data-i18n="viewActivity">View activity ↗</button></div><div data-recent-activity><p class="admin-state" data-i18n="loadingActivity">Loading audit records…</p></div></article>
             </div>
           </section>
 
           <section class="admin-section" data-panel="users" aria-labelledby="users-title" hidden>
-            <div class="admin-section-heading"><div><p class="admin-eyebrow">ACCOUNT MANAGEMENT / 02</p><h2 id="users-title" data-i18n="users">Users</h2></div><p data-i18n="usersDesc">Search, inspect, edit profile details, manage non-owner roles, and suspend accounts. Owner accounts and your own roles are protected.</p></div>
+            <div class="admin-section-heading"><div><p class="admin-eyebrow"><span data-i18n="accountManagement">ACCOUNT MANAGEMENT</span> / 02</p><h2 id="users-title" data-i18n="users">Users</h2></div><p data-i18n="usersDesc">Search, inspect, edit profile details, manage non-owner roles, and suspend accounts. Owner accounts and your own roles are protected.</p></div>
             <div class="admin-panel">
               <form class="admin-order-search" data-owner-user-search>
-                <label><span data-i18n="searchUsers">Search username, email, or ID</span><input name="q" maxlength="100" /></label>
-                <label><span data-i18n="status">Status</span><select name="status"><option value="">All statuses</option><option value="active">Active</option><option value="suspended">Suspended</option><option value="deleted">Deleted</option><option value="pending_verification">Pending verification</option></select></label>
-                <label><span data-i18n="sort">Sort</span><select name="sort"><option value="newest">Newest</option><option value="username">Username</option><option value="last_login">Last active</option><option value="coins">Coins</option></select></label>
+                <label><span data-i18n="searchUsers">Search username, email, or ID</span><input name="q" maxlength="100" dir="ltr" data-i18n-placeholder="searchPlaceholder" placeholder="Search..." /></label>
+                <label><span data-i18n="status">Status</span><select name="status"><option value="" data-i18n="allStatuses">All statuses</option><option value="active" data-i18n="active">Active</option><option value="suspended" data-i18n="suspended">Suspended</option><option value="deleted" data-i18n="deleted">Deleted</option><option value="pending_verification" data-i18n="pendingVerification">Pending verification</option></select></label>
+                <label><span data-i18n="sort">Sort</span><select name="sort"><option value="newest" data-i18n="newest">Newest</option><option value="username" data-i18n="username">Username</option><option value="last_login" data-i18n="lastActive">Last active</option><option value="coins" data-i18n="coins">Coins</option></select></label>
                 <button class="admin-secondary-button" type="submit" data-i18n="search">Search</button>
                 <button class="admin-secondary-button" type="button" data-owner-users-refresh data-i18n="refresh">Refresh</button>
               </form>
-              <div data-owner-users aria-live="polite"><p class="admin-state">Loading user directory…</p></div>
+              <div data-owner-users aria-live="polite"><p class="admin-state" data-i18n="loadingUsers">Loading user directory…</p></div>
               <div data-owner-pagination class="owner-pagination"></div>
             </div>
             <div class="admin-panel owner-user-detail" data-owner-user-detail aria-live="polite"><p class="admin-state" data-i18n="selectUser">Select a user to review account and wallet details.</p></div>
           </section>
 
           <section class="admin-section" data-panel="wallet" aria-labelledby="wallet-title" hidden>
-            <div class="admin-section-heading"><div><p class="admin-eyebrow">IMMUTABLE COINS LEDGER / 03</p><h2 id="wallet-title" data-i18n="wallet">Wallet &amp; Transactions</h2></div><p data-i18n="walletDesc">Wallet changes use the existing transactional ledger, require a reason, prevent negative balances, and record an idempotency key.</p></div>
-            <div class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow">SELECTED ACCOUNT</p><h3 data-i18n="walletAccount">Wallet account</h3></div></div><div data-owner-wallet-account><p class="admin-state" data-i18n="selectWalletUser">Select an account from Users to view its ledger and make a documented adjustment.</p></div></div>
-            <div class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow">RECENT ENTRIES</p><h3 data-i18n="ledgerHistory">Ledger history</h3></div></div><div data-owner-ledger><p class="admin-state" data-i18n="selectWalletUser">Select an account from Users to view its ledger and make a documented adjustment.</p></div></div>
-            <div class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow">AUDITED OPERATION</p><h3 data-i18n="adjustCoins">Adjust Coins</h3></div></div>
+            <div class="admin-section-heading"><div><p class="admin-eyebrow"><span data-i18n="immutableLedger">IMMUTABLE COINS LEDGER</span> / 03</p><h2 id="wallet-title" data-i18n="wallet">Wallet &amp; Transactions</h2></div><p data-i18n="walletDesc">Wallet changes use the existing transactional ledger, require a reason, prevent negative balances, and record an idempotency key.</p></div>
+            <div class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="selectedAccount">SELECTED ACCOUNT</p><h3 data-i18n="walletAccount">Wallet account</h3></div></div><div data-owner-wallet-account><p class="admin-state" data-i18n="selectWalletUser">Select an account from Users to view its ledger and make a documented adjustment.</p></div></div>
+            <div class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="recentEntries">RECENT ENTRIES</p><h3 data-i18n="ledgerHistory">Ledger history</h3></div></div><div data-owner-ledger><p class="admin-state" data-i18n="selectWalletUser">Select an account from Users to view its ledger and make a documented adjustment.</p></div></div>
+            <div class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="auditedOperation">AUDITED OPERATION</p><h3 data-i18n="adjustCoins">Adjust Coins</h3></div></div>
               <form class="admin-form-grid owner-adjustment-form" data-owner-adjustment>
-                <label><span data-i18n="direction">Direction</span><select name="direction" required><option value="credit">Add</option><option value="debit">Deduct</option></select></label>
-                <label><span data-i18n="balanceType">Balance type</span><select name="balance_type" required><option value="earned">Earned</option><option value="purchased">Purchased</option></select></label>
-                <label><span data-i18n="amount">Amount</span><input name="amount" type="number" min="1" max="100000000" step="1" required /></label>
-                <label class="admin-form-wide"><span data-i18n="reason">Reason (required)</span><input name="reason" minlength="3" maxlength="1000" required /></label>
+                <label><span data-i18n="direction">Direction</span><select name="direction" required><option value="credit" data-i18n="credit">Add</option><option value="debit" data-i18n="debit">Deduct</option></select></label>
+                <label><span data-i18n="balanceType">Balance type</span><select name="balance_type" required><option value="earned" data-i18n="earned">Earned</option><option value="purchased" data-i18n="purchased">Purchased</option></select></label>
+                <label><span data-i18n="amount">Amount</span><input name="amount" type="number" min="1" max="100000000" step="1" required dir="ltr" /></label>
+                <label class="admin-form-wide"><span data-i18n="reason">Reason (required)</span><input name="reason" minlength="3" maxlength="1000" data-i18n-placeholder="reasonPlaceholder" placeholder="Explain this adjustment" /></label>
                 <button class="admin-primary-button" type="submit" data-i18n="submitAdjustment">Submit adjustment</button>
               </form>
               <p class="owner-warning" data-i18n="adjustmentWarning">Every adjustment is permanent in the ledger. Verify the account, balance type, amount, and reason before submitting.</p>
@@ -143,16 +142,16 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
           </section>
 
           <section class="admin-section" data-panel="modules" aria-labelledby="modules-title" hidden>
-            <div class="admin-section-heading"><div><p class="admin-eyebrow">EXISTING SERVICES / 04</p><h2 id="modules-title" data-i18n="modules">Connected Modules</h2></div><p data-i18n="modulesDesc">Open the existing permission-checked administration console for modules already backed by services and database records.</p></div>
+            <div class="admin-section-heading"><div><p class="admin-eyebrow"><span data-i18n="existingServices">EXISTING SERVICES</span> / 04</p><h2 id="modules-title" data-i18n="modules">Connected Modules</h2></div><p data-i18n="modulesDesc">Open the existing permission-checked administration console for modules already backed by services and database records.</p></div>
             <article class="admin-panel">
-              <div class="admin-panel-heading"><div><p class="admin-eyebrow">RUNTIME-BACKED SETTINGS</p><h3 data-i18n="gamesRewards">Games &amp; Rewards</h3></div></div>
+              <div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="runtimeSettings">RUNTIME-BACKED SETTINGS</p><h3 data-i18n="gamesRewards">Games &amp; Rewards</h3></div></div>
               <p class="admin-module-description" data-i18n="gameSettingsNote">The daily free-attempt limit and verified-win Coins reward are connected to the game runtime. Board size, paid attempts, and other hard-coded rules are not editable here.</p>
-              <div data-owner-games aria-live="polite"><p class="admin-state">Loading game settings…</p></div>
+              <div data-owner-games aria-live="polite"><p class="admin-state" data-i18n="loadingGameSettings">Loading game settings…</p></div>
             </article>
             <article class="admin-panel">
-              <div class="admin-panel-heading"><div><p class="admin-eyebrow">PUBLIC SITE CONFIGURATION</p><h3 data-i18n="siteSettings">Site Settings</h3></div></div>
+              <div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="publicConfiguration">PUBLIC SITE CONFIGURATION</p><h3 data-i18n="siteSettings">Site Settings</h3></div></div>
               <form class="admin-form-grid owner-settings-form" data-owner-site-settings>
-                <label class="admin-form-wide"><span data-i18n="tiktokProfile">TikTok profile URL</span><input name="tiktok_url" type="url" maxlength="80" required /></label>
+                <label class="admin-form-wide"><span data-i18n="tiktokProfile">TikTok profile URL</span><input name="tiktok_url" type="url" maxlength="80" required dir="ltr" /></label>
                 <label class="admin-form-wide"><span data-i18n="siteDescription">Site description</span><textarea name="site_description" maxlength="300" required></textarea></label>
                 <button class="admin-primary-button" type="submit" data-i18n="saveSettings">Save site settings</button>
               </form>
@@ -166,10 +165,10 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
           </section>
 
           <section class="admin-section" data-panel="activity" aria-labelledby="activity-title" hidden>
-            <div class="admin-section-heading"><div><p class="admin-eyebrow">READ-ONLY AUDIT / 05</p><h2 id="activity-title" data-i18n="activity">Admin Activity</h2></div><p data-i18n="activityDesc">Central, read-only view of recorded administrative actions, actor, entity, available metadata, IP address, and timestamp.</p></div>
+            <div class="admin-section-heading"><div><p class="admin-eyebrow"><span data-i18n="readOnlyAudit">READ-ONLY AUDIT</span> / 05</p><h2 id="activity-title" data-i18n="activity">Admin Activity</h2></div><p data-i18n="activityDesc">Central, read-only view of recorded administrative actions, actor, entity, available metadata, IP address, and timestamp.</p></div>
             <div class="admin-panel">
-              <form class="admin-order-search" data-owner-activity-search><label><span data-i18n="searchActivity">Search actor or action</span><input name="q" maxlength="100" /></label><button class="admin-secondary-button" type="submit" data-i18n="search">Search</button><button class="admin-secondary-button" type="button" data-owner-activity-refresh data-i18n="refresh">Refresh</button></form>
-              <div data-owner-activity aria-live="polite"><p class="admin-state">Loading audit records…</p></div>
+              <form class="admin-order-search" data-owner-activity-search><label><span data-i18n="searchActivity">Search actor or action</span><input name="q" maxlength="100" dir="ltr" data-i18n-placeholder="searchPlaceholder" placeholder="Search..." /></label><button class="admin-secondary-button" type="submit" data-i18n="search">Search</button><button class="admin-secondary-button" type="button" data-owner-activity-refresh data-i18n="refresh">Refresh</button></form>
+              <div data-owner-activity aria-live="polite"><p class="admin-state" data-i18n="loadingActivity">Loading audit records…</p></div>
               <div data-owner-activity-pagination class="owner-pagination"></div>
             </div>
           </section>

@@ -5,7 +5,26 @@
   const currentUserId = Number(app.dataset.currentUser);
   const panels = [...document.querySelectorAll("[data-panel]")];
   const navItems = [...document.querySelectorAll("[data-section]")];
-  const state = { userPage: 1, activityPage: 1, userQuery: "", userStatus: "", userSort: "newest", activityQuery: "", selectedUser: null, language: "en" };
+  const languagePreferenceKey = "neen_owner_lang";
+  const readLanguagePreference = () => {
+    try {
+      return window.localStorage.getItem(languagePreferenceKey) === "ar" ? "ar" : "en";
+    } catch (error) {
+      console.warn("Owner dashboard language preference could not be read.", error);
+      return "en";
+    }
+  };
+  const state = {
+    userPage: 1,
+    activityPage: 1,
+    userQuery: "",
+    userStatus: "",
+    userSort: "newest",
+    activityQuery: "",
+    selectedUser: null,
+    games: [],
+    language: readLanguagePreference(),
+  };
   const translations = {
     en: {
       overview: "Overview", users: "Users", wallet: "Wallet & Transactions", modules: "Connected Modules",
@@ -44,7 +63,7 @@
       saved: "Saved successfully.", failed: "The operation failed.", requestError: "The server returned an error.",
       invalidResponse: "The server returned an unreadable response.", csrfMissing: "Could not obtain a CSRF token. Sign in again.",
       recentRegistrations: "Recent registrations", recentDiamondOrders: "Recent diamond orders",
-      playerId: "Player ID", orderNumber: "Order #", paymentStatus: "Order status",
+      playerId: "Player ID", orderNumber: "Order #", paymentStatus: "Payment status",
       grossVolume: "Gross ledger volume", eventsActive: "Active events", votesTotal: "Votes", claims: "Reward claims",
       rewards: "Event rewards", checkIns: "Attendance check-ins", gamesActive: "Active games", walletTransactions: "Wallet transactions",
       gamesRewards: "Games & Rewards", gameSettingsNote: "The daily free-attempt limit and verified-win Coins reward are connected to the game runtime. Board size, paid attempts, and other hard-coded rules are not editable here.",
@@ -58,6 +77,85 @@
       totalUsers: "Total users", newUsers: "New accounts (30d)", activeUsers: "Active users (30d)",
       totalCoins: "Coins in wallets", totalOrders: "Diamond orders", pendingOrders: "Open diamond orders",
       cancel: "Cancel", networkError: "Request could not be completed. Check your connection and try again.",
+      documentTitle: "Owner Dashboard — NEEN", ownerControlRoom: "OWNER CONTROL ROOM",
+      ownerOperations: "NEEN / OWNER OPERATIONS", ownerRole: "Owner", ownerNavLabel: "Owner navigation",
+      homeLabel: "NEEN Home", sectionsLabel: "Dashboard sections", switchLanguage: "Switch dashboard language",
+      liveDatabase: "LIVE DATABASE", thirtyDays: "30 DAYS", latest: "LATEST",
+      accountManagement: "ACCOUNT MANAGEMENT", immutableLedger: "IMMUTABLE COINS LEDGER",
+      selectedAccount: "SELECTED ACCOUNT", recentEntries: "RECENT ENTRIES",
+      auditedOperation: "AUDITED OPERATION", existingServices: "EXISTING SERVICES",
+      runtimeSettings: "RUNTIME-BACKED SETTINGS", publicConfiguration: "PUBLIC SITE CONFIGURATION",
+      readOnlyAudit: "READ-ONLY AUDIT", loadingStats: "Loading live statistics…",
+      loadingUsers: "Loading user directory…", loadingOrders: "Loading orders…",
+      loadingActivity: "Loading audit records…", loadingGameSettings: "Loading game settings…",
+      searchPlaceholder: "Search...", reasonPlaceholder: "Explain this adjustment",
+      allStatuses: "All statuses", deleted: "Deleted", pendingVerification: "Pending verification",
+      pending_verification: "Pending verification",
+      newest: "Newest", username: "Username", credit: "Add", debit: "Deduct",
+      pending: "Pending", pending_review: "Pending review", awaiting_payment: "Awaiting payment",
+      payment_verification: "Payment verification", paid: "Paid", not_started: "Not started",
+      processing: "Processing", delivered: "Delivered", cancelled: "Cancelled",
+      refunded: "Refunded", verification: "Verification",
+      rejected: "Rejected", approved: "Approved", completed: "Completed", disabled: "Disabled",
+      failedStatus: "Failed", maintenance: "Maintenance", verified: "Verified",
+      notVerified: "Not verified", system: "System",
+      paymentReference: "Payment reference",
+      role_user: "User", role_moderator: "Moderator", role_game_admin: "Game administrator",
+      role_support_admin: "Support administrator", role_super_admin: "Super administrator",
+      role_owner: "Owner", action_owner_user_status_changed: "Owner changed user status",
+      action_owner_user_role_changed: "Owner changed user role",
+      action_owner_user_profile_changed: "Owner updated user profile",
+      action_owner_game_settings_changed: "Owner changed game settings",
+      action_owner_site_settings_changed: "Owner changed site settings",
+      entity_users: "Users", entity_coin_ledger: "Coins ledger",
+      entity_game_catalog: "Game catalog", entity_site_settings: "Site settings",
+      operation_credit: "Credit", operation_debit: "Debit",
+      source_earned_reward: "Earned reward", source_game_reward: "Game reward",
+      game_memory_match: "Memory Match", game_picture_jigsaw: "Picture Jigsaw",
+      game_vault_cracker: "NEEN Vault Cracker", game_loot_sequence: "Loot Sequence Strike",
+      action_community_event_created: "Created a community event",
+      action_community_event_results_approved: "Approved community event results",
+      action_community_event_reward_issued: "Issued a community event reward",
+      action_community_event_updated: "Updated a community event",
+      action_community_event_suggestion_accepted: "Accepted an event suggestion",
+      action_community_event_suggestion_approved: "Approved an event suggestion",
+      action_community_event_suggestion_rejected: "Rejected an event suggestion",
+      action_diamond_package_created: "Created a diamond package",
+      action_diamond_package_updated: "Updated a diamond package",
+      action_diamond_order_begin_verification: "Started payment verification",
+      action_diamond_order_mark_paid: "Marked diamond order paid",
+      action_diamond_order_reject_payment: "Rejected diamond payment",
+      action_diamond_order_fail_payment: "Marked diamond payment failed",
+      action_diamond_order_begin_delivery: "Started diamond delivery",
+      action_diamond_order_mark_delivered: "Marked diamond order delivered",
+      action_diamond_order_fail_delivery: "Marked diamond delivery failed",
+      action_diamond_order_refund: "Refunded a diamond order",
+      action_homepage_reward_configured: "Configured homepage rewards",
+      action_user_registered: "Registered an account",
+      action_email_verified: "Verified an email address",
+      action_user_login: "Signed in",
+      action_user_logout: "Signed out",
+      action_password_reset_completed: "Reset an account password",
+      action_user_profile_updated: "Updated a user profile",
+      action_coin_order_created: "Created a Coins order",
+      action_coin_order_evidence_submitted: "Submitted Coins payment evidence",
+      action_coin_package_created: "Created a Coins package",
+      action_coin_package_updated: "Updated a Coins package",
+      action_coin_payment_method_created: "Created a Coins payment method",
+      action_coin_payment_method_updated: "Updated a Coins payment method",
+      action_coin_order_approved: "Approved a Coins order",
+      action_coin_order_rejected: "Rejected a Coins order",
+      action_wallet_adjusted: "Adjusted a wallet",
+      action_coin_ledger_reversed: "Reversed a Coins ledger entry",
+      diamondOrders: "Diamond recharge orders", diamondAmount: "Diamonds",
+      deliveryStatus: "Delivery status",
+      price: "Price", noDiamondOrders: "No diamond recharge orders for this account.",
+      entity_community_events: "Community events", entity_community_event_rewards: "Community event rewards",
+      entity_community_event_suggestions: "Event suggestions", entity_diamond_packages: "Diamond packages",
+      entity_diamond_recharge_orders: "Diamond recharge orders", entity_homepage_reward_config: "Homepage reward settings",
+      entity_user_sessions: "User sessions", entity_user_profiles: "User profiles",
+      entity_coin_orders: "Coins orders", entity_coin_packages: "Coins packages",
+      entity_coin_payment_methods: "Coins payment methods",
     },
     ar: {
       overview: "نظرة عامة", users: "المستخدمون", wallet: "المحفظة والمعاملات", modules: "الأنظمة المتصلة",
@@ -96,7 +194,7 @@
       saved: "تم الحفظ بنجاح.", failed: "تعذر تنفيذ العملية.", requestError: "أعاد الخادم خطأ.",
       invalidResponse: "تعذر قراءة استجابة الخادم.", csrfMissing: "تعذر الحصول على رمز الحماية. سجّل الدخول مجددًا.",
       recentRegistrations: "أحدث التسجيلات", recentDiamondOrders: "أحدث طلبات الجواهر",
-      playerId: "معرف اللاعب", orderNumber: "رقم الطلب", paymentStatus: "حالة الطلب",
+      playerId: "معرف اللاعب", orderNumber: "رقم الطلب", paymentStatus: "حالة الدفع",
       grossVolume: "إجمالي حجم المعاملات", eventsActive: "الفعاليات النشطة", votesTotal: "الأصوات", claims: "مطالبات المكافآت",
       rewards: "مكافآت الفعاليات", checkIns: "تسجيلات الحضور", gamesActive: "الألعاب النشطة", walletTransactions: "معاملات المحفظة",
       gamesRewards: "الألعاب والمكافآت", gameSettingsNote: "حد المحاولات المجانية اليومي ومكافأة الفوز التي يتحقق منها الخادم مرتبطان بمحرك اللعبة. حجم اللوحة والمحاولات المدفوعة والقواعد الثابتة غير قابلة للتعديل هنا.",
@@ -110,15 +208,117 @@
       totalUsers: "إجمالي المستخدمين", newUsers: "حسابات جديدة (30 يومًا)", activeUsers: "مستخدمون نشطون (30 يومًا)",
       totalCoins: "Coins في المحافظ", totalOrders: "طلبات الجواهر", pendingOrders: "طلبات جواهر مفتوحة",
       cancel: "إلغاء", networkError: "تعذر إكمال الطلب. تحقق من الاتصال وحاول مجددًا.",
+      documentTitle: "لوحة المالك — NEEN", ownerControlRoom: "غرفة تحكم المالك",
+      ownerOperations: "NEEN / إدارة المالك", ownerRole: "المالك", ownerNavLabel: "تنقل المالك",
+      homeLabel: "الرئيسية — NEEN", sectionsLabel: "أقسام لوحة التحكم", switchLanguage: "تغيير لغة لوحة التحكم",
+      liveDatabase: "قاعدة البيانات المباشرة", thirtyDays: "آخر 30 يومًا", latest: "الأحدث",
+      accountManagement: "إدارة الحسابات", immutableLedger: "سجل Coins غير القابل للتغيير",
+      selectedAccount: "الحساب المحدد", recentEntries: "أحدث القيود",
+      auditedOperation: "عملية موثقة", existingServices: "الخدمات الحالية",
+      runtimeSettings: "إعدادات مرتبطة بمحرك التشغيل", publicConfiguration: "إعدادات الموقع العامة",
+      readOnlyAudit: "سجل مراجعة للقراءة فقط", loadingStats: "جارٍ تحميل الإحصاءات المباشرة…",
+      loadingUsers: "جارٍ تحميل دليل المستخدمين…", loadingOrders: "جارٍ تحميل الطلبات…",
+      loadingActivity: "جارٍ تحميل سجلات المراجعة…", loadingGameSettings: "جارٍ تحميل إعدادات الألعاب…",
+      searchPlaceholder: "بحث…", reasonPlaceholder: "اشرح سبب هذا التعديل",
+      allStatuses: "كل الحالات", deleted: "محذوف", pendingVerification: "بانتظار التحقق",
+      pending_verification: "بانتظار التحقق",
+      newest: "الأحدث", username: "اسم المستخدم", credit: "إضافة", debit: "خصم",
+      pending: "قيد الانتظار", pending_review: "بانتظار المراجعة", awaiting_payment: "بانتظار الدفع",
+      payment_verification: "التحقق من الدفع", paid: "مدفوع", not_started: "لم يبدأ",
+      processing: "قيد التنفيذ", delivered: "تم التسليم", cancelled: "ملغي",
+      refunded: "تم رد المبلغ", verification: "التحقق",
+      rejected: "مرفوض", approved: "مقبول", completed: "مكتمل", disabled: "معطل",
+      failedStatus: "فشل", maintenance: "صيانة", verified: "تم التحقق",
+      notVerified: "لم يتم التحقق", system: "النظام",
+      paymentReference: "مرجع الدفع",
+      role_user: "مستخدم", role_moderator: "مشرف", role_game_admin: "مدير الألعاب",
+      role_support_admin: "مدير الدعم", role_super_admin: "مدير عام",
+      role_owner: "المالك", action_owner_user_status_changed: "غيّر المالك حالة المستخدم",
+      action_owner_user_role_changed: "غيّر المالك دور المستخدم",
+      action_owner_user_profile_changed: "عدّل المالك الملف الشخصي للمستخدم",
+      action_owner_game_settings_changed: "غيّر المالك إعدادات الألعاب",
+      action_owner_site_settings_changed: "غيّر المالك إعدادات الموقع",
+      entity_users: "المستخدمون", entity_coin_ledger: "سجل Coins",
+      entity_game_catalog: "كتالوج الألعاب", entity_site_settings: "إعدادات الموقع",
+      operation_credit: "إضافة رصيد", operation_debit: "خصم رصيد",
+      source_earned_reward: "مكافأة مكتسبة", source_game_reward: "مكافأة لعبة",
+      game_memory_match: "مطابقة الذاكرة", game_picture_jigsaw: "أحجية الصور",
+      game_vault_cracker: "خزنة NEEN", game_loot_sequence: "تسلسل الغنائم",
+      action_community_event_created: "أنشأ فعالية مجتمعية",
+      action_community_event_results_approved: "اعتمد نتائج فعالية مجتمعية",
+      action_community_event_reward_issued: "أصدر مكافأة فعالية مجتمعية",
+      action_community_event_updated: "عدّل فعالية مجتمعية",
+      action_community_event_suggestion_accepted: "قبل اقتراح فعالية",
+      action_community_event_suggestion_approved: "اعتمد اقتراح فعالية",
+      action_community_event_suggestion_rejected: "رفض اقتراح فعالية",
+      action_diamond_package_created: "أنشأ باقة جواهر",
+      action_diamond_package_updated: "عدّل باقة جواهر",
+      action_diamond_order_begin_verification: "بدأ التحقق من الدفع",
+      action_diamond_order_mark_paid: "أكد دفع طلب الجواهر",
+      action_diamond_order_reject_payment: "رفض دفع الجواهر",
+      action_diamond_order_fail_payment: "سجّل فشل دفع الجواهر",
+      action_diamond_order_begin_delivery: "بدأ تسليم الجواهر",
+      action_diamond_order_mark_delivered: "أكد تسليم طلب الجواهر",
+      action_diamond_order_fail_delivery: "سجّل فشل تسليم الجواهر",
+      action_diamond_order_refund: "رد مبلغ طلب الجواهر",
+      action_homepage_reward_configured: "ضبط مكافآت الصفحة الرئيسية",
+      action_user_registered: "سجّل حسابًا",
+      action_email_verified: "تحقق من عنوان بريد إلكتروني",
+      action_user_login: "سجّل الدخول",
+      action_user_logout: "سجّل الخروج",
+      action_password_reset_completed: "أعاد تعيين كلمة مرور حساب",
+      action_user_profile_updated: "عدّل ملف مستخدم",
+      action_coin_order_created: "أنشأ طلب Coins",
+      action_coin_order_evidence_submitted: "أرسل إثبات دفع Coins",
+      action_coin_package_created: "أنشأ باقة Coins",
+      action_coin_package_updated: "عدّل باقة Coins",
+      action_coin_payment_method_created: "أنشأ وسيلة دفع Coins",
+      action_coin_payment_method_updated: "عدّل وسيلة دفع Coins",
+      action_coin_order_approved: "اعتمد طلب Coins",
+      action_coin_order_rejected: "رفض طلب Coins",
+      action_wallet_adjusted: "عدّل رصيد المحفظة",
+      action_coin_ledger_reversed: "عكس قيدًا في سجل Coins",
+      diamondOrders: "طلبات شحن الجواهر", diamondAmount: "كمية الجواهر",
+      deliveryStatus: "حالة التسليم",
+      price: "السعر", noDiamondOrders: "لا توجد طلبات شحن جواهر لهذا الحساب.",
+      entity_community_events: "الفعاليات المجتمعية", entity_community_event_rewards: "مكافآت الفعاليات",
+      entity_community_event_suggestions: "اقتراحات الفعاليات", entity_diamond_packages: "باقات الجواهر",
+      entity_diamond_recharge_orders: "طلبات شحن الجواهر", entity_homepage_reward_config: "إعدادات مكافآت الصفحة الرئيسية",
+      entity_user_sessions: "جلسات المستخدمين", entity_user_profiles: "ملفات المستخدمين",
+      entity_coin_orders: "طلبات Coins", entity_coin_packages: "باقات Coins",
+      entity_coin_payment_methods: "وسائل دفع Coins",
     },
   };
 
   const t = (key) => translations[state.language][key] ?? translations.en[key] ?? key;
+  const translateCode = (value, namespace = "") => {
+    if (typeof value !== "string" || value === "") return "—";
+    const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, "_");
+    const key = namespace
+      ? `${namespace}_${normalized}`
+      : normalized === "failed"
+        ? "failedStatus"
+        : normalized;
+    return translations[state.language][key] ?? translations.en[key] ?? value;
+  };
+  const localizeGameName = (game) => translateCode(game.slug, "game") || game.name;
+  const markLtr = (element) => {
+    element.dir = "ltr";
+    element.classList.add("owner-ltr");
+    return element;
+  };
+  const formatNumber = (value) => Number(value ?? 0).toLocaleString(state.language);
   const make = (tag, className = "", text = undefined) => {
     const element = document.createElement(tag);
     if (className) element.className = className;
     if (text !== undefined) element.textContent = String(text);
     return element;
+  };
+  const ltrText = (value) => markLtr(make("bdi", "", value ?? "—"));
+  const accountMeta = (id, status, date) => {
+    const meta = make("small");
+    meta.append(`${t("account")} `, ltrText(`#${id}`), ` · ${translateCode(status)} · `, ltrText(formatDate(date)));
+    return meta;
   };
   const showState = (container, message, error = false) => {
     container.replaceChildren(make("p", `admin-state${error ? " is-error" : ""}`, message));
@@ -158,7 +358,11 @@
     }
     if (!response.ok || result.success !== true) {
       const message = result.errors?.[0]?.message;
-      throw new Error(typeof message === "string" ? message : `${t("requestError")} (${response.status})`);
+      throw new Error(
+        state.language === "en" && typeof message === "string"
+          ? message
+          : `${t("requestError")} (${response.status})`,
+      );
     }
     return result.data;
   };
@@ -194,7 +398,15 @@
     previous.type = "button";
     previous.disabled = pagination.page <= 1;
     previous.addEventListener("click", () => onPage(pagination.page - 1));
-    const label = make("span", "", `${t("page")} ${pagination.page} ${t("of")} ${pagination.pages} · ${pagination.total}`);
+    const label = make("span");
+    label.append(
+      `${t("page")} `,
+      ltrText(pagination.page),
+      ` ${t("of")} `,
+      ltrText(pagination.pages),
+      " · ",
+      ltrText(pagination.total),
+    );
     const next = make("button", "", t("next"));
     next.type = "button";
     next.disabled = pagination.page >= pagination.pages;
@@ -233,13 +445,14 @@
     container.replaceChildren();
     rows.slice(-30).forEach((row) => {
       const column = make("span", "owner-chart-bar");
+      column.dir = "ltr";
       const value = Number(row.value) || 0;
       column.title = `${row.day}: ${value}`;
       const bar = make("i");
       bar.style.height = `${Math.max(2, value / max * 100)}%`;
       bar.setAttribute("aria-label", `${row.day}: ${value}`);
-      const amount = make("b", "owner-chart-tooltip", value);
-      const day = make("small", "", String(row.day).slice(5));
+      const amount = markLtr(make("b", "owner-chart-tooltip", formatNumber(value)));
+      const day = markLtr(make("small", "", String(row.day).slice(5)));
       column.append(bar, amount, day);
       container.append(column);
     });
@@ -255,22 +468,45 @@
       const row = make("div", "owner-compact-item");
       const main = make("span");
       if (type === "users") {
-        main.append(make("strong", "", item.username));
-        main.append(make("small", "", `${t("account")} #${item.id} · ${item.status} · ${formatDate(item.created_at)}`));
+        main.append(markLtr(make("strong", "", item.username)));
+        main.append(accountMeta(item.id, item.status, item.created_at));
         const action = make("button", "owner-table-action", t("manage"));
         action.type = "button";
         action.addEventListener("click", () => selectUser(item.id, "users"));
         row.append(main, action);
       } else if (type === "orders") {
-        main.append(make("strong", "", `${item.order_number} · ${item.username}`));
-        main.append(make("small", "", `${t("playerId")} ${item.player_id} · ${item.diamond_amount} · ${formatDate(item.created_at)}`));
+        main.append(markLtr(make("strong", "", `${item.order_number} · ${item.username}`)));
+        const orderMeta = make("small");
+        orderMeta.append(
+          `${t("playerId")} `,
+          ltrText(item.player_id),
+          " · ",
+          ltrText(formatNumber(item.diamond_amount)),
+          " · ",
+          ltrText(formatDate(item.created_at)),
+        );
+        main.append(orderMeta);
         if (item.payment_reference) {
-          main.append(make("small", "", `Payment reference: ${item.payment_reference}`));
+          const reference = make("small");
+          reference.append(`${t("paymentReference")}: `, ltrText(item.payment_reference));
+          main.append(reference);
         }
-        row.append(main, make("span", "", item.order_status));
+        row.append(main, make("span", "", translateCode(item.order_status)));
       } else {
-        main.append(make("strong", "", `${item.action_type} · ${item.actor_username ?? "System"}`));
-        main.append(make("small", "", `${item.entity_type} #${item.entity_id ?? "—"} · ${formatDate(item.created_at)}`));
+        const title = make("strong");
+        title.append(
+          `${translateCode(item.action_type, "action")} · `,
+          ltrText(item.actor_username ?? t("system")),
+        );
+        main.append(title);
+        const activityMeta = make("small");
+        activityMeta.append(
+          `${translateCode(item.entity_type, "entity")} `,
+          ltrText(`#${item.entity_id ?? "—"}`),
+          ` · `,
+          ltrText(formatDate(item.created_at)),
+        );
+        main.append(activityMeta);
         row.append(main);
       }
       list.append(row);
@@ -293,16 +529,16 @@
         ["walletTransactions", count.wallet_transactions_total],
         ["totalOrders", count.diamond_orders_total],
         ["pendingOrders", count.diamond_orders_pending],
-        ["eventsActive", `${count.events_active} / ${count.events_total}`],
+        ["eventsActive", `${formatNumber(count.events_active)} / ${formatNumber(count.events_total)}`],
         ["votesTotal", count.event_votes_total],
         ["rewards", count.event_rewards_total],
         ["claims", count.homepage_reward_claims],
         ["checkIns", count.attendance_checkins],
-        ["gamesActive", `${count.games_active} / ${count.games_total}`],
+        ["gamesActive", `${formatNumber(count.games_active)} / ${formatNumber(count.games_total)}`],
       ];
       const cards = values.map(([label, value]) => {
         const card = make("article", "owner-stat-card");
-        card.append(make("span", "", t(label)), make("strong", "", value));
+        card.append(make("span", "", t(label)), markLtr(make("strong", "", typeof value === "number" ? formatNumber(value) : value)));
         return card;
       });
       stats.replaceChildren(...cards);
@@ -334,14 +570,14 @@
         const rows = result.users.map((user) => {
           const row = make("tr");
           const account = make("td");
-          account.append(make("strong", "", user.username));
-          account.append(make("small", "", `${t("account")} #${user.id} · ${user.status}`));
-          row.append(account, make("td", "", user.email));
-          row.append(make("td", "", formatDate(user.created_at)));
-          row.append(make("td", "", formatDate(user.last_login_at)));
-          row.append(make("td", "", user.coin_balance.toLocaleString()));
-          row.append(make("td", "", user.diamond_balance.toLocaleString()));
-          row.append(make("td", "", user.roles.join(", ") || "—"));
+          account.append(markLtr(make("strong", "", user.username)));
+          account.append(accountMeta(user.id, user.status, user.created_at));
+          row.append(account, markLtr(make("td", "", user.email)));
+          row.append(markLtr(make("td", "", formatDate(user.created_at))));
+          row.append(markLtr(make("td", "", formatDate(user.last_login_at))));
+          row.append(markLtr(make("td", "", formatNumber(user.coin_balance))));
+          row.append(markLtr(make("td", "", formatNumber(user.diamond_balance))));
+          row.append(make("td", "", user.roles.map((role) => translateCode(role, "role")).join(", ") || "—"));
           const action = make("td");
           const button = make("button", "owner-table-action", t("manage"));
           button.type = "button";
@@ -378,13 +614,50 @@
     }
     const rows = entries.map((entry) => {
       const row = make("tr");
-      row.append(make("td", "", `${entry.operation_type} · ${entry.amount} ${entry.balance_type}`));
-      row.append(make("td", "", `${entry.balance_before} → ${entry.balance_after} (${entry.total_balance_before} → ${entry.total_balance_after})`));
-      row.append(make("td", "", entry.source));
-      row.append(make("td", "", formatDate(entry.created_at)));
+      const operation = make("td");
+      operation.append(
+        `${translateCode(entry.operation_type, "operation")} · `,
+        ltrText(`${formatNumber(entry.amount)} ${translateCode(entry.balance_type)}`),
+      );
+      row.append(operation);
+      row.append(markLtr(make("td", "", `${formatNumber(entry.balance_before)} → ${formatNumber(entry.balance_after)} (${formatNumber(entry.total_balance_before)} → ${formatNumber(entry.total_balance_after)})`)));
+      row.append(make("td", "", translateCode(entry.source, "source")));
+      row.append(markLtr(make("td", "", formatDate(entry.created_at))));
       return row;
     });
     container.replaceChildren(buildTable([t("operation"), t("balance"), t("source"), t("date")], rows));
+  };
+
+  const renderDiamondOrders = (container, orders) => {
+    if (!Array.isArray(orders) || orders.length === 0) {
+      showState(container, t("noDiamondOrders"));
+      return;
+    }
+    const rows = orders.map((order) => {
+      const row = make("tr");
+      row.append(markLtr(make("td", "", order.order_number)));
+      row.append(markLtr(make("td", "", order.player_id)));
+      row.append(markLtr(make("td", "", `${formatNumber(order.diamond_amount)} · ${order.price} ${order.currency_code}`)));
+      row.append(make("td", "", translateCode(order.order_status)));
+      row.append(make("td", "", translateCode(order.payment_status)));
+      row.append(make("td", "", translateCode(order.delivery_status)));
+      row.append(markLtr(make("td", "", order.payment_reference || "—")));
+      row.append(markLtr(make("td", "", formatDate(order.created_at))));
+      return row;
+    });
+    container.replaceChildren(buildTable(
+      [
+        t("orderNumber"),
+        t("playerId"),
+        t("diamondAmount"),
+        t("status"),
+        t("paymentStatus"),
+        t("deliveryStatus"),
+        t("paymentReference"),
+        t("date"),
+      ],
+      rows,
+    ));
   };
 
   const renderUserDetails = (user) => {
@@ -395,9 +668,17 @@
     const card = make("div");
     const heading = make("div", "owner-detail-heading");
     const identity = make("div");
-    identity.append(make("h3", "", `${user.username} · ${t("account")} #${user.id}`));
-    identity.append(make("p", "", `${user.email} · ${user.email_verified ? "verified" : "not verified"} · ${t("lastActive")}: ${formatDate(user.last_login_at)}`));
-    heading.append(identity, make("span", "admin-status-pill", user.status));
+    const userHeading = make("h3");
+    userHeading.append(ltrText(user.username), ` · ${t("account")} `, ltrText(`#${user.id}`));
+    identity.append(userHeading);
+    const userMeta = make("p");
+    userMeta.append(
+      ltrText(user.email),
+      ` · ${t(user.email_verified ? "verified" : "notVerified")} · ${t("lastActive")}: `,
+      ltrText(formatDate(user.last_login_at)),
+    );
+    identity.append(userMeta);
+    heading.append(identity, make("span", "admin-status-pill", translateCode(user.status)));
     card.append(heading);
     const grid = make("div", "owner-detail-grid");
 
@@ -417,7 +698,7 @@
     const accessSection = make("section");
     accessSection.append(make("h4", "", t("accessRoles")));
     const roleList = make("div", "owner-role-list");
-    user.roles.forEach((role) => roleList.append(make("span", "owner-role-pill", role)));
+    user.roles.forEach((role) => roleList.append(make("span", "owner-role-pill", translateCode(role, "role"))));
     accessSection.append(roleList);
     if (user.roles.includes("owner")) {
       accessSection.append(make("p", "owner-warning", t("ownerProtected")));
@@ -428,7 +709,7 @@
       const roleSelect = document.createElement("select");
       roleSelect.name = "role";
       ["moderator", "game_admin", "support_admin", "super_admin"].forEach((role) => {
-        const option = make("option", "", role);
+        const option = make("option", "", translateCode(role, "role"));
         option.value = role;
         roleSelect.append(option);
       });
@@ -471,7 +752,11 @@
       [t("purchased"), user.purchased_coin_balance ?? 0],
       [t("earned"), user.earned_coin_balance ?? 0],
       [t("diamondBalance"), user.diamond_balance ?? 0],
-    ]) walletSummary.append(make("span", "", `${label}: ${Number(value).toLocaleString()}`));
+    ]) {
+      const item = make("span");
+      item.append(`${label}: `, ltrText(formatNumber(value)));
+      walletSummary.append(item);
+    }
     walletSection.append(walletSummary);
 
     const activitySection = make("section");
@@ -479,6 +764,12 @@
     const transactionPreview = make("div");
     renderTransactions(transactionPreview, user.recent_transactions);
     activitySection.append(transactionPreview);
+
+    const ordersSection = make("section");
+    ordersSection.append(make("h4", "", t("diamondOrders")));
+    const ordersPreview = make("div");
+    renderDiamondOrders(ordersPreview, user.recent_diamond_orders);
+    ordersSection.append(ordersPreview);
 
     const auditSection = make("section");
     auditSection.append(make("h4", "", t("recentActivity")));
@@ -490,18 +781,37 @@
       auditRows.forEach((entry) => {
         const row = make("div", "owner-compact-item");
         const description = make("span");
-        description.append(make("strong", "", `${entry.action_type} · ${entry.actor_username ?? "System"}`));
-        description.append(make("small", "", entry.payload ? JSON.stringify(entry.payload) : `${entry.entity_type} #${entry.entity_id ?? "—"}`));
-        row.append(description, make("span", "", formatDate(entry.created_at)));
+        const title = make("strong");
+        title.append(
+          `${translateCode(entry.action_type, "action")} · `,
+          ltrText(entry.actor_username ?? t("system")),
+        );
+        description.append(title);
+        const details = entry.payload
+          ? markLtr(make("small", "", JSON.stringify(entry.payload)))
+          : make("small");
+        if (!entry.payload) {
+          details.append(`${translateCode(entry.entity_type, "entity")} `, ltrText(`#${entry.entity_id ?? "—"}`));
+        }
+        description.append(details);
+        row.append(description, markLtr(make("span", "", formatDate(entry.created_at))));
         list.append(row);
       });
       auditSection.append(list);
     }
 
-    grid.append(profileSection, accessSection, walletSection, activitySection, auditSection);
+    grid.append(profileSection, accessSection, walletSection, activitySection, ordersSection, auditSection);
     card.append(grid);
     container.replaceChildren(card);
-    walletAccount.replaceChildren(make("p", "admin-state", `${user.username} · ${t("account")} #${user.id} · ${user.coin_balance ?? 0} ${t("coins")}`));
+    const walletCaption = make("p", "admin-state");
+    walletCaption.append(
+      ltrText(user.username),
+      ` · ${t("account")} `,
+      ltrText(`#${user.id}`),
+      ` · `,
+      ltrText(`${formatNumber(user.coin_balance)} ${t("coins")}`),
+    );
+    walletAccount.replaceChildren(walletCaption);
     renderTransactions(ledger, user.recent_transactions);
     state.selectedUser = user;
   };
@@ -533,14 +843,18 @@
       else {
         const rows = result.entries.map((entry) => {
           const row = make("tr");
-          row.append(make("td", "", `${entry.actor_username ?? "System"} · ${entry.actor_role ?? "—"}`));
-          row.append(make("td", "", entry.action_type));
-          row.append(make("td", "", `${entry.entity_type} #${entry.entity_id ?? "—"}`));
-          const metadata = make("td", "owner-metadata", entry.payload ? JSON.stringify(entry.payload) : "—");
+          const actor = make("td");
+          actor.append(ltrText(entry.actor_username ?? t("system")), ` · ${translateCode(entry.actor_role, "role")}`);
+          row.append(actor);
+          row.append(make("td", "", translateCode(entry.action_type, "action")));
+          const entity = make("td");
+          entity.append(`${translateCode(entry.entity_type, "entity")} `, ltrText(`#${entry.entity_id ?? "—"}`));
+          row.append(entity);
+          const metadata = markLtr(make("td", "owner-metadata", entry.payload ? JSON.stringify(entry.payload) : "—"));
           metadata.title = metadata.textContent;
           row.append(metadata);
-          row.append(make("td", "", entry.ip_address ?? "—"));
-          row.append(make("td", "", formatDate(entry.created_at)));
+          row.append(markLtr(make("td", "", entry.ip_address ?? "—")));
+          row.append(markLtr(make("td", "", formatDate(entry.created_at))));
           return row;
         });
         container.replaceChildren(buildTable(
@@ -554,61 +868,70 @@
     }
   };
 
+  const renderGames = (games) => {
+    const container = document.querySelector("[data-owner-games]");
+    if (!(container instanceof HTMLElement)) return;
+    if (!Array.isArray(games) || games.length === 0) {
+      showState(container, t("noResults"));
+      return;
+    }
+    const cards = games.map((game) => {
+      const card = make("article", "owner-game-card");
+      const heading = make("div", "admin-module-heading");
+      heading.append(make("h3", "", localizeGameName(game)), make("span", "admin-status-pill", translateCode(game.status)));
+      card.append(heading);
+      const form = make("form", "owner-game-form");
+      form.dataset.ownerGame = String(game.id);
+      const addField = (labelText, name, value, type = "text", max = null) => {
+        const label = make("label", "", labelText);
+        const input = document.createElement(type === "textarea" ? "textarea" : "input");
+        if (type !== "textarea") input.type = type;
+        input.name = name;
+        input.value = value ?? "";
+        if (max !== null) input.maxLength = max;
+        if (name === "name") input.dir = "ltr";
+        if (type === "number") {
+          input.min = name === "free_attempt_limit" ? "0" : "1";
+          input.max = "100000000";
+          input.step = "1";
+          input.required = true;
+          input.dir = "ltr";
+        }
+        label.append(input);
+        form.append(label);
+      };
+      addField(t("gameName"), "name", game.name, "text", 100);
+      addField(t("gameDescription"), "description", game.description ?? "", "textarea", 2000);
+      addField(t("dailyFreeAttempts"), "free_attempt_limit", game.free_attempt_limit, "number");
+      addField(t("winReward"), "reward_amount_coins", game.reward_amount_coins, "number");
+      const statusLabel = make("label", "", t("gameState"));
+      const status = document.createElement("select");
+      status.name = "status";
+      ["active", "disabled", "maintenance"].forEach((value) => {
+        const option = make("option", "", translateCode(value));
+        option.value = value;
+        option.selected = value === game.status;
+        status.append(option);
+      });
+      statusLabel.append(status);
+      form.append(statusLabel);
+      const submit = make("button", "admin-primary-button", t("saveGame"));
+      submit.type = "submit";
+      form.append(submit);
+      card.append(form);
+      return card;
+    });
+    container.replaceChildren(...cards);
+  };
+
   const loadGames = async () => {
     const container = document.querySelector("[data-owner-games]");
     if (!(container instanceof HTMLElement)) return;
     showState(container, t("loading"));
     try {
       const { games } = await apiRequest("/api/owner/games");
-      if (!Array.isArray(games) || games.length === 0) {
-        showState(container, t("noResults"));
-        return;
-      }
-      const cards = games.map((game) => {
-        const card = make("article", "owner-game-card");
-        const heading = make("div", "admin-module-heading");
-        heading.append(make("h3", "", game.name), make("span", "admin-status-pill", game.status));
-        card.append(heading);
-        const form = make("form", "owner-game-form");
-        form.dataset.ownerGame = String(game.id);
-        const addField = (labelText, name, value, type = "text", max = null) => {
-          const label = make("label", "", labelText);
-          const input = document.createElement(type === "textarea" ? "textarea" : "input");
-          if (type !== "textarea") input.type = type;
-          input.name = name;
-          input.value = value ?? "";
-          if (max !== null) input.maxLength = max;
-          if (type === "number") {
-            input.min = name === "free_attempt_limit" ? "0" : "1";
-            input.max = "100000000";
-            input.step = "1";
-            input.required = true;
-          }
-          label.append(input);
-          form.append(label);
-        };
-        addField(t("gameName"), "name", game.name, "text", 100);
-        addField(t("gameDescription"), "description", game.description ?? "", "textarea", 2000);
-        addField(t("dailyFreeAttempts"), "free_attempt_limit", game.free_attempt_limit, "number");
-        addField(t("winReward"), "reward_amount_coins", game.reward_amount_coins, "number");
-        const statusLabel = make("label", "", t("gameState"));
-        const status = document.createElement("select");
-        status.name = "status";
-        ["active", "disabled", "maintenance"].forEach((value) => {
-          const option = make("option", "", value);
-          option.value = value;
-          option.selected = value === game.status;
-          status.append(option);
-        });
-        statusLabel.append(status);
-        form.append(statusLabel);
-        const submit = make("button", "admin-primary-button", t("saveGame"));
-        submit.type = "submit";
-        form.append(submit);
-        card.append(form);
-        return card;
-      });
-      container.replaceChildren(...cards);
+      state.games = games;
+      renderGames(state.games);
     } catch (error) {
       showState(container, error instanceof Error ? error.message : t("failed"), true);
     }
@@ -783,22 +1106,41 @@
     }
   });
 
-  const languageSelect = document.querySelector("[data-owner-language]");
+  const languageToggle = document.querySelector("[data-language-toggle]");
   const setLanguage = (language) => {
     state.language = language === "ar" ? "ar" : "en";
     document.documentElement.lang = state.language;
     document.documentElement.dir = state.language === "ar" ? "rtl" : "ltr";
+    try {
+      window.localStorage.setItem(languagePreferenceKey, state.language);
+    } catch (error) {
+      console.warn("Owner dashboard language preference could not be saved.", error);
+    }
     document.querySelectorAll("[data-i18n]").forEach((element) => {
       const key = element.dataset.i18n;
       if (key) element.textContent = t(key);
     });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
+      const key = element.dataset.i18nPlaceholder;
+      if (key && element instanceof HTMLInputElement) element.placeholder = t(key);
+    });
+    document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+      const key = element.dataset.i18nAriaLabel;
+      if (key) element.setAttribute("aria-label", t(key));
+    });
+    if (languageToggle instanceof HTMLButtonElement) {
+      languageToggle.textContent = state.language === "en" ? "عربي" : "EN";
+    }
     if (state.selectedUser) renderUserDetails(state.selectedUser);
     if (!document.querySelector('[data-panel="overview"]').hidden) loadOverview();
     if (!document.querySelector('[data-panel="users"]').hidden) loadUsers(state.userPage);
     if (!document.querySelector('[data-panel="activity"]').hidden) loadActivity(state.activityPage);
+    if (!document.querySelector('[data-panel="modules"]').hidden) renderGames(state.games);
   };
-  if (languageSelect instanceof HTMLSelectElement) {
-    languageSelect.addEventListener("change", () => setLanguage(languageSelect.value));
+  if (languageToggle instanceof HTMLButtonElement) {
+    languageToggle.addEventListener("click", () => {
+      setLanguage(state.language === "en" ? "ar" : "en");
+    });
   }
 
   document.querySelector("[data-logout]")?.addEventListener("click", async () => {
@@ -816,6 +1158,6 @@
     }
   });
 
-  setLanguage("en");
+  setLanguage(state.language);
   loadOverview();
 })();
