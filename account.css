@@ -1,0 +1,429 @@
+.account-page {
+  padding-block: 42px 100px;
+}
+
+.account-intro {
+  padding-bottom: 34px;
+}
+
+.account-intro h1 {
+  margin: 14px 0;
+  font-family: var(--display);
+  font-size: clamp(42px, 8vw, 82px);
+  line-height: 0.98;
+}
+
+.account-intro h1 span {
+  color: var(--pink);
+}
+
+.account-intro .page-lede {
+  max-width: 620px;
+}
+
+.account-content {
+  display: grid;
+  max-width: 760px;
+  gap: 20px;
+}
+
+.account-card {
+  padding: clamp(20px, 5vw, 42px);
+  border: 1px solid var(--divider);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 18px 55px rgb(75 30 55 / 7%);
+}
+
+.account-tabs {
+  display: flex;
+  gap: 10px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.account-tab,
+.account-text-button {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+}
+
+.account-tab {
+  padding: 9px 13px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.account-tab.is-active {
+  background: var(--pink);
+  color: #fff;
+}
+
+.account-form {
+  display: grid;
+  gap: 17px;
+  padding-top: 24px;
+}
+
+.account-form h2,
+.account-profile h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(26px, 5vw, 36px);
+}
+
+.account-copy,
+.account-identity {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.account-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px 12px;
+}
+
+.account-verification-state {
+  color: #8a526c;
+  font-size: 11px;
+}
+
+.account-verification-state.is-verified {
+  color: #26734d;
+}
+
+.account-field {
+  display: grid;
+  gap: 8px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.account-field input,
+.account-field textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 13px;
+  border: 1px solid #f2c9dc;
+  border-radius: 9px;
+  background: #fffafd;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.account-field textarea {
+  resize: vertical;
+}
+
+.account-field input:focus,
+.account-field textarea:focus {
+  border-color: var(--pink-soft);
+  outline: 2px solid rgb(235 136 180 / 20%);
+  outline-offset: 1px;
+}
+
+.account-field small,
+.account-wallet small {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.account-field label small {
+  font-size: inherit;
+}
+
+.account-submit {
+  width: fit-content;
+  min-width: 150px;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.account-text-button {
+  width: fit-content;
+  padding: 4px 0;
+  color: var(--pink-soft);
+  font-size: 12px;
+  text-align: left;
+}
+
+.account-text-button:hover {
+  color: var(--pink);
+}
+
+.account-profile {
+  display: grid;
+  gap: 14px;
+}
+
+.account-profile .account-form {
+  padding-top: 2px;
+}
+
+.account-wallet {
+  padding: 18px;
+  border-radius: 12px;
+  background: #fff6fa;
+}
+
+.wallet-balances {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-block: 14px 6px;
+}
+
+.wallet-balances p {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.wallet-balances strong,
+.wallet-balances b {
+  color: var(--pink);
+  font-family: var(--display);
+  font-size: 32px;
+  overflow-wrap: anywhere;
+}
+
+.wallet-balances span {
+  font-size: 10px;
+}
+
+.account-coins-section {
+  display: grid;
+  gap: 13px;
+  padding-top: 21px;
+  border-top: 1px solid var(--divider);
+}
+
+.account-coins-section h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(22px, 4vw, 29px);
+}
+
+.account-coins-section .account-form {
+  padding-top: 0;
+}
+
+.attendance-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.attendance-summary p {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 12px;
+  border-radius: 9px;
+  background: #fff6fa;
+}
+
+.attendance-summary strong {
+  color: var(--pink);
+  font-family: var(--display);
+  font-size: 21px;
+}
+
+.attendance-summary span {
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+
+.attendance-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.attendance-day {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  justify-items: center;
+  padding: 10px 4px;
+  border: 1px solid var(--divider);
+  border-radius: 9px;
+  background: #fffafd;
+  text-align: center;
+}
+
+.attendance-day.is-earned {
+  border-color: #e6a8c7;
+  background: #fff0f7;
+}
+
+.attendance-day.is-today {
+  box-shadow: 0 0 0 2px rgb(214 95 150 / 17%);
+}
+
+.attendance-day-label,
+.attendance-day-state,
+.attendance-day-date {
+  color: var(--text-muted);
+  font-size: 8px;
+  line-height: 1.3;
+}
+
+.attendance-day-reward {
+  color: var(--pink);
+  font-family: var(--display);
+  font-size: 14px;
+}
+
+.attendance-day.is-earned .attendance-day-state {
+  color: #26734d;
+  font-weight: 700;
+}
+
+.account-field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 13px;
+  border: 1px solid #f2c9dc;
+  border-radius: 9px;
+  background: #fffafd;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.account-payment-instructions {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
+.coin-order-list,
+.coin-ledger-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coin-order-card,
+.coin-ledger-item {
+  display: grid;
+  gap: 9px;
+  padding: 15px;
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  background: #fffafd;
+}
+
+.coin-order-title,
+.coin-ledger-title {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.coin-order-meta,
+.coin-ledger-meta {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.coin-order-evidence {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--divider);
+}
+
+.coin-ledger-amount {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.coin-ledger-amount.is-credit {
+  color: #26734d;
+}
+
+.coin-ledger-amount.is-debit {
+  color: #a63e6f;
+}
+
+.account-message {
+  min-height: 24px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.account-message.is-error {
+  color: #a63e6f;
+}
+
+.account-message.is-success {
+  color: #26734d;
+}
+
+@media (max-width: 560px) {
+  .account-page {
+    padding-top: 28px;
+  }
+
+  .account-submit {
+    width: 100%;
+  }
+
+  .wallet-balances {
+    gap: 8px;
+  }
+
+  .wallet-balances strong,
+  .wallet-balances b {
+    font-size: 24px;
+  }
+
+  .attendance-days {
+    gap: 4px;
+  }
+
+  .attendance-day {
+    padding: 8px 2px;
+  }
+
+  .attendance-day-label,
+  .attendance-day-state,
+  .attendance-day-date {
+    font-size: 7px;
+  }
+
+  .attendance-day-reward {
+    font-size: 11px;
+  }
+}

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#FFF2F7" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <meta name="description" content="Choose an administrator-configured diamond package and submit a tracked top-up request." />
+    <title>Diamonds — NEEN</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Exo+2:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Oxanium:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+    <script src="diamonds-recharge.js" defer></script>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <span class="wordmark wordmark-lockup"><a href="index.html" aria-label="NEEN home">NEE</a><a class="wordmark-admin-entry" href="events-admin.php" aria-label="Events admin console">E</a><span aria-hidden="true">.</span></span>
+        <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-navigation"><span></span><span></span></button>
+        <nav class="site-navigation" id="site-navigation" aria-label="Main navigation">
+          <a class="nav-link" href="index.html">Home</a>
+          <a class="nav-link" href="videos.html">Videos</a>
+          <a class="nav-link" href="about.html">About Me</a>
+          <a class="nav-link" href="gallery.html">Gallery</a>
+          <a class="nav-link" href="events.html">Events</a>
+          <a class="nav-link is-active" href="diamonds.html" aria-current="page">Diamonds</a>
+          <a class="nav-cta" href="https://www.tiktok.com/@neen_0o" target="_blank" rel="noreferrer"><span>TikTok</span><span class="arrow" aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
+      <main class="page-main diamonds-page">
+        <section class="diamonds-intro section-wrap" aria-labelledby="page-title">
+          <p class="eyebrow section-eyebrow">FREE FIRE <span> / TOP-UP</span></p>
+          <h1 id="page-title">DIAMONDS<br /><span>TOP-UP.</span></h1>
+          <p class="page-lede">Choose an active package and submit a tracked top-up request. Payment and delivery are reviewed separately by NEEN staff.</p>
+        </section>
+        <section class="diamonds-layout section-wrap" aria-label="Diamond top-up request">
+          <aside class="setup-notice">
+            <span class="setup-notice-icon" aria-hidden="true">!</span>
+            <div>
+              <p class="eyebrow">SAFE TOP-UP</p>
+              <h2>Tracked requests.<br />No fake delivery.</h2>
+              <p>Only packages configured by an authorized NEEN administrator are displayed. Submitting a request does not verify payment or deliver diamonds.</p>
+            </div>
+            <ul class="setup-checklist">
+              <li><span aria-hidden="true">—</span> Packages and prices are server-managed</li>
+              <li><span aria-hidden="true">—</span> Player ID only; never provide a game password</li>
+              <li><span aria-hidden="true">—</span> Payment review and delivery are separate steps</li>
+              <li><span aria-hidden="true">—</span> Provider integrations remain disabled until approved</li>
+            </ul>
+          </aside>
+          <div class="order-panel">
+            <div class="order-panel-heading">
+              <p class="eyebrow section-eyebrow">DIAMOND ORDER <span> / 01</span></p>
+              <span class="preview-badge">SERVER-TRACKED</span>
+            </div>
+            <form class="diamond-form" data-diamond-order-form autocomplete="off" novalidate>
+              <div class="form-field">
+                <label for="diamond-package">1. Choose an active package <span>Required</span></label>
+                <select id="diamond-package" data-diamond-package required disabled>
+                  <option value="">Loading server packages…</option>
+                </select>
+                <small data-diamond-package-status>Packages and prices are read from the NEEN database.</small>
+              </div>
+              <div class="form-field">
+                <label for="player-id">2. Player ID / UID <span>Required</span></label>
+                <input id="player-id" type="text" inputmode="numeric" autocomplete="off" minlength="6" maxlength="20" pattern="[0-9]{6,20}" title="Enter a player ID containing 6 to 20 digits." placeholder="Enter your numeric player ID" required />
+                <small>Only your in-game player ID. Never enter your password or verification code.</small>
+              </div>
+              <button class="button button-primary review-button" type="submit" disabled><span>Review order</span><span class="button-arrow" aria-hidden="true">↗</span></button>
+              <p class="form-error" data-diamond-error role="alert" hidden></p>
+            </form>
+
+            <section class="order-review" data-diamond-review aria-labelledby="review-title" hidden>
+              <p class="eyebrow section-eyebrow">CHECK YOUR DETAILS <span> / 02</span></p>
+              <h2 id="review-title">REVIEW YOUR <span>ORDER.</span></h2>
+              <dl class="order-summary">
+                <div><dt>Package</dt><dd data-diamond-review-package></dd></div>
+                <div><dt>Diamond quantity</dt><dd data-diamond-review-amount></dd></div>
+                <div><dt>Price</dt><dd data-diamond-review-price></dd></div>
+                <div><dt>Player ID / UID</dt><dd data-diamond-review-player></dd></div>
+              </dl>
+              <p class="review-disclaimer">Submitting creates a request only. Payment verification and diamond delivery are not automatic.</p>
+              <div class="review-actions">
+                <button class="outline-link" type="button" data-diamond-edit>Edit details</button>
+                <button class="button button-primary" type="button" data-diamond-submit disabled><span>Submit tracked request</span><span class="button-arrow" aria-hidden="true">↗</span></button>
+              </div>
+              <p class="form-error" data-diamond-review-error role="alert" hidden></p>
+            </section>
+
+            <section class="order-confirmation" data-diamond-confirmation aria-labelledby="confirmation-title" aria-live="polite" hidden>
+              <span class="confirmation-mark" aria-hidden="true">↻</span>
+              <p class="eyebrow section-eyebrow">REQUEST RECEIVED — PAYMENT PENDING</p>
+              <h2 id="confirmation-title" tabindex="-1">TRACK YOUR<br /><span>REQUEST.</span></h2>
+              <p data-diamond-confirmation-copy>Your request is recorded. Payment and diamond delivery are not confirmed.</p>
+              <p>Order number: <strong data-diamond-order-number></strong></p>
+              <a class="outline-link" href="index.html">Return home <span class="arrow" aria-hidden="true">↗</span></a>
+            </section>
+          </div>
+        </section>
+        <section class="diamonds-safety diamonds-orders section-wrap" aria-labelledby="diamond-orders-title">
+          <div class="order-panel-heading">
+            <div><p class="eyebrow section-eyebrow">ACCOUNT ORDERS <span> / 03</span></p><h2 id="diamond-orders-title">YOUR RECHARGES</h2></div>
+            <button type="button" class="outline-link" data-diamond-refresh>Refresh orders</button>
+          </div>
+          <p data-diamond-account-message role="status">Sign in to submit and track a recharge request. <a data-diamond-login href="account.html">Open your NEEN account</a>.</p>
+          <div data-diamond-orders aria-live="polite"></div>
+        </section>
+        <section class="diamonds-safety section-wrap">
+          <p class="eyebrow section-eyebrow">PLAYER SAFETY</p>
+          <p>NEEN will never need your Free Fire password or one-time verification code to prepare a top-up request.</p>
+        </section>
+      </main>
+      <footer class="site-footer">
+        <a class="wordmark footer-wordmark" href="index.html">NEEN<span>.</span></a>
+        <p>FREE FIRE CONTENT <span>·</span> @NEEN_0O</p>
+        <div class="footer-links"><a href="videos.html">VIDEOS</a><a href="about.html">ABOUT</a><a href="gallery.html">GALLERY</a><a href="events.html">EVENTS</a><a href="diamonds.html">DIAMONDS</a></div>
+        <a class="back-to-top" href="index.html">BACK HOME <span aria-hidden="true">↑</span></a>
+      </footer>
+    </div>
+  </body>
+</html>

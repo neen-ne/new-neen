@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#FFF2F7" />
+    <meta name="description" content="Create and manage your NEEN account." />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <title>Account — NEEN</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Exo+2:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Oxanium:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="account.css" />
+    <script src="script.js" defer></script>
+    <script src="account.js" defer></script>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <span class="wordmark wordmark-lockup"><a href="index.html" aria-label="NEEN home">NEE</a><a class="wordmark-admin-entry" href="events-admin.php" aria-label="Events admin console">E</a><span aria-hidden="true">.</span></span>
+        <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-navigation">
+          <span></span><span></span>
+        </button>
+        <nav class="site-navigation" id="site-navigation" aria-label="Main navigation">
+          <a class="nav-link" href="index.html">Home</a>
+          <a class="nav-link is-active" href="account.html" aria-current="page">Account</a>
+        </nav>
+      </header>
+
+      <main class="page-main account-page">
+        <section class="account-intro section-wrap" aria-labelledby="account-title">
+          <p class="eyebrow section-eyebrow">NEEN COMMUNITY <span>/ ACCOUNT</span></p>
+          <h1 id="account-title">YOUR NEEN <span>ACCOUNT.</span></h1>
+          <p class="page-lede">Sign in or create an account to manage your profile and view your Coins wallet.</p>
+        </section>
+
+        <section class="account-content section-wrap" aria-label="Account management">
+          <div class="account-card" data-auth-panel>
+            <div class="account-tabs" data-auth-tabs>
+              <button class="account-tab is-active" type="button" data-mode="login" aria-pressed="true">Sign in</button>
+              <button class="account-tab" type="button" data-mode="register" aria-pressed="false">Create account</button>
+            </div>
+
+            <form class="account-form" id="login-form" novalidate>
+              <h2>Welcome back.</h2>
+              <label class="account-field">
+                <span>Email or username</span>
+                <input name="identifier" type="text" autocomplete="username" maxlength="254" required />
+              </label>
+              <label class="account-field">
+                <span>Password</span>
+                <input name="password" type="password" autocomplete="current-password" maxlength="72" required />
+              </label>
+              <button class="button button-primary account-submit" type="submit">Sign in</button>
+              <button class="account-text-button" type="button" data-show-forgot>Forgot your password?</button>
+            </form>
+
+            <form class="account-form" id="register-form" hidden novalidate>
+              <h2>Create your account.</h2>
+              <label class="account-field">
+                <span>Username</span>
+                <input name="username" type="text" autocomplete="username" minlength="3" maxlength="50" pattern="[A-Za-z0-9][A-Za-z0-9_.-]{2,49}" required />
+                <small>3–50 letters, numbers, dots, underscores, or hyphens.</small>
+              </label>
+              <label class="account-field">
+                <span>Email</span>
+                <input name="email" type="email" autocomplete="email" maxlength="254" required />
+              </label>
+              <label class="account-field">
+                <span>Display name</span>
+                <input name="display_name" type="text" autocomplete="nickname" maxlength="80" />
+              </label>
+              <label class="account-field">
+                <span>Password</span>
+                <input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="72" required />
+                <small>Use at least 12 characters.</small>
+              </label>
+              <button class="button button-primary account-submit" type="submit">Create account</button>
+            </form>
+
+            <form class="account-form" id="forgot-form" hidden novalidate>
+              <h2>Reset your password.</h2>
+              <p class="account-copy">Enter your account email. If an active account uses it, we’ll send a reset link.</p>
+              <label class="account-field">
+                <span>Email</span>
+                <input name="email" type="email" autocomplete="email" maxlength="254" required />
+              </label>
+              <button class="button button-primary account-submit" type="submit">Send reset link</button>
+              <button class="account-text-button" type="button" data-show-login>Back to sign in</button>
+            </form>
+
+            <form class="account-form" id="reset-form" hidden novalidate>
+              <h2>Choose a new password.</h2>
+              <label class="account-field">
+                <span>New password</span>
+                <input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="72" required />
+                <small>Use at least 12 characters. Reset links expire after 60 minutes.</small>
+              </label>
+              <button class="button button-primary account-submit" type="submit">Reset password</button>
+            </form>
+          </div>
+
+          <div class="account-card account-profile" data-profile-panel hidden>
+            <p class="eyebrow section-eyebrow">ACCOUNT <span>/ PROFILE</span></p>
+            <h2>Your profile.</h2>
+            <p class="account-identity" data-identity></p>
+            <form class="account-form" id="profile-form" novalidate>
+              <label class="account-field">
+                <span>Display name</span>
+                <input name="display_name" type="text" autocomplete="nickname" maxlength="80" />
+              </label>
+              <label class="account-field">
+                <span>Full name</span>
+                <input name="full_name" type="text" autocomplete="name" maxlength="150" />
+              </label>
+              <label class="account-field">
+                <span>Country</span>
+                <input name="country" type="text" autocomplete="country-name" maxlength="80" />
+              </label>
+              <label class="account-field">
+                <span>Avatar URL <small>HTTPS only</small></span>
+                <input name="avatar_url" type="url" maxlength="255" />
+              </label>
+              <label class="account-field">
+                <span>Bio</span>
+                <textarea name="bio" maxlength="500" rows="4"></textarea>
+              </label>
+              <button class="button button-primary account-submit" type="submit">Save profile</button>
+            </form>
+            <div class="account-wallet">
+              <p class="eyebrow section-eyebrow">NEEN COINS <span>/ WALLET</span></p>
+              <div class="wallet-balances" aria-label="Coins balance breakdown">
+                <p><strong data-wallet-balance>—</strong><span>Total Coins</span></p>
+                <p><b data-purchased-balance>—</b><span>Purchased</span></p>
+                <p><b data-earned-balance>—</b><span>Earned</span></p>
+              </div>
+              <small>NEEN Coins are separate from Free Fire Diamonds.</small>
+            </div>
+            <section class="account-coins-section attendance-section" aria-labelledby="attendance-title">
+              <p class="eyebrow section-eyebrow">DAILY REWARDS <span>/ CHECK-IN</span></p>
+              <h3 id="attendance-title">Your 7-day attendance cycle.</h3>
+              <p class="account-copy" data-attendance-status role="status" aria-live="polite">Loading Cairo-time attendance…</p>
+              <div class="attendance-summary">
+                <p><strong data-attendance-progress>0 / 7</strong><span>days in this cycle</span></p>
+                <p><strong>100</strong><span>Earned Coins per day</span></p>
+                <p><strong>700</strong><span>Coins across 7 days</span></p>
+              </div>
+              <ol class="attendance-days" data-attendance-days aria-label="Seven day attendance progress"></ol>
+              <button class="button button-primary account-submit" type="button" data-attendance-checkin disabled>
+                Check in for 100 Earned Coins
+              </button>
+            </section>
+            <section class="account-coins-section" aria-labelledby="coin-purchase-title">
+              <p class="eyebrow section-eyebrow">COIN PACKAGES <span>/ PURCHASE</span></p>
+              <h3 id="coin-purchase-title">Add Purchased Coins.</h3>
+              <p class="account-copy" data-coins-config-message>Loading available packages and payment methods…</p>
+              <form class="account-form" id="coin-order-form" hidden novalidate>
+                <label class="account-field">
+                  <span>Package</span>
+                  <select name="package_id" required></select>
+                </label>
+                <label class="account-field">
+                  <span>Payment method</span>
+                  <select name="payment_method_id" required></select>
+                </label>
+                <p class="account-payment-instructions" data-payment-instructions></p>
+                <button class="button button-primary account-submit" type="submit">Create payment request</button>
+              </form>
+            </section>
+            <section class="account-coins-section" aria-labelledby="coin-orders-title">
+              <p class="eyebrow section-eyebrow">PURCHASE HISTORY <span>/ REVIEW STATUS</span></p>
+              <h3 id="coin-orders-title">Your Coin requests.</h3>
+              <div class="coin-order-list" data-coin-orders></div>
+            </section>
+            <section class="account-coins-section" aria-labelledby="coin-ledger-title">
+              <p class="eyebrow section-eyebrow">WALLET ACTIVITY <span>/ LEDGER</span></p>
+              <h3 id="coin-ledger-title">Coins history.</h3>
+              <ol class="coin-ledger-list" data-coin-ledger></ol>
+            </section>
+            <button class="account-text-button" type="button" data-logout>Sign out</button>
+          </div>
+
+          <p class="account-message" data-account-message role="status" aria-live="polite"></p>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <a class="wordmark footer-wordmark" href="index.html">NEEN<span>.</span></a>
+        <p>FREE FIRE CONTENT <span>·</span> @NEEN_0O</p>
+        <a class="back-to-top" href="index.html">BACK HOME <span aria-hidden="true">↗</span></a>
+      </footer>
+    </div>
+  </body>
+</html>

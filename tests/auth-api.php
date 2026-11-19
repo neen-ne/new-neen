@@ -1,0 +1,2962 @@
+<?php
+declare(strict_types=1);
+
+require_once dirname(__DIR__) . '/api/src/ApiException.php';
+require_once dirname(__DIR__) . '/api/src/CoinsLedger.php';
+require_once dirname(__DIR__) . '/api/src/Attendance.php';
+
+function assertTrue(bool $condition, string $message): void
+{
+    if (!$condition) {
+        throw new RuntimeException($message);
+    }
+}
+
+function request(
+    string $baseUrl,
+    string $path,
+    array &$cookies,
+    ?array $payload = null,
+    ?string $csrf = null,
+    string $method = 'GET',
+): array {
+    $headers = ['Accept: application/json'];
+    if ($payload !== null) {
+        $headers[] = 'Content-Type: application/json';
+    }
+    if ($csrf !== null) {
+        $headers[] = 'X-CSRF-Token: ' . $csrf;
+    }
+    if ($cookies !== []) {
+        $pairs = [];
+        foreach ($cookies as $name => $value) {
+            $pairs[] = $name . '=' . $value;
+        }
+        $headers[] = 'Cookie: ' . implode('; ', $pairs);
+    }
+
+    $context = stream_context_create([
+        'http' => [
+            'method' => $method,
+            'header' => implode("\r\n", $headers),
+            'content' => $payload === null
+                ? ''
+                : json_encode($payload === [] ? (object) [] : $payload, JSON_THROW_ON_ERROR),
+            'ignore_errors' => true,
+            'timeout' => 3,
+            'follow_location' => 0,
+        ],
+    ]);
+    $body = file_get_contents($baseUrl . $path, false, $context);
+    if ($body === false) {
+        throw new RuntimeException('Request failed: ' . $path . ' (' . (error_get_last()['message'] ?? 'unknown transport error') . ')');
+    }
+    $responseHeaders = $http_response_header ?? [];
+    preg_match('/\s(\d{3})\s/', $responseHeaders[0] ?? '', $match);
+    $status = isset($match[1]) ? (int) $match[1] : 0;
+
+    foreach ($responseHeaders as $header) {
+        if (stripos($header, 'Set-Cookie: ') !== 0) {
+            continue;
+        }
+        $cookie = explode(';', substr($header, 12), 2)[0];
+        [$name, $value] = array_pad(explode('=', $cookie, 2), 2, '');
+        $cookies[$name] = $value;
+    }
+
+    return [$status, json_decode($body, true, 32, JSON_THROW_ON_ERROR), $responseHeaders];
+}
+
+function requestPage(string $baseUrl, string $path, array $cookies): array
+{
+    $headers = ['Accept: text/html'];
+    if ($cookies !== []) {
+        $pairs = [];
+        foreach ($cookies as $name => $value) {
+            $pairs[] = $name . '=' . $value;
+        }
+        $headers[] = 'Cookie: ' . implode('; ', $pairs);
+    }
+
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'GET',
+            'header' => implode("\r\n", $headers),
+            'ignore_errors' => true,
+            'timeout' => 3,
+            'follow_location' => 0,
+        ],
+    ]);
+    $body = file_get_contents($baseUrl . $path, false, $context);
+    if ($body === false) {
+        throw new RuntimeException('Page request failed: ' . $path . ' (' . (error_get_last()['message'] ?? 'unknown transport error') . ')');
+    }
+    $responseHeaders = $http_response_header ?? [];
+    preg_match('/\s(\d{3})\s/', $responseHeaders[0] ?? '', $match);
+    $status = isset($match[1]) ? (int) $match[1] : 0;
+    return [$status, $body, $responseHeaders];
+}
+
+function concurrentRequests(
+    string $baseUrl,
+    string $path,
+    array $cookies,
+    array $payload,
+    string $csrf,
+): array {
+    $cookieHeader = implode('; ', array_map(
+        static fn (string $name, string $value): string => $name . '=' . $value,
+        array_keys($cookies),
+        array_values($cookies),
+    ));
+    $clientCode = <<<'PHP'
+$payload = json_decode($argv[5], true, 32, JSON_THROW_ON_ERROR);
+$context = stream_context_create(['http' => [
+    'method' => 'POST',
+    'header' => "Accept: application/json\r\nContent-Type: application/json\r\nX-CSRF-Token: {$argv[4]}\r\nCookie: {$argv[3]}",
+    'content' => json_encode($payload === [] ? (object) [] : $payload, JSON_THROW_ON_ERROR),
+    'ignore_errors' => true,
+    'timeout' => 10,
+]]);
+$body = file_get_contents($argv[1] . $argv[2], false, $context);
+if ($body === false) {
+    exit(2);
+}
+preg_match('/\s(\d{3})\s/', $http_response_header[0] ?? '', $match);
+echo json_encode([
+    'status' => isset($match[1]) ? (int) $match[1] : 0,
+    'response' => json_decode($body, true, 32, JSON_THROW_ON_ERROR),
+], JSON_THROW_ON_ERROR);
+PHP;
+    $workers = [];
+    for ($index = 0; $index < 2; $index++) {
+        $process = proc_open(
+            [
+                PHP_BINARY,
+                '-r',
+                $clientCode,
+                $baseUrl,
+                $path,
+                $cookieHeader,
+                $csrf,
+                json_encode($payload, JSON_THROW_ON_ERROR),
+            ],
+            [['pipe', 'r'], ['pipe', 'w'], ['pipe', 'w']],
+            $pipes,
+        );
+        if (!is_resource($process)) {
+            throw new RuntimeException('Unable to launch a concurrent game request.');
+        }
+        fclose($pipes[0]);
+        $workers[] = [$process, $pipes[1], $pipes[2]];
+    }
+
+    $results = [];
+    foreach ($workers as [$process, $stdout, $stderr]) {
+        $output = stream_get_contents($stdout);
+        $error = stream_get_contents($stderr);
+        fclose($stdout);
+        fclose($stderr);
+        $exitCode = proc_close($process);
+        if ($exitCode !== 0 || !is_string($output) || $output === '') {
+            throw new RuntimeException('A concurrent game request failed: ' . (string) $error);
+        }
+        $result = json_decode($output, true, 32, JSON_THROW_ON_ERROR);
+        $results[] = [(int) $result['status'], $result['response']];
+    }
+    return $results;
+}
+
+function checkResponse(array $response, bool $success, string $message): void
+{
+    assertTrue(($response['success'] ?? null) === $success, $message . ': response success flag');
+}
+
+$root = dirname(__DIR__);
+$temporaryDirectory = sys_get_temp_dir() . '/neen-auth-' . bin2hex(random_bytes(6));
+if (!mkdir($temporaryDirectory, 0700)) {
+    throw new RuntimeException('Unable to create test directory.');
+}
+$databasePath = $temporaryDirectory . '/accounts.sqlite';
+$mailPath = $temporaryDirectory . '/mail.jsonl';
+$database = new PDO('sqlite:' . $databasePath);
+$database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$schema = file_get_contents(__DIR__ . '/fixtures/account-schema.sqlite.sql');
+if ($schema === false) {
+    throw new RuntimeException('Unable to read the SQLite test schema.');
+}
+$database->exec($schema);
+unset($database);
+
+$serverSocket = stream_socket_server('tcp://127.0.0.1:0', $errno, $error);
+if ($serverSocket === false) {
+    throw new RuntimeException('Unable to reserve a local test port: ' . $error);
+}
+$address = stream_socket_get_name($serverSocket, false);
+fclose($serverSocket);
+$port = (int) substr(strrchr((string) $address, ':'), 1);
+$baseUrl = 'http://127.0.0.1:' . $port;
+$environment = array_merge($_ENV, [
+    'APP_ENV' => 'test',
+    'NEEN_APP_KEY' => bin2hex(random_bytes(32)),
+    'NEEN_APP_URL' => $baseUrl,
+    'NEEN_DB_DSN' => 'sqlite:' . $databasePath,
+    'NEEN_TEST_MAIL_FILE' => $mailPath,
+    'XDEBUG_MODE' => 'off',
+]);
+$process = proc_open(
+    [PHP_BINARY, '-S', '127.0.0.1:' . $port, '-t', $root, $root . '/api/router.php'],
+    [['pipe', 'r'], ['pipe', 'w'], ['pipe', 'w']],
+    $pipes,
+    $root,
+    $environment,
+);
+if (!is_resource($process)) {
+    throw new RuntimeException('Unable to launch the API test server.');
+}
+stream_set_blocking($pipes[1], false);
+stream_set_blocking($pipes[2], false);
+
+try {
+    $ready = false;
+    for ($attempt = 0; $attempt < 50; $attempt++) {
+        $socket = @fsockopen('127.0.0.1', $port, $socketError, $socketMessage, 0.1);
+        if ($socket !== false) {
+            fclose($socket);
+            $ready = true;
+            break;
+        }
+        usleep(50_000);
+    }
+    assertTrue($ready, 'API test server starts');
+
+    $cookies = [];
+    [$status, $response] = request($baseUrl, '/api/auth/csrf', $cookies);
+    assertTrue($status === 200, 'Anonymous CSRF endpoint responds');
+    $csrf = $response['data']['csrf_token'];
+    assertTrue(isset($cookies['neen_csrf']), 'Anonymous CSRF cookie is issued');
+
+    [$status] = request(
+        $baseUrl,
+        '/api/auth/register',
+        $cookies,
+        ['username' => 'NeenPlayer', 'email' => 'player@example.com', 'password' => 'Correct-Horse-123'],
+        null,
+        'POST',
+    );
+    assertTrue($status === 403, 'Registration rejects a missing CSRF header');
+
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/auth/register',
+        $cookies,
+        [
+            'username' => 'NeenPlayer',
+            'email' => 'player@example.com',
+            'password' => 'Correct-Horse-123',
+            'display_name' => 'Neen Player',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 201, 'Valid open registration succeeds');
+    checkResponse($response, true, 'Valid open registration');
+    assertTrue($response['data']['wallet_created'] === true, 'Registration creates a wallet');
+    $userId = (int) $response['data']['user_id'];
+    $walletId = (int) $response['data']['wallet_id'];
+
+    [$status] = request(
+        $baseUrl,
+        '/api/auth/register',
+        $cookies,
+        [
+            'username' => 'neenplayer',
+            'email' => 'other@example.com',
+            'password' => 'Correct-Horse-123',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 409, 'Duplicate username registration is rejected');
+    [$status] = request(
+        $baseUrl,
+        '/api/auth/register',
+        $cookies,
+        [
+            'username' => 'differentname',
+            'email' => 'PLAYER@example.com',
+            'password' => 'Correct-Horse-123',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 409, 'Duplicate email registration is rejected');
+    foreach ([
+        ['username' => 'bad name', 'email' => 'valid@example.com', 'password' => 'Correct-Horse-123'],
+        ['username' => 'validname', 'email' => 'not-an-email', 'password' => 'Correct-Horse-123'],
+        ['username' => 'validname', 'email' => 'valid@example.com', 'password' => 'short'],
+    ] as $invalidRegistration) {
+        [$invalidStatus] = request(
+            $baseUrl,
+            '/api/auth/register',
+            $cookies,
+            $invalidRegistration,
+            $csrf,
+            'POST',
+        );
+        assertTrue($invalidStatus === 422, 'Invalid registration data is rejected with a validation response');
+        $rateLimitDb = new PDO('sqlite:' . $databasePath);
+        $rateLimitDb->exec('DELETE FROM auth_rate_limits');
+        unset($rateLimitDb);
+    }
+
+    $accountPage = file_get_contents($baseUrl . '/account.html');
+    assertTrue(
+        is_string($accountPage)
+        && str_contains($accountPage, 'Create account')
+        && str_contains($accountPage, 'Email or username'),
+        'The account page exposes login and registration entry points',
+    );
+    $siteScript = file_get_contents($root . '/script.js');
+    assertTrue(
+        is_string($siteScript)
+        && str_contains($siteScript, '/api/auth/me')
+        && str_contains($siteScript, 'dataset.accountLink')
+        && str_contains($siteScript, 'neen:authchange'),
+        'Shared site navigation reads server-side sign-in status and responds to account changes',
+    );
+    $gamePage = file_get_contents($baseUrl . '/memory-match.html');
+    assertTrue(is_string($gamePage) && str_contains($gamePage, 'data-match-board'),
+        'Memory Match page is served with the existing site');
+    [$status, $gameCatalogResponse] = request($baseUrl, '/api/games/memory-match', $cookies);
+    $gameCatalog = $gameCatalogResponse['data']['game'] ?? [];
+    assertTrue(
+        $status === 200
+        && $gameCatalog['pairs_total'] === 8
+        && $gameCatalog['cards_total'] === 16
+        && $gameCatalog['free_attempts_per_day'] === 3
+        && $gameCatalog['reset_timezone'] === 'Africa/Cairo',
+        'Memory Match exposes the eight-image catalog and approved daily policy',
+    );
+    assertTrue(count($gameCatalog['images']) === 8, 'The public catalog returns every supported source image');
+    foreach ($gameCatalog['images'] as $image) {
+        $imageBytes = file_get_contents($baseUrl . $image['src']);
+        $servedImage = $imageBytes === false ? false : getimagesizefromstring($imageBytes);
+        assertTrue(
+            $servedImage !== false
+            && $servedImage[0] === 1600
+            && $servedImage[1] === 738,
+            'The original catalog image is served successfully with its full dimensions',
+        );
+    }
+    $gameStyles = file_get_contents($root . '/memory-match.css');
+    assertTrue(
+        is_string($gameStyles)
+        && str_contains($gameStyles, 'aspect-ratio: 1;')
+        && str_contains($gameStyles, 'object-fit: contain;')
+        && str_contains($gameStyles, '@media (max-width: 560px)'),
+        'Memory Match uses square, uncropped cards and includes a small-screen layout',
+    );
+    $sourceImages = glob($root . '/assets/hero-loot/Memory Match pic/*') ?: [];
+    assertTrue(count($sourceImages) === 8, 'All eight source images in the approved folder were discovered');
+    $imageManifest = json_decode(
+        (string) file_get_contents($root . '/assets/hero-loot/memory-match-images.json'),
+        true,
+        16,
+        JSON_THROW_ON_ERROR,
+    );
+    assertTrue(count($imageManifest) === 8, 'The organized game manifest uses all eight discovered images');
+    foreach ($imageManifest as $image) {
+        $imageInfo = getimagesize($root . '/' . $image['src']);
+        assertTrue(
+            $imageInfo !== false && $imageInfo[0] === 1600 && $imageInfo[1] === 738,
+            'Original game image remains valid at its source dimensions',
+        );
+    }
+
+    $anonymousCookies = [];
+    [$status] = request(
+        $baseUrl,
+        '/api/games/memory-match/sessions',
+        $anonymousCookies,
+        ['idempotency_key' => 'memory-anonymous-start-001'],
+        null,
+        'POST',
+    );
+    assertTrue($status === 401, 'An anonymous visitor cannot start a user-linked game session');
+
+    [$status] = request(
+        $baseUrl,
+        '/api/auth/login',
+        $cookies,
+        ['identifier' => 'bad identifier!', 'password' => 'Correct-Horse-123'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 422, 'Invalid email/username login identifiers are rejected before authentication');
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/auth/login',
+        $cookies,
+        ['email' => 'player@example.com', 'password' => 'Wrong-Password-123'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 401, 'Incorrect login is rejected');
+    checkResponse($response, false, 'Incorrect login');
+
+    [$status, $response, $loginHeaders] = request(
+        $baseUrl,
+        '/api/auth/login',
+        $cookies,
+        ['identifier' => 'NEENPLAYER', 'password' => 'Correct-Horse-123'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 200, 'Correct login succeeds by case-insensitive username');
+    checkResponse($response, true, 'Correct login');
+    $csrf = $response['data']['csrf_token'];
+    assertTrue(isset($cookies['neen_session']), 'Login issues an opaque session cookie');
+    $sessionCookieHeaders = array_values(array_filter(
+        $loginHeaders,
+        static fn (string $header): bool => stripos($header, 'Set-Cookie: neen_session=') === 0,
+    ));
+    assertTrue(
+        $sessionCookieHeaders !== []
+        && stripos(implode(';', $sessionCookieHeaders), 'httponly') !== false
+        && stripos(implode(';', $sessionCookieHeaders), 'samesite=lax') !== false,
+        'Session cookie has HttpOnly and SameSite protections',
+    );
+    $database = new PDO('sqlite:' . $databasePath);
+    $storedSessionHash = $database->query(
+        'SELECT session_token_hash FROM user_sessions WHERE user_id = ' . $userId,
+    )->fetchColumn();
+    $storedPasswordHash = $database->query(
+        'SELECT password_hash FROM users WHERE id = ' . $userId,
+    )->fetchColumn();
+    assertTrue(
+        $storedSessionHash === hash('sha256', $cookies['neen_session'])
+        && $storedSessionHash !== $cookies['neen_session'],
+        'The session token is stored only as a hash',
+    );
+    assertTrue(
+        is_string($storedPasswordHash)
+        && $storedPasswordHash !== 'Correct-Horse-123'
+        && password_verify('Correct-Horse-123', $storedPasswordHash),
+        'Registration stores a verifiable one-way password hash instead of plaintext',
+    );
+    unset($database);
+
+    [$status, $response] = request($baseUrl, '/api/auth/me', $cookies);
+    assertTrue($status === 200 && $response['data']['user']['id'] === $userId, 'Authenticated user data is returned');
+    assertTrue($response['data']['user']['roles'] === ['user'], 'New accounts receive only the user role');
+    assertTrue(
+        $response['data']['user']['permissions'] === ['view_wallet', 'view_wallet_transactions'],
+        'New accounts receive only read-only wallet permissions',
+    );
+
+    [$status, $response] = request($baseUrl, '/api/users/me', $cookies);
+    assertTrue(
+        $status === 200 && $response['data']['profile']['email_verified'] === false,
+        'Authenticated profile can be read without falsely marking the email verified',
+    );
+    assertTrue($response['data']['profile']['display_name'] === 'Neen Player', 'Registration creates a user profile');
+
+    [$status] = request(
+        $baseUrl,
+        '/api/users/me',
+        $cookies,
+        ['role' => 'super_admin'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($status === 422, 'Profile updates reject role tampering');
+
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/users/me',
+        $cookies,
+        ['display_name' => 'Updated Player', 'country' => 'Egypt'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($status === 200, 'Authenticated profile can be updated');
+    assertTrue($response['data']['profile']['display_name'] === 'Updated Player', 'Profile update is persisted');
+
+    [$status, $response] = request($baseUrl, '/api/wallet', $cookies);
+    assertTrue($status === 200, 'Authenticated user can read their wallet');
+    assertTrue(
+        $response['data']['id'] === $walletId
+        && $response['data']['coin_balance'] === 0
+        && $response['data']['purchased_coin_balance'] === 0
+        && $response['data']['earned_coin_balance'] === 0
+        && $response['data']['diamond_balance'] === 0,
+        'The account wallet is created once with zero Coins and Diamond balances',
+    );
+    $database = new PDO('sqlite:' . $databasePath);
+    assertTrue((int) $database->query('SELECT COUNT(*) FROM wallets WHERE user_id = ' . $userId)->fetchColumn() === 1,
+        'Only one wallet exists for the registered user');
+    [$status, $response] = request($baseUrl, '/api/coins/packages', $cookies);
+    assertTrue($status === 200 && $response['data']['packages'] === [], 'No unapproved Coins packages are seeded');
+    [$status, $response] = request($baseUrl, '/api/coins/payment-methods', $cookies);
+    assertTrue($status === 200 && $response['data']['payment_methods'] === [], 'No payment methods are assumed');
+    [$status] = request($baseUrl, '/api/admin/coin-packages', $cookies);
+    assertTrue($status === 403, 'Ordinary users cannot manage Coins packages');
+    [$status] = request($baseUrl, '/api/admin/coin-orders', $cookies);
+    assertTrue($status === 403, 'Ordinary users cannot review Coins orders');
+    [$status] = request($baseUrl, '/api/wallet/debit', $cookies, [], $csrf, 'POST');
+    assertTrue($status === 404, 'There is no public wallet debit endpoint');
+
+    $database->prepare(
+        "INSERT INTO user_roles (user_id, role_id, granted_at)
+         SELECT :user_id, id, CURRENT_TIMESTAMP FROM roles WHERE name = 'super_admin'",
+    )->execute(['user_id' => $userId]);
+
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/admin/coin-packages',
+        $cookies,
+        [
+            'name' => 'Test Coins',
+            'coin_amount' => 100,
+            'price' => '2.50',
+            'currency_code' => 'USD',
+            'is_active' => true,
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 201, 'Authorized admin can configure a Coins package');
+    $packageId = $response['data']['package']['id'];
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/admin/coin-payment-methods',
+        $cookies,
+        [
+            'code' => 'test-transfer',
+            'display_name' => 'Test transfer',
+            'instructions' => 'Test environment only.',
+            'proof_required' => true,
+            'is_active' => true,
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 201, 'Authorized admin can configure a payment method');
+    $paymentMethodId = $response['data']['payment_method']['id'];
+
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/coins/orders',
+        $cookies,
+        [
+            'package_id' => $packageId,
+            'payment_method_id' => $paymentMethodId,
+            'idempotency_key' => 'coins-order-test-001',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 201 && $response['data']['order']['status'] === 'awaiting_payment',
+        'Creating a purchase request does not credit Coins');
+    $orderId = $response['data']['order']['id'];
+    [$status, $replay] = request(
+        $baseUrl,
+        '/api/coins/orders',
+        $cookies,
+        [
+            'package_id' => $packageId,
+            'payment_method_id' => $paymentMethodId,
+            'idempotency_key' => 'coins-order-test-001',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 200 && $replay['data']['order']['id'] === $orderId,
+        'Repeated purchase requests return the same order');
+    $database->query('PRAGMA foreign_keys = ON');
+    $walletRow = $database->query(
+        'SELECT coin_balance, purchased_coin_balance, earned_coin_balance FROM wallets WHERE user_id = ' . $userId,
+    )->fetch(PDO::FETCH_ASSOC);
+    assertTrue((int) $walletRow['coin_balance'] === 0, 'Unreviewed purchase does not add Coins');
+    unset($database);
+
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/coins/orders/' . $orderId . '/evidence',
+        $cookies,
+        [
+            'payment_reference' => 'TEST-REFERENCE-001',
+            'proof_details' => 'Test proof record.',
+            'idempotency_key' => 'coins-evidence-test-001',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 200 && $response['data']['order']['status'] === 'pending_review',
+        'Payment evidence moves an order to review without crediting Coins');
+
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/admin/coin-orders/' . $orderId . '/review',
+        $cookies,
+        [
+            'decision' => 'approved',
+            'reason' => 'Test approval after evidence review.',
+            'idempotency_key' => 'coins-review-test-001',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 200 && $response['data']['review']['ledger_entry_id'] > 0,
+        'Payment approval creates a Purchased Coins ledger entry');
+    [$status, $replay] = request(
+        $baseUrl,
+        '/api/admin/coin-orders/' . $orderId . '/review',
+        $cookies,
+        [
+            'decision' => 'approved',
+            'reason' => 'Test approval after evidence review.',
+            'idempotency_key' => 'coins-review-test-001',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 200 && $replay['data']['review']['ledger_entry_id'] === $response['data']['review']['ledger_entry_id'],
+        'Repeated approval cannot credit the order twice');
+
+    [$status, $wallet] = request($baseUrl, '/api/wallet', $cookies);
+    assertTrue(
+        $status === 200
+        && $wallet['data']['coin_balance'] === 100
+        && $wallet['data']['purchased_coin_balance'] === 100
+        && $wallet['data']['earned_coin_balance'] === 0
+        && $wallet['data']['diamond_balance'] === 0,
+        'Purchase approval changes only Purchased Coins, not Earned Coins or Diamonds',
+    );
+
+    $ledger = new CoinsLedger($database = new PDO('sqlite:' . $databasePath));
+    $earnedEntry = $ledger->credit(
+        $userId,
+        'earned',
+        25,
+        'earned_reward',
+        'coins-earned-test-001',
+        'test_reward',
+        1,
+        'Test-only earned reward.',
+    );
+    $usageEntry = $ledger->debitAfterConfirmedUsage(
+        $userId,
+        'purchased',
+        30,
+        555,
+        'coins-usage-test-001',
+        'Test-only confirmed service usage.',
+    );
+    assertTrue($ledger->debitAfterConfirmedUsage(
+        $userId,
+        'purchased',
+        30,
+        555,
+        'coins-usage-test-001',
+        'Test-only confirmed service usage.',
+    ) === $usageEntry, 'Repeated confirmed usage is idempotent');
+    try {
+        $ledger->debitAfterConfirmedUsage(
+            $userId,
+            'purchased',
+            1000,
+            556,
+            'coins-overdraw-test-001',
+            'Test-only overdraw attempt.',
+        );
+        throw new RuntimeException('Overspending must be rejected.');
+    } catch (ApiException $exception) {
+        assertTrue($exception->errorCode === 'INSUFFICIENT_BALANCE', 'Overspending is rejected safely');
+    }
+
+    $reversalEntry = $ledger->reverse(
+        $userId,
+        $usageEntry,
+        'Test-only usage reversal.',
+        'coins-reverse-test-001',
+    );
+    assertTrue($ledger->reverse(
+        $userId,
+        $usageEntry,
+        'Test-only usage reversal.',
+        'coins-reverse-test-001',
+    ) === $reversalEntry, 'A repeated reversal request is idempotent');
+    try {
+        $ledger->reverse($userId, $usageEntry, 'Second reversal must fail.', 'coins-reverse-test-002');
+        throw new RuntimeException('A ledger entry must not be reversed twice.');
+    } catch (ApiException $exception) {
+        assertTrue($exception->errorCode === 'DUPLICATE_REQUEST', 'A ledger entry cannot be reversed twice');
+    }
+    $ledger->reverse($userId, $earnedEntry, 'Test-only earned adjustment reversal.', 'coins-reverse-test-003');
+
+    [$status, $wallet] = request($baseUrl, '/api/wallet', $cookies);
+    assertTrue(
+        $status === 200
+        && $wallet['data']['coin_balance'] === 100
+        && $wallet['data']['purchased_coin_balance'] === 100
+        && $wallet['data']['earned_coin_balance'] === 0,
+        'Debits, earned credits, and reversals keep wallet buckets reconciled',
+    );
+    $ledgerHistory = request($baseUrl, '/api/wallet/transactions?limit=100', $cookies);
+    assertTrue(
+        $ledgerHistory[0] === 200 && count($ledgerHistory[1]['data']['transactions']) === 5,
+        'Users can view the immutable Coins transaction history',
+    );
+    try {
+        $database->exec('UPDATE coin_ledger SET note = \'tampered\' WHERE id = ' . $usageEntry);
+        throw new RuntimeException('Coin ledger entries must not be editable.');
+    } catch (PDOException) {
+        assertTrue(true, 'Coin ledger entries reject updates');
+    }
+    try {
+        $database->exec('DELETE FROM coin_ledger WHERE id = ' . $usageEntry);
+        throw new RuntimeException('Coin ledger entries must not be deletable.');
+    } catch (PDOException) {
+        assertTrue(true, 'Coin ledger entries reject deletes');
+    }
+
+    [$status, $adjustment] = request(
+        $baseUrl,
+        '/api/admin/wallets/' . $userId . '/adjustments',
+        $cookies,
+        [
+            'direction' => 'credit',
+            'balance_type' => 'earned',
+            'amount' => 10,
+            'reason' => 'Test-only admin adjustment.',
+            'idempotency_key' => 'coins-admin-adjust-test-001',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 201, 'Explicitly authorized admin can make an audited balance adjustment');
+    [$status, $adjustmentReplay] = request(
+        $baseUrl,
+        '/api/admin/wallets/' . $userId . '/adjustments',
+        $cookies,
+        [
+            'direction' => 'credit',
+            'balance_type' => 'earned',
+            'amount' => 10,
+            'reason' => 'Test-only admin adjustment.',
+            'idempotency_key' => 'coins-admin-adjust-test-001',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 201 && $adjustmentReplay['data']['ledger_entry_id'] === $adjustment['data']['ledger_entry_id'],
+        'Admin wallet adjustments are idempotent',
+    );
+    [$status] = request(
+        $baseUrl,
+        '/api/admin/coin-ledger/' . $adjustment['data']['ledger_entry_id'] . '/reverse',
+        $cookies,
+        [
+            'reason' => 'Test-only admin correction.',
+            'idempotency_key' => 'coins-admin-reverse-test-001',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 201, 'Administrative correction creates a reversal entry');
+    [$status, $wallet] = request($baseUrl, '/api/wallet', $cookies);
+    assertTrue(
+        $wallet['data']['coin_balance'] === 100
+        && $wallet['data']['earned_coin_balance'] === 0,
+        'Administrative reversal restores the prior wallet balances',
+    );
+
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/coins/orders',
+        $cookies,
+        [
+            'package_id' => $packageId,
+            'payment_method_id' => $paymentMethodId,
+            'idempotency_key' => 'coins-order-test-002',
+        ],
+        $csrf,
+        'POST',
+    );
+    $rejectedOrderId = $response['data']['order']['id'];
+    [$status] = request(
+        $baseUrl,
+        '/api/coins/orders/' . $rejectedOrderId . '/evidence',
+        $cookies,
+        [
+            'payment_reference' => 'TEST-REFERENCE-002',
+            'proof_details' => 'Test proof record for rejection.',
+            'idempotency_key' => 'coins-evidence-test-002',
+        ],
+        $csrf,
+        'POST',
+    );
+    [$status] = request(
+        $baseUrl,
+        '/api/admin/coin-orders/' . $rejectedOrderId . '/review',
+        $cookies,
+        [
+            'decision' => 'rejected',
+            'reason' => 'Test rejection.',
+            'idempotency_key' => 'coins-review-test-002',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 200, 'Admin can reject a Coins order');
+    [$status, $wallet] = request($baseUrl, '/api/wallet', $cookies);
+    assertTrue($wallet['data']['coin_balance'] === 100, 'Rejected payment adds no Coins');
+
+    [$status, $gameStart] = request(
+        $baseUrl,
+        '/api/games/memory-match/sessions',
+        $cookies,
+        ['idempotency_key' => 'memory-match-start-001'],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 201
+        && $gameStart['data']['created'] === true
+        && $gameStart['data']['attempts_remaining_today'] === 2,
+        'An authenticated user can start one server-tracked free game',
+    );
+    $gameSessionId = $gameStart['data']['session']['id'];
+    $gameState = $gameStart['data']['session'];
+    $gameReward = null;
+    [$status, $gameReplay] = request(
+        $baseUrl,
+        '/api/games/memory-match/sessions',
+        $cookies,
+        ['idempotency_key' => 'memory-match-start-001'],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 200
+        && $gameReplay['data']['session']['id'] === $gameSessionId
+        && $gameReplay['data']['attempts_remaining_today'] === 2,
+        'Retrying session creation is idempotent and consumes no extra daily attempt',
+    );
+    [$status, $gameCurrent] = request($baseUrl, '/api/games/memory-match/sessions/current', $cookies);
+    assertTrue(
+        $status === 200
+        && $gameCurrent['data']['session']['id'] === $gameSessionId
+        && $gameCurrent['data']['attempts_remaining_today'] === 2,
+        'An active game can be recovered from server state',
+    );
+    assertTrue(
+        $gameState['matched_cards'] === []
+        && $gameState['revealed_cards'] === [],
+        'The shuffled unrevealed board identities are not sent to the browser',
+    );
+
+    $flipGameCard = static function (int $index, array $extra = []) use (
+        $baseUrl,
+        &$cookies,
+        &$csrf,
+        $gameSessionId,
+        &$gameState,
+        &$gameReward,
+    ): array {
+        [$status, $response] = request(
+            $baseUrl,
+            '/api/games/memory-match/sessions/' . $gameSessionId . '/flip',
+            $cookies,
+            ['card_index' => $index, ...$extra],
+            $csrf,
+            'POST',
+        );
+        if ($status === 200) {
+            $gameState = $response['data']['session'];
+            $gameReward = $response['data']['reward'] ?? null;
+        }
+        return [$status, $response];
+    };
+
+    [$status, $firstFlip] = $flipGameCard(0);
+    assertTrue(
+        $status === 200
+        && count($firstFlip['data']['session']['revealed_cards']) === 1,
+        'A legal first card flip reveals one server-selected image',
+    );
+    assertTrue(!isset($firstFlip['data']['reward']), 'An incomplete Memory Match turn returns no reward');
+    [$status] = $flipGameCard(0);
+    assertTrue($status === 409, 'A card cannot be flipped twice while already revealed');
+    [$status] = $flipGameCard(1, ['won' => true, 'matches' => 8]);
+    assertTrue($status === 422, 'Client-supplied win or match results are rejected');
+    [$status] = $flipGameCard(255);
+    assertTrue($status === 422, 'Card indices outside the server board are rejected');
+    [$status] = request(
+        $baseUrl,
+        '/api/games/memory-match/sessions/' . $gameSessionId . '/reward',
+        $cookies,
+        [],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 404, 'There is no client-callable reward claim endpoint before a win');
+
+    $seenImages = [];
+    $matchedIndexes = [];
+    $mismatchWasChecked = false;
+    $matchedCardWasChecked = false;
+    $ledgerFailureChecked = false;
+    $learnGameState = static function () use (&$gameState, &$seenImages, &$matchedIndexes): void {
+        foreach ($gameState['matched_cards'] as $card) {
+            $seenImages[$card['index']] = $card['image']['id'];
+            $matchedIndexes[$card['index']] = true;
+        }
+        foreach ($gameState['revealed_cards'] as $card) {
+            $seenImages[$card['index']] = $card['image']['id'];
+        }
+    };
+    $learnGameState();
+
+    for ($turn = 0; $gameState['status'] !== 'completed' && $turn < 100; $turn++) {
+        $learnGameState();
+        $revealed = $gameState['revealed_cards'];
+        if (count($revealed) === 2) {
+            if (!$mismatchWasChecked) {
+                [$earlyHideStatus, $earlyHideResponse] = request(
+                    $baseUrl,
+                    '/api/games/memory-match/sessions/' . $gameSessionId . '/hide-mismatch',
+                    $cookies,
+                    [],
+                    $csrf,
+                    'POST',
+                );
+                assertTrue(
+                    $earlyHideStatus === 409
+                    && ($earlyHideResponse['errors'][0]['code'] ?? '') === 'PAIR_REVEAL_PENDING',
+                    'The server rejects hiding a mismatch before its reveal delay',
+                );
+                $blockedIndex = 0;
+                while (
+                    isset($matchedIndexes[$blockedIndex])
+                    || in_array($blockedIndex, array_column($revealed, 'index'), true)
+                ) {
+                    $blockedIndex++;
+                }
+                [$status, $blockedResponse] = $flipGameCard($blockedIndex);
+                assertTrue(
+                    $status === 409
+                    && ($blockedResponse['errors'][0]['code'] ?? '') === 'PAIR_REVEAL_PENDING',
+                    'A third card is rejected while a mismatched pair is still revealed',
+                );
+                $mismatchWasChecked = true;
+                usleep(1_100_000);
+                [$status, $hiddenResponse] = request(
+                    $baseUrl,
+                    '/api/games/memory-match/sessions/' . $gameSessionId . '/hide-mismatch',
+                    $cookies,
+                    [],
+                    $csrf,
+                    'POST',
+                );
+                assertTrue(
+                    $status === 200
+                    && $hiddenResponse['data']['session']['revealed_cards'] === [],
+                    'Mismatched cards are concealed by the server after the reveal delay',
+                );
+                $gameState = $hiddenResponse['data']['session'];
+            } else {
+                usleep(1_100_000);
+                [$status, $hiddenResponse] = request(
+                    $baseUrl,
+                    '/api/games/memory-match/sessions/' . $gameSessionId . '/hide-mismatch',
+                    $cookies,
+                    [],
+                    $csrf,
+                    'POST',
+                );
+                assertTrue($status === 200, 'A later mismatch can be concealed after its delay');
+                $gameState = $hiddenResponse['data']['session'];
+            }
+            continue;
+        }
+
+        $candidate = null;
+        if (count($revealed) === 1) {
+            $first = $revealed[0];
+            foreach ($seenImages as $index => $imageId) {
+                if (
+                    $imageId === $first['image']['id']
+                    && $index !== $first['index']
+                    && !isset($matchedIndexes[$index])
+                ) {
+                    $candidate = (int) $index;
+                    break;
+                }
+            }
+        }
+        if ($candidate === null) {
+            for ($index = 0; $index < $gameState['cards_total']; $index++) {
+                if (!isset($matchedIndexes[$index]) && !isset($seenImages[$index])) {
+                    $candidate = $index;
+                    break;
+                }
+            }
+        }
+        if ($candidate === null) {
+            for ($index = 0; $index < $gameState['cards_total']; $index++) {
+                if (!isset($matchedIndexes[$index]) && !in_array($index, array_column($revealed, 'index'), true)) {
+                    $candidate = $index;
+                    break;
+                }
+            }
+        }
+        assertTrue($candidate !== null, 'A remaining unmatched card can be selected');
+        $finalPair = $gameState['matched_pairs'] === 7
+            && count($revealed) === 1
+            && ($seenImages[$candidate] ?? null) === $revealed[0]['image']['id'];
+        if ($finalPair && !$ledgerFailureChecked) {
+            $database->exec(
+                "CREATE TRIGGER test_fail_game_reward BEFORE INSERT ON coin_ledger
+                 WHEN NEW.source = 'game_reward'
+                 BEGIN SELECT RAISE(ABORT, 'simulated ledger failure'); END",
+            );
+            [$failedStatus] = $flipGameCard($candidate);
+            assertTrue($failedStatus === 500, 'A ledger write failure prevents a Memory Match win response');
+            $database->exec('DROP TRIGGER test_fail_game_reward');
+            $storedStatus = $database->prepare('SELECT status FROM game_sessions WHERE id = :id');
+            $storedStatus->execute(['id' => $gameSessionId]);
+            $rewardCount = $database->prepare(
+                'SELECT COUNT(*) FROM coin_ledger WHERE reference_type = \'game_session\' AND reference_id = :id',
+            );
+            $rewardCount->execute(['id' => $gameSessionId]);
+            $rolledBackStatus = $storedStatus->fetchColumn();
+            $storedStatus->closeCursor();
+            $rolledBackRewardCount = (int) $rewardCount->fetchColumn();
+            $rewardCount->closeCursor();
+            $walletAfterFailure = request($baseUrl, '/api/wallet', $cookies);
+            assertTrue(
+                $rolledBackStatus === 'in_progress'
+                && $rolledBackRewardCount === 0
+                && $walletAfterFailure[1]['data']['coin_balance'] === 100,
+                'A failed reward ledger write rolls back both game completion and wallet credit',
+            );
+            $ledgerFailureChecked = true;
+        }
+        [$status] = $flipGameCard($candidate);
+        assertTrue($status === 200, 'The server accepts a legal card flip');
+        $learnGameState();
+
+        if (!$matchedCardWasChecked && $gameState['matched_cards'] !== []) {
+            $matchedIndex = $gameState['matched_cards'][0]['index'];
+            [$status] = $flipGameCard($matchedIndex);
+            assertTrue($status === 409, 'A card already matched cannot be flipped again');
+            $matchedCardWasChecked = true;
+        }
+    }
+    assertTrue(
+        $gameState['status'] === 'completed'
+        && $gameState['matched_pairs'] === 8
+        && $gameState['completed_at'] !== null,
+        'The server completes the game only after all image pairs are matched',
+    );
+    assertTrue(
+        $mismatchWasChecked && $matchedCardWasChecked && $ledgerFailureChecked,
+        'Mismatch, matched-card, and atomic reward protections were exercised',
+    );
+    assertTrue(
+        $gameReward !== null
+        && $gameReward['amount'] === 50
+        && $gameReward['balance_type'] === 'earned'
+        && $gameReward['earned_coin_balance'] === 50
+        && $gameReward['coin_balance'] === 150,
+        'A verified Memory Match win credits exactly 50 Earned Coins',
+    );
+    $firstRewardEntry = $database->prepare(
+        'SELECT source, amount, balance_type, reference_type, reference_id, idempotency_key,
+                balance_before, balance_after, total_balance_before, total_balance_after
+         FROM coin_ledger WHERE user_id = :user_id AND reference_type = \'game_session\' AND reference_id = :session_id',
+    );
+    $firstRewardEntry->execute(['user_id' => $userId, 'session_id' => $gameSessionId]);
+    $firstReward = $firstRewardEntry->fetch();
+    $firstRewardEntry->closeCursor();
+    assertTrue(
+        $firstReward !== false
+        && $firstReward['source'] === 'game_reward'
+        && (int) $firstReward['amount'] === 50
+        && $firstReward['balance_type'] === 'earned'
+        && $firstReward['idempotency_key'] === 'game-win-memory-match-' . $gameSessionId
+        && (int) $firstReward['balance_before'] === 0
+        && (int) $firstReward['balance_after'] === 50
+        && (int) $firstReward['total_balance_before'] === 100
+        && (int) $firstReward['total_balance_after'] === 150,
+        'The immutable ledger entry records the exact game, session, Earned bucket, and before/after balances',
+    );
+    [$status, $completedReplay] = $flipGameCard(0);
+    assertTrue(
+        $status === 409
+        && ($completedReplay['errors'][0]['code'] ?? '') === 'GAME_SESSION_CLOSED',
+        'A completed game cannot be submitted or completed a second time',
+    );
+    [$status, $completedRefresh] = request($baseUrl, '/api/games/memory-match/sessions/current', $cookies);
+    assertTrue(
+        $status === 200
+        && $completedRefresh['data']['session']['status'] === 'completed'
+        && !isset($completedRefresh['data']['reward']),
+        'Refreshing a completed Memory Match session never returns a new reward grant',
+    );
+    $walletAfterGame = request($baseUrl, '/api/wallet', $cookies);
+    assertTrue(
+        $walletAfterGame[1]['data']['coin_balance'] === 150
+        && $walletAfterGame[1]['data']['earned_coin_balance'] === 50
+        && $walletAfterGame[1]['data']['purchased_coin_balance'] === 100,
+        'Memory Match rewards change Earned Coins only and preserve Purchased Coins',
+    );
+
+    [$status, $secondGame] = request(
+        $baseUrl,
+        '/api/games/memory-match/sessions',
+        $cookies,
+        ['idempotency_key' => 'memory-match-start-002'],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 201 && $secondGame['data']['attempts_remaining_today'] === 1,
+        'A second free start consumes exactly one additional daily attempt',
+    );
+    $secondGameId = $secondGame['data']['session']['id'];
+    $otherUser = $database->prepare(
+        "INSERT INTO users (username, email, password_hash, status, email_verified, created_at, updated_at)
+         VALUES ('RewardOther', 'reward-other@example.com', 'test-hash', 'active', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+    );
+    $otherUser->execute();
+    $otherUserId = (int) $database->lastInsertId();
+    $otherSessionToken = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+    $otherCsrfToken = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+    $database->prepare(
+        'INSERT INTO user_sessions
+            (user_id, session_token_hash, csrf_token_hash, expires_at, last_activity_at, created_at)
+         VALUES (:user_id, :session_hash, :csrf_hash, :expires_at, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+    )->execute([
+        'user_id' => $otherUserId,
+        'session_hash' => hash('sha256', $otherSessionToken),
+        'csrf_hash' => hash('sha256', $otherCsrfToken),
+        'expires_at' => (new DateTimeImmutable('+30 minutes', new DateTimeZone('UTC')))->format('Y-m-d H:i:s'),
+    ]);
+    $otherCookies = ['neen_session' => $otherSessionToken];
+    [$status] = request(
+        $baseUrl,
+        '/api/games/memory-match/sessions/' . $secondGameId . '/flip',
+        $otherCookies,
+        ['card_index' => 0],
+        $otherCsrfToken,
+        'POST',
+    );
+    assertTrue($status === 404, 'Another user cannot flip a card or claim a reward for the session');
+    [$status, $activeReplay] = request(
+        $baseUrl,
+        '/api/games/memory-match/sessions',
+        $cookies,
+        ['idempotency_key' => 'memory-match-start-other-key'],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 200
+        && $activeReplay['data']['session']['id'] === $secondGameId
+        && $activeReplay['data']['attempts_remaining_today'] === 1,
+        'A second start cannot replace an already active game session',
+    );
+    $secondDeckStatement = $database->prepare(
+        'SELECT deck_json FROM memory_match_states WHERE session_id = :session_id',
+    );
+    $secondDeckStatement->execute(['session_id' => $secondGameId]);
+    $secondDeckJson = $secondDeckStatement->fetchColumn();
+    $secondDeckStatement->closeCursor();
+    $secondDeck = json_decode((string) $secondDeckJson, true, 16, JSON_THROW_ON_ERROR);
+    $secondPairs = [];
+    foreach ($secondDeck as $cardIndex => $imageId) {
+        $secondPairs[$imageId][] = $cardIndex;
+    }
+    $secondGameState = $secondGame['data']['session'];
+    $secondGameReward = null;
+    foreach ($secondPairs as $pair) {
+        foreach ($pair as $cardIndex) {
+            [$status, $matchedMove] = request(
+                $baseUrl,
+                '/api/games/memory-match/sessions/' . $secondGameId . '/flip',
+                $cookies,
+                ['card_index' => $cardIndex],
+                $csrf,
+                'POST',
+            );
+            assertTrue($status === 200, 'A server-valid pair can be completed in a new Memory Match session');
+            $secondGameState = $matchedMove['data']['session'];
+            $secondGameReward = $matchedMove['data']['reward'] ?? $secondGameReward;
+        }
+    }
+    assertTrue(
+        $secondGameState['status'] === 'completed'
+        && $secondGameReward !== null
+        && $secondGameReward['amount'] === 50
+        && $secondGameReward['earned_coin_balance'] === 100
+        && $secondGameReward['coin_balance'] === 200,
+        'A second Memory Match win grants a separate 50 Earned Coins reward',
+    );
+    [$status, $secondGameReplay] = request(
+        $baseUrl,
+        '/api/games/memory-match/sessions/' . $secondGameId . '/flip',
+        $cookies,
+        ['card_index' => $secondPairs[array_key_first($secondPairs)][0]],
+        $csrf,
+        'POST',
+    );
+    $secondRewardRows = $database->prepare(
+        "SELECT COUNT(*) FROM coin_ledger
+         WHERE user_id = :user_id AND source = 'game_reward'
+           AND reference_type = 'game_session' AND reference_id = :session_id",
+    );
+    $secondRewardRows->execute(['user_id' => $userId, 'session_id' => $secondGameId]);
+    $secondRewardCount = (int) $secondRewardRows->fetchColumn();
+    $secondRewardRows->closeCursor();
+    assertTrue(
+        $status === 409
+        && $secondRewardCount === 1,
+        'Replaying a completed session cannot grant its game reward twice',
+    );
+    $walletAfterSecondWin = request($baseUrl, '/api/wallet', $cookies);
+    assertTrue(
+        $walletAfterSecondWin[1]['data']['coin_balance'] === 200
+        && $walletAfterSecondWin[1]['data']['earned_coin_balance'] === 100
+        && $walletAfterSecondWin[1]['data']['purchased_coin_balance'] === 100,
+        'A second win updates only the Earned Coins bucket',
+    );
+    [$status, $thirdGame] = request(
+        $baseUrl,
+        '/api/games/memory-match/sessions',
+        $cookies,
+        ['idempotency_key' => 'memory-match-start-003'],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 201
+        && $thirdGame['data']['attempts_remaining_today'] === 0,
+        'The third free start is allowed and the expired session is closed',
+    );
+    [$status, $activeFourthStart] = request(
+        $baseUrl,
+        '/api/games/memory-match/sessions',
+        $cookies,
+        ['idempotency_key' => 'memory-match-start-004'],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 200
+        && $activeFourthStart['data']['session']['id'] === $thirdGame['data']['session']['id']
+        && $activeFourthStart['data']['attempts_remaining_today'] === 0,
+        'An additional start request resumes the third active session without consuming another attempt',
+    );
+    $database->prepare('UPDATE game_sessions SET expires_at = :expired WHERE id = :id')
+        ->execute([
+            'expired' => (new DateTimeImmutable('-1 minute', new DateTimeZone('UTC')))->format('Y-m-d H:i:s'),
+            'id' => $thirdGame['data']['session']['id'],
+        ]);
+    [$status] = request(
+        $baseUrl,
+        '/api/games/memory-match/sessions',
+        $cookies,
+        ['idempotency_key' => 'memory-match-start-005'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 429, 'A fourth free start in the same Cairo day is rejected');
+
+    [$status] = request($baseUrl, '/api/games/picture-jigsaw/sessions/current', $anonymousCookies);
+    assertTrue($status === 401, 'Anonymous visitors cannot load a user-linked Jigsaw session');
+    [$status, $jigsawCatalogResponse] = request($baseUrl, '/api/games/picture-jigsaw', $cookies);
+    $jigsawCatalog = $jigsawCatalogResponse['data']['game'] ?? [];
+    assertTrue(
+        $status === 200
+        && $jigsawCatalog['board_size'] === 3
+        && $jigsawCatalog['piece_count'] === 9
+        && count($jigsawCatalog['images']) === 3
+        && $jigsawCatalog['free_attempts_per_day'] === 3,
+        'Jigsaw exposes the approved 3-by-3 board and all three source images',
+    );
+    $jigsawManifest = json_decode(
+        (string) file_get_contents($root . '/assets/hero-loot/picture-jigsaw-images.json'),
+        true,
+        16,
+        JSON_THROW_ON_ERROR,
+    );
+    assertTrue(count($jigsawManifest) === 3, 'The Jigsaw manifest contains the three approved images');
+    foreach ($jigsawCatalog['images'] as $image) {
+        $bytes = file_get_contents($baseUrl . $image['src']);
+        $info = $bytes === false ? false : getimagesizefromstring($bytes);
+        assertTrue(
+            $info !== false && $info[0] === $image['width'] && $info[1] === $image['height'],
+            'The selected Jigsaw source is served without resizing or changing its proportions',
+        );
+    }
+    $jigsawPage = file_get_contents($baseUrl . '/picture-jigsaw.html');
+    $jigsawStyles = file_get_contents($root . '/picture-jigsaw.css');
+    assertTrue(
+        is_string($jigsawPage)
+        && str_contains($jigsawPage, 'data-jigsaw-options')
+        && is_string($jigsawStyles)
+        && str_contains($jigsawStyles, 'touch-action: none;')
+        && str_contains($jigsawStyles, '@media (max-width: 600px)'),
+        'The Jigsaw page includes image selection and responsive pointer/touch styling',
+    );
+
+    [$status] = request(
+        $baseUrl,
+        '/api/games/picture-jigsaw/sessions',
+        $anonymousCookies,
+        [
+            'image_id' => $jigsawCatalog['images'][0]['id'],
+            'idempotency_key' => 'jigsaw-anonymous-start-001',
+        ],
+        null,
+        'POST',
+    );
+    assertTrue($status === 401, 'An anonymous visitor cannot start a Jigsaw game');
+
+    foreach ($jigsawCatalog['images'] as $imageNumber => $image) {
+        [$status, $started] = request(
+            $baseUrl,
+            '/api/games/picture-jigsaw/sessions',
+            $cookies,
+            ['image_id' => $image['id'], 'idempotency_key' => 'jigsaw-start-' . ($imageNumber + 1) . '-0001'],
+            $csrf,
+            'POST',
+        );
+        assertTrue(
+            $status === 201
+            && $started['data']['session']['image']['id'] === $image['id']
+            && $started['data']['session']['piece_count'] === 9,
+            'A registered user can start Jigsaw with each selected original image',
+        );
+        $jigsawSessionId = $started['data']['session']['id'];
+        $jigsawState = $started['data']['session'];
+        assertTrue(
+            count($jigsawState['permutation']) === 9
+            && count(array_unique($jigsawState['permutation'])) === 9
+            && $jigsawState['permutation'] !== range(0, 8),
+            'The server creates a unique shuffled nine-piece board',
+        );
+        assertTrue(
+            $started['data']['attempts_remaining_today'] === 2 - $imageNumber,
+            'Jigsaw starts are counted per user and per Cairo day',
+        );
+
+        [$status] = request(
+            $baseUrl,
+            '/api/games/picture-jigsaw/sessions',
+            $cookies,
+            [
+                'image_id' => $image['id'],
+                'idempotency_key' => 'jigsaw-start-' . ($imageNumber + 1) . '-0001',
+                'permutation' => range(0, 8),
+                'completed' => true,
+            ],
+            $csrf,
+            'POST',
+        );
+        assertTrue($status === 422, 'Client-supplied piece positions and completion flags are rejected');
+        [$status] = request(
+            $baseUrl,
+            '/api/games/picture-jigsaw/sessions/' . $jigsawSessionId,
+            $otherCookies,
+        );
+        assertTrue($status === 404, 'A different authenticated user cannot read another Jigsaw session');
+        [$status] = request(
+            $baseUrl,
+            '/api/games/picture-jigsaw/sessions/' . $jigsawSessionId . '/swap',
+            $otherCookies,
+            ['from_index' => 0, 'to_index' => 1],
+            $otherCsrfToken,
+            'POST',
+        );
+        assertTrue($status === 404, 'Another user cannot complete or claim a reward for a Jigsaw session');
+        [$status] = request(
+            $baseUrl,
+            '/api/games/picture-jigsaw/sessions/' . $jigsawSessionId . '/reward',
+            $cookies,
+            [],
+            $csrf,
+            'POST',
+        );
+        assertTrue($status === 404, 'There is no client-callable reward claim endpoint before a Jigsaw win');
+        [$status, $refresh] = request(
+            $baseUrl,
+            '/api/games/picture-jigsaw/sessions/current',
+            $cookies,
+        );
+        assertTrue(
+            $status === 200
+            && $refresh['data']['session']['id'] === $jigsawSessionId,
+            'An interrupted Jigsaw board is recovered from server state after refresh',
+        );
+
+        $jigsawReward = null;
+        $swapJigsaw = static function (int $from, int $to, array $extra = []) use (
+            $baseUrl,
+            &$cookies,
+            &$csrf,
+            $jigsawSessionId,
+            &$jigsawState,
+            &$jigsawReward,
+        ): array {
+            [$status, $response] = request(
+                $baseUrl,
+                '/api/games/picture-jigsaw/sessions/' . $jigsawSessionId . '/swap',
+                $cookies,
+                ['from_index' => $from, 'to_index' => $to, ...$extra],
+                $csrf,
+                'POST',
+            );
+            if ($status === 200) {
+                $jigsawState = $response['data']['session'];
+                $jigsawReward = $response['data']['reward'] ?? null;
+            }
+            return [$status, $response];
+        };
+
+        [$status] = $swapJigsaw(0, 0);
+        assertTrue($status === 422, 'The server rejects a no-op piece placement');
+        [$status] = $swapJigsaw(0, 1, ['completed' => true, 'permutation' => range(0, 8)]);
+        assertTrue($status === 422, 'The server rejects forged completion and arrangement data');
+
+        $firstWrong = null;
+        foreach ($jigsawState['permutation'] as $position => $pieceIndex) {
+            if ($position !== $pieceIndex) {
+                $firstWrong = $position;
+                break;
+            }
+        }
+        $safeSwap = null;
+        for ($otherPosition = 0; $otherPosition < 9; $otherPosition++) {
+            if ($otherPosition === $firstWrong) {
+                continue;
+            }
+            $candidate = $jigsawState['permutation'];
+            [$candidate[$firstWrong], $candidate[$otherPosition]] = [$candidate[$otherPosition], $candidate[$firstWrong]];
+            if ($candidate !== range(0, 8)) {
+                $safeSwap = $otherPosition;
+                break;
+            }
+        }
+        assertTrue($safeSwap !== null, 'A deliberately incorrect piece placement can be exercised');
+        [$status, $wrongPlacement] = $swapJigsaw($firstWrong, $safeSwap);
+        assertTrue(
+            $status === 200
+            && isset($wrongPlacement['data']['session']['status'], $wrongPlacement['data']['session']['permutation'])
+            && $wrongPlacement['data']['session']['status'] !== 'completed'
+            && $wrongPlacement['data']['session']['permutation'] !== range(0, 8),
+            'A piece in the wrong position does not complete the Jigsaw',
+        );
+        assertTrue(!isset($wrongPlacement['data']['reward']), 'An incomplete Jigsaw board returns no reward');
+
+        $solveMoves = 0;
+        while ($jigsawState['status'] !== 'completed' && $solveMoves < 20) {
+            $wrongPosition = null;
+            foreach ($jigsawState['permutation'] as $position => $pieceIndex) {
+                if ($position !== $pieceIndex) {
+                    $wrongPosition = $position;
+                    break;
+                }
+            }
+            assertTrue($wrongPosition !== null, 'The board still has an incorrect piece before completion');
+            $correctPosition = array_search($wrongPosition, $jigsawState['permutation'], true);
+            assertTrue($correctPosition !== false, 'Every Jigsaw piece has a server-stored position');
+            $candidatePermutation = $jigsawState['permutation'];
+            [$candidatePermutation[$wrongPosition], $candidatePermutation[$correctPosition]] = [
+                $candidatePermutation[$correctPosition],
+                $candidatePermutation[$wrongPosition],
+            ];
+            if ($imageNumber === 2 && $candidatePermutation === range(0, 8)) {
+                $concurrentResults = concurrentRequests(
+                    $baseUrl,
+                    '/api/games/picture-jigsaw/sessions/' . $jigsawSessionId . '/swap',
+                    $cookies,
+                    ['from_index' => $wrongPosition, 'to_index' => $correctPosition],
+                    $csrf,
+                );
+                $concurrentStatuses = array_column($concurrentResults, 0);
+                sort($concurrentStatuses);
+                assertTrue(
+                    $concurrentStatuses === [200, 409],
+                    'Concurrent final Jigsaw moves serialize to one completion and one rejected replay',
+                );
+                foreach ($concurrentResults as [$concurrentStatus, $concurrentResponse]) {
+                    if ($concurrentStatus === 200) {
+                        $jigsawState = $concurrentResponse['data']['session'];
+                        $jigsawReward = $concurrentResponse['data']['reward'] ?? null;
+                    }
+                }
+                $status = 200;
+            } else {
+                [$status] = $swapJigsaw($wrongPosition, $correctPosition);
+            }
+            assertTrue($status === 200, 'The server accepts a legal Jigsaw piece swap');
+            $solveMoves++;
+        }
+        assertTrue(
+            $jigsawState['status'] === 'completed'
+            && $jigsawState['permutation'] === range(0, 8)
+            && $jigsawState['completed_at'] !== null,
+            'The server records completion only after all nine pieces are correctly positioned',
+        );
+        assertTrue(
+            $jigsawReward !== null
+            && $jigsawReward['amount'] === 50
+            && $jigsawReward['balance_type'] === 'earned'
+            && $jigsawReward['earned_coin_balance'] === 100 + 50 * ($imageNumber + 1)
+            && $jigsawReward['coin_balance'] === 200 + 50 * ($imageNumber + 1),
+            'A verified Picture Jigsaw win credits exactly 50 additional Earned Coins',
+        );
+        [$status, $duplicateFinish] = $swapJigsaw(0, 1);
+        assertTrue(
+            $status === 409
+            && ($duplicateFinish['errors'][0]['code'] ?? '') === 'GAME_SESSION_CLOSED',
+            'A completed Jigsaw session cannot be completed a second time',
+        );
+        $jigsawRewardRows = $database->prepare(
+            "SELECT COUNT(*) FROM coin_ledger
+             WHERE user_id = :user_id AND source = 'game_reward'
+               AND reference_type = 'game_session' AND reference_id = :session_id",
+        );
+        $jigsawRewardRows->execute(['user_id' => $userId, 'session_id' => $jigsawSessionId]);
+        $jigsawRewardCount = (int) $jigsawRewardRows->fetchColumn();
+        $jigsawRewardRows->closeCursor();
+        assertTrue($jigsawRewardCount === 1, 'A Picture Jigsaw session has exactly one immutable reward ledger entry');
+        [$status, $recoveredFinish] = request(
+            $baseUrl,
+            '/api/games/picture-jigsaw/sessions/current',
+            $cookies,
+        );
+        assertTrue(
+            $status === 200
+            && $recoveredFinish['data']['session']['id'] === $jigsawSessionId
+            && $recoveredFinish['data']['session']['status'] === 'completed',
+            'A completed Jigsaw result remains available after refresh',
+        );
+        [$status, $refreshedWallet] = request($baseUrl, '/api/wallet', $cookies);
+        assertTrue(
+            $status === 200
+            && $refreshedWallet['data']['earned_coin_balance'] === 100 + 50 * ($imageNumber + 1)
+            && $refreshedWallet['data']['purchased_coin_balance'] === 100
+            && $refreshedWallet['data']['coin_balance'] === 200 + 50 * ($imageNumber + 1),
+            'Refreshing a completed Jigsaw session shows server wallet balances without another grant',
+        );
+    }
+    [$status] = request(
+        $baseUrl,
+        '/api/games/picture-jigsaw/sessions',
+        $cookies,
+        [
+            'image_id' => $jigsawCatalog['images'][0]['id'],
+            'idempotency_key' => 'jigsaw-start-limit-0001',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 429, 'A fourth Jigsaw start in the same Cairo day is rejected');
+
+    [$status, $walletAfterJigsaw] = request($baseUrl, '/api/wallet', $cookies);
+    assertTrue(
+        $status === 200
+        && $walletAfterJigsaw['data']['coin_balance'] === 350
+        && $walletAfterJigsaw['data']['earned_coin_balance'] === 250
+        && $walletAfterJigsaw['data']['purchased_coin_balance'] === 100,
+        'The combined game rewards remain in Earned Coins and preserve the Purchased Coins balance',
+    );
+
+    [$status] = request($baseUrl, '/api/attendance/daily', $anonymousCookies);
+    assertTrue($status === 401, 'Anonymous visitors cannot inspect account attendance');
+    [$status] = request(
+        $baseUrl,
+        '/api/attendance/check-in',
+        $anonymousCookies,
+        [],
+        null,
+        'POST',
+    );
+    assertTrue($status === 401, 'Anonymous visitors cannot claim attendance Coins');
+    [$status, $attendanceBefore] = request(
+        $baseUrl,
+        '/api/attendance/daily?date=2000-01-01',
+        $cookies,
+    );
+    $serverAttendanceDate = (new DateTimeImmutable('now', new DateTimeZone('Africa/Cairo')))->format('Y-m-d');
+    assertTrue(
+        $status === 200
+        && $attendanceBefore['data']['attendance']['today'] === $serverAttendanceDate
+        && $attendanceBefore['data']['attendance']['timezone'] === 'Africa/Cairo'
+        && $attendanceBefore['data']['attendance']['today_reward'] === 100
+        && $attendanceBefore['data']['attendance']['cycle_reward_total'] === 700,
+        'Attendance dates and reward values come from the server and use Cairo time',
+    );
+    [$status] = request(
+        $baseUrl,
+        '/api/attendance/check-in',
+        $cookies,
+        ['date' => '2000-01-01', 'user_id' => 999],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 422, 'Client-supplied dates and user IDs are rejected');
+    $database->exec(
+        "CREATE TRIGGER test_fail_attendance_reward BEFORE INSERT ON coin_ledger
+         WHEN NEW.source = 'earned_reward' AND NEW.reference_type = 'daily_attendance'
+         BEGIN SELECT RAISE(ABORT, 'simulated attendance ledger failure'); END",
+    );
+    [$status] = request(
+        $baseUrl,
+        '/api/attendance/check-in',
+        $cookies,
+        [],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 500, 'Attendance ledger failure is reported rather than accepted');
+    $database->exec('DROP TRIGGER test_fail_attendance_reward');
+    $attendanceCount = (int) $database->query('SELECT COUNT(*) FROM daily_attendance')->fetchColumn();
+    $attendanceFailureWallet = request($baseUrl, '/api/wallet', $cookies);
+    assertTrue(
+        $attendanceCount === 0
+        && $attendanceFailureWallet[1]['data']['coin_balance'] === 350
+        && $attendanceFailureWallet[1]['data']['earned_coin_balance'] === 250,
+        'A failed check-in ledger write rolls back attendance and leaves the wallet unchanged',
+    );
+    $concurrentCheckins = concurrentRequests(
+        $baseUrl,
+        '/api/attendance/check-in',
+        $cookies,
+        [],
+        $csrf,
+    );
+    $checkinStatuses = array_column($concurrentCheckins, 0);
+    sort($checkinStatuses);
+    $createdCheckins = array_values(array_filter(
+        $concurrentCheckins,
+        static fn (array $result): bool => ($result[1]['data']['created'] ?? false) === true,
+    ));
+    assertTrue(
+        $checkinStatuses === [200, 201]
+        && count($createdCheckins) === 1
+        && $createdCheckins[0][1]['data']['attendance']['checked_in_today'] === true,
+        'Concurrent same-day requests create exactly one credited attendance record: '
+            . json_encode($concurrentCheckins, JSON_THROW_ON_ERROR),
+    );
+    [$status, $attendanceReplay] = request(
+        $baseUrl,
+        '/api/attendance/check-in',
+        $cookies,
+        [],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 200
+        && $attendanceReplay['data']['created'] === false
+        && $attendanceReplay['data']['attendance']['checked_in_today'] === true,
+        'Repeating attendance on the same Cairo day returns the existing check-in without re-crediting',
+    );
+    $attendanceLedger = $database->prepare(
+        "SELECT a.id AS attendance_id, a.attendance_date, a.cycle_number, a.cycle_day, a.reward_amount,
+                a.ledger_entry_id, l.source, l.balance_type, l.amount, l.reference_type, l.reference_id,
+                l.idempotency_key
+         FROM daily_attendance a
+         JOIN coin_ledger l ON l.id = a.ledger_entry_id
+         WHERE a.user_id = :user_id",
+    );
+    $attendanceLedger->execute(['user_id' => $userId]);
+    $attendanceEntry = $attendanceLedger->fetch();
+    $attendanceLedger->closeCursor();
+    assertTrue(
+        $attendanceEntry !== false
+        && $attendanceEntry['attendance_date'] === $serverAttendanceDate
+        && (int) $attendanceEntry['cycle_day'] === 1
+        && (int) $attendanceEntry['reward_amount'] === 100
+        && $attendanceEntry['source'] === 'earned_reward'
+        && $attendanceEntry['balance_type'] === 'earned'
+        && (int) $attendanceEntry['amount'] === 100
+        && $attendanceEntry['reference_type'] === 'daily_attendance'
+        && (int) $attendanceEntry['reference_id'] === (int) $attendanceEntry['attendance_id']
+        && $attendanceEntry['idempotency_key'] === 'daily-attendance-' . $serverAttendanceDate,
+        'Attendance and ledger entries are linked to the Cairo day, cycle, and unique daily key',
+    );
+    [$status, $attendanceWallet] = request($baseUrl, '/api/wallet', $cookies);
+    assertTrue(
+        $status === 200
+        && $attendanceWallet['data']['coin_balance'] === 450
+        && $attendanceWallet['data']['earned_coin_balance'] === 350
+        && $attendanceWallet['data']['purchased_coin_balance'] === 100,
+        'Daily attendance credits 100 Earned Coins without changing Purchased Coins or game rewards',
+    );
+
+    [$status] = request($baseUrl, '/api/homepage-rewards', $anonymousCookies);
+    assertTrue($status === 401, 'Anonymous visitors cannot inspect homepage rewards');
+    [$status, $homepageRewardBefore] = request($baseUrl, '/api/homepage-rewards', $cookies);
+    assertTrue(
+        $status === 200
+        && $homepageRewardBefore['data']['reward']['configured'] === false
+        && $homepageRewardBefore['data']['reward']['can_claim'] === false
+        && $homepageRewardBefore['data']['reward']['wallet']['coin_balance'] === 450,
+        'Homepage rewards start unavailable until the server configuration is explicitly set',
+    );
+    $database->prepare(
+        "DELETE FROM user_roles
+         WHERE user_id = :user_id AND role_id = (SELECT id FROM roles WHERE name = 'super_admin')",
+    )->execute(['user_id' => $userId]);
+    [$status] = request(
+        $baseUrl,
+        '/api/admin/homepage-rewards',
+        $cookies,
+        null,
+        null,
+        'GET',
+    );
+    assertTrue($status === 403, 'Ordinary users cannot read administrative homepage reward configuration: HTTP ' . $status);
+    [$status] = request(
+        $baseUrl,
+        '/api/homepage-rewards',
+        $cookies,
+        ['reward_amount' => 999],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 422, 'Homepage reward claims reject client-supplied reward amounts');
+
+    $superAdminRoleId = (int) $database->query(
+        "SELECT id FROM roles WHERE name = 'super_admin'",
+    )->fetchColumn();
+    $grantAdmin = $database->prepare(
+        'INSERT INTO user_roles (user_id, role_id, granted_at) VALUES (:user_id, :role_id, :granted_at)',
+    );
+    $grantAdmin->execute([
+        'user_id' => $userId,
+        'role_id' => $superAdminRoleId,
+        'granted_at' => gmdate('Y-m-d H:i:s'),
+    ]);
+    [$status, $configuredReward] = request(
+        $baseUrl,
+        '/api/admin/homepage-rewards',
+        $cookies,
+        ['reward_amount' => '7', 'window_seconds' => '3600', 'is_active' => true],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue(
+        $status === 200
+        && $configuredReward['data']['configuration']['reward_amount'] === 7
+        && $configuredReward['data']['configuration']['window_seconds'] === 3600
+        && $configuredReward['data']['configuration']['is_active'] === true,
+        'Authorized administrators configure the server reward and window',
+    );
+
+    $database->exec(
+        "CREATE TRIGGER test_fail_homepage_reward BEFORE INSERT ON coin_ledger
+         WHEN NEW.source = 'earned_reward' AND NEW.reference_type = 'homepage_reward'
+         BEGIN SELECT RAISE(ABORT, 'simulated homepage reward ledger failure'); END",
+    );
+    [$status] = request(
+        $baseUrl,
+        '/api/homepage-rewards',
+        $cookies,
+        [],
+        $csrf,
+        'POST',
+    );
+    $failedHomepageClaims = (int) $database->query('SELECT COUNT(*) FROM homepage_reward_claims')->fetchColumn();
+    $failedHomepageWallet = request($baseUrl, '/api/wallet', $cookies);
+    assertTrue(
+        $status === 500
+        && $failedHomepageClaims === 0
+        && $failedHomepageWallet[1]['data']['coin_balance'] === 450,
+        'A failed homepage reward ledger write rolls back its claim and wallet credit',
+    );
+    $database->exec('DROP TRIGGER test_fail_homepage_reward');
+
+    $concurrentHomepageClaims = concurrentRequests(
+        $baseUrl,
+        '/api/homepage-rewards',
+        $cookies,
+        [],
+        $csrf,
+    );
+    $homepageClaimStatuses = array_column($concurrentHomepageClaims, 0);
+    sort($homepageClaimStatuses);
+    $createdHomepageClaims = array_values(array_filter(
+        $concurrentHomepageClaims,
+        static fn (array $result): bool => ($result[1]['data']['created'] ?? false) === true,
+    ));
+    assertTrue(
+        $homepageClaimStatuses === [200, 201]
+        && count($createdHomepageClaims) === 1
+        && $createdHomepageClaims[0][1]['data']['amount'] === 7
+        && $createdHomepageClaims[0][1]['data']['wallet']['coin_balance'] === 457,
+        'Concurrent homepage claims create one earned-credit ledger entry and return the actual wallet balance',
+    );
+    [$status, $homepageReplay] = request(
+        $baseUrl,
+        '/api/homepage-rewards',
+        $cookies,
+        [],
+        $csrf,
+        'POST',
+    );
+    $homepageLedgerCount = (int) $database->query(
+        "SELECT COUNT(*) FROM coin_ledger WHERE source = 'earned_reward' AND reference_type = 'homepage_reward'",
+    )->fetchColumn();
+    assertTrue(
+        $status === 200
+        && $homepageReplay['data']['created'] === false
+        && $homepageReplay['data']['wallet']['coin_balance'] === 457
+        && $homepageLedgerCount === 1,
+        'Repeated homepage reward claims do not credit the wallet twice',
+    );
+
+    [$status] = request($baseUrl, '/api/events', $anonymousCookies);
+    assertTrue($status === 200, 'Anonymous visitors can browse published community events');
+    [$status] = request($baseUrl, '/api/events/suggestions', $anonymousCookies);
+    assertTrue($status === 401, 'Anonymous visitors cannot submit or view event suggestions');
+    [$status, $suggestionResponse] = request(
+        $baseUrl,
+        '/api/events/suggestions',
+        $cookies,
+        ['title' => 'Community puzzle night', 'description' => 'A friendly community event idea.'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 201, 'Authenticated users can submit an event suggestion');
+    $suggestionId = $suggestionResponse['data']['suggestion_id'];
+    [$status, $mySuggestions] = request($baseUrl, '/api/events/suggestions', $cookies);
+    assertTrue(
+        $status === 200
+        && $mySuggestions['data']['suggestions'][0]['id'] === $suggestionId
+        && $mySuggestions['data']['suggestions'][0]['status'] === 'pending',
+        'Users can track the status of their own event suggestions',
+    );
+    [$status, $adminSuggestions] = request($baseUrl, '/api/admin/event-suggestions', $cookies);
+    assertTrue(
+        $status === 200
+        && $adminSuggestions['data']['suggestions'][0]['id'] === $suggestionId,
+        'Authorized administrators can review pending event suggestions',
+    );
+    [$status, $suggestionReview] = request(
+        $baseUrl,
+        '/api/admin/event-suggestions/' . $suggestionId . '/review',
+        $cookies,
+        ['decision' => 'accepted', 'note' => 'Approved for planning.'],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 200
+        && $suggestionReview['data']['review']['status'] === 'accepted',
+        'Administrators can accept event suggestions',
+    );
+
+    $eventStart = (new DateTimeImmutable('-30 seconds', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s\Z');
+    $eventEnd = (new DateTimeImmutable('+60 seconds', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s\Z');
+    [$status, $eventCreated] = request(
+        $baseUrl,
+        '/api/admin/events',
+        $cookies,
+        [
+            'title' => 'Community choice',
+            'description' => 'Choose the next community activity.',
+            'starts_at' => $eventStart,
+            'ends_at' => $eventEnd,
+            'options' => ['Puzzle night', 'Art showcase'],
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 201
+        && $eventCreated['data']['event']['starts_at'] === $eventStart
+        && $eventCreated['data']['event']['ends_at'] === $eventEnd,
+        'Administrators can create a community event with poll options and UTC timestamp values',
+    );
+    $eventId = $eventCreated['data']['event']['id'];
+    $firstOptionId = $eventCreated['data']['event']['options'][0]['id'];
+    [$status, $eventUpdated] = request(
+        $baseUrl,
+        '/api/admin/events/' . $eventId,
+        $cookies,
+        ['title' => 'Community choice edited'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue(
+        $status === 200
+        && $eventUpdated['data']['event']['title'] === 'Community choice edited'
+        && $eventUpdated['data']['event']['starts_at'] === $eventStart,
+        'Administrators can edit event details while preserving exact UTC dates',
+    );
+    [$status, $eventPublished] = request(
+        $baseUrl,
+        '/api/admin/events/' . $eventId,
+        $cookies,
+        ['status' => 'published'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue(
+        $status === 200
+        && $eventPublished['data']['event']['status'] === 'published',
+        'Administrators can publish a community event',
+    );
+    [$status, $publicEvent] = request($baseUrl, '/api/events/' . $eventId, $cookies);
+    assertTrue(
+        $status === 200
+        && $publicEvent['data']['event']['options'][0]['label'] === 'Puzzle night'
+        && $publicEvent['data']['event']['total_votes'] === 0,
+        'Published event details include server-defined options and vote totals',
+    );
+    [$status, $voteResponse] = request(
+        $baseUrl,
+        '/api/events/' . $eventId . '/votes',
+        $cookies,
+        ['option_id' => $firstOptionId],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 201
+        && $voteResponse['data']['event']['total_votes'] === 1
+        && $voteResponse['data']['event']['my_vote_option_id'] === $firstOptionId,
+        'Authenticated participants can vote and receive server-computed event totals',
+    );
+    [$status] = request(
+        $baseUrl,
+        '/api/events/' . $eventId . '/votes',
+        $cookies,
+        ['option_id' => $eventCreated['data']['event']['options'][1]['id']],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 409, 'A participant cannot vote twice in the same event');
+
+    $eventEndPast = (new DateTimeImmutable('-1 second', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s\Z');
+    [$status] = request(
+        $baseUrl,
+        '/api/admin/events/' . $eventId,
+        $cookies,
+        ['ends_at' => $eventEndPast],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($status === 200, 'Authorized administrators can close voting by updating the event window');
+    [$status, $approvedResults] = request(
+        $baseUrl,
+        '/api/admin/events/' . $eventId . '/results/approve',
+        $cookies,
+        [],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 200
+        && $approvedResults['data']['event']['status'] === 'results_published'
+        && $approvedResults['data']['event']['results'][0]['vote_count'] === 1,
+        'Administrators can approve results computed from stored votes after voting closes',
+    );
+    [$status, $eventReward] = request(
+        $baseUrl,
+        '/api/admin/events/' . $eventId . '/rewards',
+        $cookies,
+        ['user_id' => $userId, 'amount' => 5, 'reason' => 'Participation reward.'],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 201
+        && $eventReward['data']['created'] === true,
+        'Administrators can issue a configured event reward after results are approved',
+    );
+    [$status, $eventRewardReplay] = request(
+        $baseUrl,
+        '/api/admin/events/' . $eventId . '/rewards',
+        $cookies,
+        ['user_id' => $userId, 'amount' => 5, 'reason' => 'Participation reward.'],
+        $csrf,
+        'POST',
+    );
+    [$statusRewards, $myEventRewards] = request($baseUrl, '/api/events/rewards', $cookies);
+    [$statusWallet, $eventWallet] = request($baseUrl, '/api/wallet', $cookies);
+    assertTrue(
+        $status === 200
+        && $eventRewardReplay['data']['created'] === false
+        && $statusRewards === 200
+        && $myEventRewards['data']['rewards'][0]['reward_amount'] === 5
+        && $statusWallet === 200
+        && $eventWallet['data']['coin_balance'] === 462,
+        'Event rewards are visible to participants, credited through the wallet, and not paid twice',
+    );
+
+    [$status, $diamondCatalog] = request($baseUrl, '/api/diamonds/packages', $cookies);
+    assertTrue(
+        $status === 200 && $diamondCatalog['data']['packages'] === [],
+        'The diamond package catalog has no invented prices or quantities',
+    );
+    [$status] = request($baseUrl, '/api/diamonds/orders', $anonymousCookies);
+    assertTrue($status === 401, 'Anonymous visitors cannot submit diamond recharge requests');
+    [$status] = request($baseUrl, '/api/diamonds/orders', $cookies, [], $csrf, 'POST');
+    assertTrue($status === 422, 'Diamond order endpoints require validated package and Player ID fields');
+    $database->prepare(
+        "DELETE FROM user_roles
+         WHERE user_id = :user_id AND role_id = (SELECT id FROM roles WHERE name = 'super_admin')",
+    )->execute(['user_id' => $userId]);
+    [$status] = request($baseUrl, '/api/admin/diamonds/packages', $cookies);
+    assertTrue($status === 403, 'Ordinary accounts cannot manage diamond package settings');
+    $grantAdmin->execute([
+        'user_id' => $userId,
+        'role_id' => $superAdminRoleId,
+        'granted_at' => gmdate('Y-m-d H:i:s'),
+    ]);
+
+    [$status, $diamondPackage] = request(
+        $baseUrl,
+        '/api/admin/diamonds/packages',
+        $cookies,
+        [
+            'name' => 'Test diamond package',
+            'diamond_amount' => '50',
+            'price' => '3.25',
+            'currency_code' => 'USD',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 201
+        && $diamondPackage['data']['package']['is_active'] === false
+        && $diamondPackage['data']['package']['diamond_amount'] === 50
+        && $diamondPackage['data']['package']['price'] === '3.25',
+        'Administrators can create inactive packages with explicitly configured terms',
+    );
+    $diamondPackageId = $diamondPackage['data']['package']['id'];
+    [$status] = request(
+        $baseUrl,
+        '/api/admin/diamonds/packages/' . $diamondPackageId,
+        $cookies,
+        ['is_active' => true],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($status === 200, 'Administrators can publish a configured diamond package');
+    [$status, $diamondCatalog] = request($baseUrl, '/api/diamonds/packages', $cookies);
+    assertTrue(
+        $status === 200
+        && count($diamondCatalog['data']['packages']) === 1
+        && $diamondCatalog['data']['packages'][0]['diamond_amount'] === 50,
+        'Users see only active packages and server-owned package data',
+    );
+    [$status] = request(
+        $baseUrl,
+        '/api/diamonds/orders',
+        $cookies,
+        [
+            'package_id' => $diamondPackageId,
+            'player_id' => '123456789',
+            'diamond_amount' => 999999,
+            'price' => '0.01',
+            'idempotency_key' => 'diamond-tamper-test-01',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 422, 'Diamond order requests cannot override server package quantities or prices');
+
+    [$status, $diamondOrderResponse] = request(
+        $baseUrl,
+        '/api/diamonds/orders',
+        $cookies,
+        [
+            'package_id' => $diamondPackageId,
+            'player_id' => '123456789',
+            'idempotency_key' => 'diamond-order-test-001',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 201
+        && $diamondOrderResponse['data']['created'] === true
+        && preg_match('/\AND-[A-F0-9]{16}\z/', $diamondOrderResponse['data']['order']['order_number']) === 1
+        && $diamondOrderResponse['data']['order']['order_status'] === 'pending'
+        && $diamondOrderResponse['data']['order']['payment_status'] === 'pending'
+        && $diamondOrderResponse['data']['order']['delivery_status'] === 'not_started',
+        'Submitting a valid recharge creates a unique pending order with separate payment and delivery states',
+    );
+    $diamondOrder = $diamondOrderResponse['data']['order'];
+    [$status, $diamondOrderReplay] = request(
+        $baseUrl,
+        '/api/diamonds/orders',
+        $cookies,
+        [
+            'package_id' => $diamondPackageId,
+            'player_id' => '123456789',
+            'idempotency_key' => 'diamond-order-test-001',
+        ],
+        $csrf,
+        'POST',
+    );
+    [$statusDuplicate, $activeDiamondOrder] = request(
+        $baseUrl,
+        '/api/diamonds/orders',
+        $cookies,
+        [
+            'package_id' => $diamondPackageId,
+            'player_id' => '123456789',
+            'idempotency_key' => 'diamond-order-retry-002',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 200
+        && $diamondOrderReplay['data']['created'] === false
+        && $statusDuplicate === 200
+        && $activeDiamondOrder['data']['order']['order_number'] === $diamondOrder['order_number'],
+        'Idempotent retries and duplicate open orders return the existing request instead of creating another',
+    );
+
+    $diamondTransition = static function (string $orderId, string $action, string $reason) use (
+        $baseUrl,
+        &$cookies,
+        &$csrf,
+    ): array {
+        return request(
+            $baseUrl,
+            '/api/admin/diamonds/orders/' . $orderId . '/actions',
+            $cookies,
+            ['action' => $action, 'note' => $reason],
+            $csrf,
+            'POST',
+        );
+    };
+    [$status, $beginPaymentReview] = $diamondTransition((string) $diamondOrder['id'], 'begin_verification', 'Start manual payment verification.');
+    [$paidStatus, $markPaid] = request(
+        $baseUrl,
+        '/api/admin/diamonds/orders/' . $diamondOrder['id'] . '/actions',
+        $cookies,
+        [
+            'action' => 'mark_paid',
+            'note' => 'Payment verified in the approved manual workflow.',
+            'payment_reference' => 'test-payment-reference',
+        ],
+        $csrf,
+        'POST',
+    );
+    [$processingStatus, $beginDelivery] = $diamondTransition((string) $diamondOrder['id'], 'begin_delivery', 'Begin manual fulfillment.');
+    [$deliveredStatus, $markDelivered] = $diamondTransition((string) $diamondOrder['id'], 'mark_delivered', 'Manual test delivery completed.');
+    [$statusHistory, $diamondHistory] = request(
+        $baseUrl,
+        '/api/admin/diamonds/orders/' . $diamondOrder['id'],
+        $cookies,
+    );
+    [$statusUserOrders, $userDiamondOrders] = request($baseUrl, '/api/diamonds/orders', $cookies);
+    assertTrue(
+        $status === 200
+        && $beginPaymentReview['data']['transition']['order_status'] === 'payment_verification'
+        && $paidStatus === 200
+        && $markPaid['data']['transition']['payment_status'] === 'paid'
+        && $processingStatus === 200
+        && $beginDelivery['data']['transition']['delivery_status'] === 'processing'
+        && $deliveredStatus === 200
+        && $markDelivered['data']['transition']['order_status'] === 'delivered'
+        && $statusHistory === 200
+        && count($diamondHistory['data']['order']['activity']) === 5
+        && $statusUserOrders === 200
+        && $userDiamondOrders['data']['orders'][0]['order_status'] === 'delivered',
+        'Admin and user views track the full payment verification through delivered lifecycle and its actor history',
+    );
+    [$statusDeliveredRefund] = $diamondTransition((string) $diamondOrder['id'], 'refund', 'Delivered orders cannot be refunded.');
+    assertTrue($statusDeliveredRefund === 409, 'Delivered diamond orders cannot be refunded through a status shortcut');
+    [$statusSearch, $diamondSearch] = request(
+        $baseUrl,
+        '/api/admin/diamonds/orders?q=123456789',
+        $cookies,
+    );
+    assertTrue(
+        $statusSearch === 200
+        && count($diamondSearch['data']['orders']) === 1
+        && $diamondSearch['data']['orders'][0]['player_id'] === '123456789',
+        'Administrators can search recharge requests by Player ID',
+    );
+
+    [$statusRejectedOrder, $rejectedDiamondOrder] = request(
+        $baseUrl,
+        '/api/diamonds/orders',
+        $cookies,
+        [
+            'package_id' => $diamondPackageId,
+            'player_id' => '123456790',
+            'idempotency_key' => 'diamond-order-test-002',
+        ],
+        $csrf,
+        'POST',
+    );
+    [$statusRejected] = $diamondTransition(
+        (string) $rejectedDiamondOrder['data']['order']['id'],
+        'reject_payment',
+        'Test payment verification was rejected.',
+    );
+    assertTrue(
+        $statusRejectedOrder === 201
+        && $statusRejected === 200,
+        'Administrators can reject an unverified payment and record the reason',
+    );
+
+    [$statusRefundOrder, $refundableOrder] = request(
+        $baseUrl,
+        '/api/diamonds/orders',
+        $cookies,
+        [
+            'package_id' => $diamondPackageId,
+            'player_id' => '123456791',
+            'idempotency_key' => 'diamond-order-test-003',
+        ],
+        $csrf,
+        'POST',
+    );
+    $refundOrderId = (string) $refundableOrder['data']['order']['id'];
+    $diamondTransition($refundOrderId, 'begin_verification', 'Begin refund test verification.');
+    $diamondTransition($refundOrderId, 'mark_paid', 'Test payment verified before refund.');
+    [$statusRefunded, $refundedOrder] = $diamondTransition($refundOrderId, 'refund', 'Refund recorded in test workflow.');
+    assertTrue(
+        $statusRefundOrder === 201
+        && $statusRefunded === 200
+        && $refundedOrder['data']['transition']['order_status'] === 'refunded'
+        && $refundedOrder['data']['transition']['payment_status'] === 'refunded',
+        'The admin workflow supports an audited refund before delivery',
+    );
+
+    unset($database);
+
+    $authenticatedCookies = $cookies;
+    $cookies = [];
+    [$status, $response] = request($baseUrl, '/api/auth/me', $cookies);
+    assertTrue($status === 401, 'Unauthenticated requests cannot access protected user data');
+    checkResponse($response, false, 'Unauthenticated request');
+    [$status] = request($baseUrl, '/api/wallet', $cookies);
+    assertTrue($status === 401, 'Unauthenticated requests cannot access protected wallet data');
+    foreach ([
+        '/api/users/me',
+        '/api/attendance/daily',
+        '/api/diamonds/orders',
+        '/api/events/suggestions',
+        '/api/events/rewards',
+    ] as $protectedPath) {
+        [$protectedStatus] = request($baseUrl, $protectedPath, $cookies);
+        assertTrue($protectedStatus === 401, 'Unauthenticated requests cannot access ' . $protectedPath);
+    }
+    $cookies = $authenticatedCookies;
+
+    [$status] = request(
+        $baseUrl,
+        '/api/auth/logout',
+        $cookies,
+        [],
+        'invalid-csrf-token',
+        'POST',
+    );
+    assertTrue($status === 403, 'Logout rejects an invalid CSRF token');
+    [$status, $response] = request($baseUrl, '/api/auth/logout', $cookies, [], $csrf, 'POST');
+    assertTrue($status === 200 && $response['data']['logged_out'] === true, 'Authenticated logout succeeds');
+    [$status] = request($baseUrl, '/api/auth/me', $cookies);
+    assertTrue($status === 401, 'Logged-out session is revoked');
+
+    [$status, $response] = request($baseUrl, '/api/auth/csrf', $cookies);
+    assertTrue($status === 200, 'Password recovery receives an anonymous CSRF token');
+    $csrf = $response['data']['csrf_token'];
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/auth/login',
+        $cookies,
+        ['email' => 'player@example.com', 'password' => 'Correct-Horse-123'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 200, 'User can establish a session before password recovery');
+    $csrf = $response['data']['csrf_token'];
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/auth/password/forgot',
+        $cookies,
+        ['email' => 'player@example.com'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 202, 'Password recovery request is accepted');
+    $mailLines = file($mailPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    assertTrue(is_array($mailLines) && count($mailLines) === 1, 'Password reset email is delivered to the test sink');
+    $mail = json_decode($mailLines[0], true, 16, JSON_THROW_ON_ERROR);
+    assertTrue(preg_match('/reset_token=([A-Za-z0-9_-]{43})/', $mail['message'], $match) === 1,
+        'Password reset email contains a one-time reset link');
+    $resetToken = $match[1];
+    $database = new PDO('sqlite:' . $databasePath);
+    assertTrue(
+        $database->query('SELECT token_hash FROM password_reset_tokens')->fetchColumn() === hash('sha256', $resetToken),
+        'Only a hash of the password reset token is stored',
+    );
+    unset($database);
+
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/auth/password/reset',
+        $cookies,
+        ['token' => $resetToken, 'password' => 'New-Correct-Password-456'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 200 && $response['data']['password_reset'] === true, 'Password reset succeeds');
+    [$status] = request($baseUrl, '/api/auth/me', $cookies);
+    assertTrue($status === 401, 'Password reset revokes existing sessions');
+    [$status, $response] = request($baseUrl, '/api/auth/csrf', $cookies);
+    assertTrue($status === 200, 'A fresh anonymous CSRF token is issued after password reset');
+    $csrf = $response['data']['csrf_token'];
+    [$status] = request(
+        $baseUrl,
+        '/api/auth/password/reset',
+        $cookies,
+        ['token' => $resetToken, 'password' => 'Another-Correct-Password-789'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 422, 'A reset token cannot be reused');
+
+    [$status] = request(
+        $baseUrl,
+        '/api/auth/login',
+        $cookies,
+        ['email' => 'player@example.com', 'password' => 'Correct-Horse-123'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 401, 'Old password no longer authenticates after reset');
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/auth/login',
+        $cookies,
+        ['email' => 'player@example.com', 'password' => 'New-Correct-Password-456'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 200, 'New password authenticates after reset');
+
+    [$status, $page, $headers] = requestPage($baseUrl, '/events-admin.php', []);
+    assertTrue(
+        $status === 302
+        && in_array('Location: /account.html?auth=required', $headers, true)
+        && !str_contains($page, 'NEEN Admin Dashboard'),
+        'Anonymous visitors are redirected before the admin dashboard is sent',
+    );
+    $anonymousCookies = [];
+    [$status] = request($baseUrl, '/api/admin/coin-orders', $anonymousCookies);
+    assertTrue($status === 401, 'Anonymous direct requests to administrative APIs are denied');
+    [$status, $legacyPage] = requestPage($baseUrl, '/events-admin.html', []);
+    assertTrue(
+        $status === 200
+        && str_contains($legacyPage, 'events-admin.php')
+        && !str_contains($legacyPage, 'data-panel')
+        && !str_contains($legacyPage, 'Coin Orders'),
+        'The legacy HTML address contains only a redirect and no unprotected dashboard',
+    );
+    $database = new PDO('sqlite:' . $databasePath);
+    $statement = $database->prepare(
+        "DELETE FROM user_roles
+         WHERE user_id = :user_id AND role_id = (SELECT id FROM roles WHERE name = 'super_admin')",
+    );
+    $statement->execute(['user_id' => $userId]);
+    unset($database);
+
+    [$status, $page] = requestPage($baseUrl, '/events-admin.php', $cookies);
+    assertTrue(
+        $status === 403
+        && str_contains($page, 'Access denied')
+        && !str_contains($page, 'NEEN Admin Dashboard')
+        && !str_contains($page, 'data-panel'),
+        'An authenticated user without an administrative permission receives no dashboard markup',
+    );
+    [$status] = request($baseUrl, '/api/admin/coin-orders', $cookies);
+    assertTrue($status === 403, 'A regular user cannot directly access protected Coin order APIs');
+    [$status] = request($baseUrl, '/api/admin/audit-logs', $cookies);
+    assertTrue($status === 403, 'A regular user cannot directly access protected audit APIs');
+    foreach ([
+        '/api/admin/homepage-rewards',
+        '/api/admin/events',
+        '/api/admin/event-suggestions',
+        '/api/admin/diamonds/packages',
+        '/api/admin/diamonds/orders',
+        '/api/admin/users',
+        '/api/admin/wallets',
+    ] as $adminOnlyPath) {
+        [$adminOnlyStatus] = request($baseUrl, $adminOnlyPath, $cookies);
+        assertTrue($adminOnlyStatus === 403, 'A regular user cannot access protected admin module ' . $adminOnlyPath);
+    }
+
+    $database = new PDO('sqlite:' . $databasePath);
+    $statement = $database->prepare(
+        "INSERT INTO user_roles (user_id, role_id, granted_at)
+         SELECT :user_id, id, :granted_at FROM roles WHERE name = 'super_admin'",
+    );
+    $statement->execute(['user_id' => $userId, 'granted_at' => gmdate('Y-m-d H:i:s')]);
+    unset($database);
+
+    [$status, $response] = request($baseUrl, '/api/auth/csrf', $cookies);
+    assertTrue($status === 200, 'Authenticated admin receives a session-bound CSRF token');
+    $csrf = $response['data']['csrf_token'];
+    [$status, $page] = requestPage($baseUrl, '/events-admin.php', $cookies);
+    assertTrue(
+        $status === 200
+        && str_contains($page, 'NEEN Admin Dashboard')
+        && str_contains($page, 'data-panel="dashboard"')
+        && str_contains($page, 'data-panel="homepage-rewards"')
+        && str_contains($page, 'data-panel="community-events"')
+        && str_contains($page, 'data-panel="event-suggestions"')
+        && str_contains($page, 'data-panel="event-results"')
+        && str_contains($page, 'data-panel="diamond-packages"')
+        && str_contains($page, 'data-panel="diamond-orders"')
+        && stripos($page, 'neenplayer') !== false,
+        'An account with an existing server-assigned admin permission receives integrated Rewards, Events, and Diamonds admin sections',
+    );
+    [$ownerPageStatus] = requestPage($baseUrl, '/owner-dashboard.php', $cookies);
+    [$ownerApiStatus] = request($baseUrl, '/api/owner/dashboard', $cookies);
+    assertTrue(
+        $ownerPageStatus === 403 && $ownerApiStatus === 403,
+        'An administrator without the distinct Owner role cannot access Owner pages or APIs (page '
+            . $ownerPageStatus . ', API ' . $ownerApiStatus . ')',
+    );
+    [$ownerSettingsBeforeStatus] = request($baseUrl, '/api/owner/site-settings', $cookies);
+    assertTrue($ownerSettingsBeforeStatus === 403, 'Administrators without the Owner role cannot read Owner site settings');
+    [$status, $response] = request($baseUrl, '/api/admin/audit-logs', $cookies);
+    assertTrue(
+        $status === 200
+        && isset($response['data']['entries'])
+        && count($response['data']['entries']) > 0,
+        'The existing view_audit_logs permission exposes read-only audit records',
+    );
+    [$status, $adminUsers] = request($baseUrl, '/api/admin/users?q=NeenPlayer', $cookies);
+    assertTrue(
+        $status === 200
+        && count($adminUsers['data']['users']) === 1
+        && $adminUsers['data']['users'][0]['username'] === 'neenplayer'
+        && in_array('super_admin', $adminUsers['data']['users'][0]['roles'], true)
+        && in_array('manage_diamond_orders', $adminUsers['data']['users'][0]['permissions'], true),
+        'The permission-scoped admin directory returns matching users, roles, and effective permissions',
+    );
+    [$status, $adminAccounts] = request($baseUrl, '/api/admin/users?admins_only=1', $cookies);
+    [$walletStatus, $wallets] = request($baseUrl, '/api/admin/wallets?q=NeenPlayer', $cookies);
+    [$ledgerStatus, $walletLedger] = request($baseUrl, '/api/admin/wallets/' . $userId . '/transactions', $cookies);
+    assertTrue(
+        $status === 200
+        && count($adminAccounts['data']['users']) > 0
+        && $walletStatus === 200
+        && count($wallets['data']['wallets']) === 1
+        && $wallets['data']['wallets'][0]['user_id'] === $userId
+        && $ledgerStatus === 200
+        && is_array($walletLedger['data']['entries']),
+        'Authorized admins can read real account roles and wallet ledger data without balance mutation',
+    );
+    [$status] = request(
+        $baseUrl,
+        '/api/admin/coin-orders/1/review',
+        $cookies,
+        [],
+        null,
+        'POST',
+    );
+    assertTrue($status === 403, 'Admin order mutations reject requests without CSRF tokens');
+    [$status] = request(
+        $baseUrl,
+        '/api/admin/coin-orders/1/review',
+        $cookies,
+        [],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 422,
+        'A valid session-bound CSRF token is accepted before the API validates an order review',
+    );
+
+    $database = new PDO('sqlite:' . $databasePath);
+    $now = gmdate('Y-m-d H:i:s');
+    $insertUser = $database->prepare(
+        'INSERT INTO users (username, email, password_hash, status, email_verified, created_at, updated_at, last_login_at)
+         VALUES (:username, :email, :password_hash, \'active\', 0, :created_at, :updated_at, :last_login_at)',
+    );
+    $insertUser->execute([
+        'username' => 'OwnerTarget',
+        'email' => 'ownertarget@example.test',
+        'password_hash' => password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT),
+        'created_at' => $now,
+        'updated_at' => $now,
+        'last_login_at' => $now,
+    ]);
+    $targetUserId = (int) $database->lastInsertId();
+    $database->prepare(
+        'INSERT INTO user_profiles
+            (user_id, full_name, display_name, avatar_url, country, bio, created_at, updated_at)
+         VALUES (:user_id, \'Owner Target\', \'Target\', NULL, \'Egypt\', \'Original bio\', :created_at, :updated_at)',
+    )->execute(['user_id' => $targetUserId, 'created_at' => $now, 'updated_at' => $now]);
+    $database->prepare(
+        'INSERT INTO wallets
+            (user_id, coin_balance, purchased_coin_balance, earned_coin_balance, diamond_balance, currency_code, updated_at)
+         VALUES (:user_id, 0, 0, 0, 0, \'EGP\', :updated_at)',
+    )->execute(['user_id' => $targetUserId, 'updated_at' => $now]);
+    $targetSessionToken = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+    $database->prepare(
+        'INSERT INTO user_sessions
+            (user_id, session_token_hash, csrf_token_hash, expires_at, last_activity_at, created_at)
+         VALUES (:user_id, :session_token_hash, :csrf_token_hash, :expires_at, :last_activity_at, :created_at)',
+    )->execute([
+        'user_id' => $targetUserId,
+        'session_token_hash' => hash('sha256', $targetSessionToken),
+        'csrf_token_hash' => hash('sha256', bin2hex(random_bytes(32))),
+        'expires_at' => gmdate('Y-m-d H:i:s', time() + 1800),
+        'last_activity_at' => $now,
+        'created_at' => $now,
+    ]);
+    $database->prepare(
+        "INSERT INTO user_roles (user_id, role_id, granted_at)
+         SELECT :user_id, id, :granted_at FROM roles WHERE name = 'owner'",
+    )->execute(['user_id' => $userId, 'granted_at' => $now]);
+    unset($database);
+
+    [$status, $ownerPage] = requestPage($baseUrl, '/owner-dashboard.php', $cookies);
+    assertTrue(
+        $status === 200
+        && str_contains($ownerPage, 'Owner Dashboard')
+        && str_contains($ownerPage, 'data-panel="overview"')
+        && str_contains($ownerPage, 'data-panel="users"')
+        && str_contains($ownerPage, 'data-panel="wallet"')
+        && str_contains($ownerPage, 'data-panel="activity"'),
+        'A separately assigned Owner role receives the Owner Dashboard page',
+    );
+    [$status, $ownerOverview] = request($baseUrl, '/api/owner/dashboard', $cookies);
+    assertTrue(
+        $status === 200
+        && $ownerOverview['data']['overview']['counts']['users_total'] >= 2
+        && is_array($ownerOverview['data']['overview']['series']['users']),
+        'Owner overview statistics and chart series come from the connected database',
+    );
+    [$status, $ownerSiteSettings] = request($baseUrl, '/api/owner/site-settings', $cookies);
+    assertTrue(
+        $status === 200 && isset($ownerSiteSettings['data']['settings']['tiktok_url']),
+        'Owner can read persistent site settings',
+    );
+    [$status, $ownerGames] = request($baseUrl, '/api/owner/games', $cookies);
+    $memoryGame = array_values(array_filter(
+        $ownerGames['data']['games'],
+        static fn (array $game): bool => $game['slug'] === 'memory-match',
+    ))[0] ?? null;
+    assertTrue($status === 200 && is_array($memoryGame), 'Owner can read game records from the database');
+    [$status] = request(
+        $baseUrl,
+        '/api/owner/games/' . $memoryGame['id'],
+        $cookies,
+        [
+            'status' => 'maintenance',
+            'free_attempt_limit' => 4,
+            'reward_amount_coins' => 77,
+        ],
+        $csrf,
+        'PATCH',
+    );
+    [$catalogStatus, $gameCatalog] = request($baseUrl, '/api/games/memory-match', $cookies);
+    [$blockedGameStatus] = request(
+        $baseUrl,
+        '/api/games/memory-match/sessions',
+        $cookies,
+        ['idempotency_key' => 'owner-disabled-game-001'],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 200
+        && $catalogStatus === 200
+        && $gameCatalog['data']['game']['status'] === 'maintenance'
+        && $gameCatalog['data']['game']['free_attempts_per_day'] === 4
+        && $gameCatalog['data']['game']['reward_amount_coins'] === 77
+        && $blockedGameStatus === 503,
+        'Owner game status, free attempts, and win rewards are enforced by the runtime',
+    );
+    [$restoreGameStatus] = request(
+        $baseUrl,
+        '/api/owner/games/' . $memoryGame['id'],
+        $cookies,
+        [
+            'status' => 'active',
+            'free_attempt_limit' => $memoryGame['free_attempt_limit'],
+            'reward_amount_coins' => $memoryGame['reward_amount_coins'],
+        ],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($restoreGameStatus === 200, 'Owner game settings can be restored after the integration check');
+    [$publicSettingsStatus, $publicSettings] = request($baseUrl, '/api/site-settings', $cookies);
+    assertTrue(
+        $publicSettingsStatus === 200
+        && $publicSettings['data']['settings']['tiktok_url']['value'] === 'https://www.tiktok.com/@neen_0o',
+        'The public site reads persisted settings without exposing administrative metadata',
+    );
+    [$settingsStatus] = request(
+        $baseUrl,
+        '/api/owner/site-settings',
+        $cookies,
+        [
+            'tiktok_url' => 'https://www.tiktok.com/@neen_test',
+            'site_description' => 'Updated site description for Owner integration testing.',
+        ],
+        $csrf,
+        'PATCH',
+    );
+    [$updatedPublicSettingsStatus, $updatedPublicSettings] = request($baseUrl, '/api/site-settings', $cookies);
+    assertTrue(
+        $settingsStatus === 200
+        && $updatedPublicSettingsStatus === 200
+        && $updatedPublicSettings['data']['settings']['tiktok_url']['value'] === 'https://www.tiktok.com/@neen_test'
+        && $updatedPublicSettings['data']['settings']['site_description']['value']
+            === 'Updated site description for Owner integration testing.',
+        'Owner site settings persist and are returned by the public settings API',
+    );
+    [$invalidSettingsStatus] = request(
+        $baseUrl,
+        '/api/owner/site-settings',
+        $cookies,
+        ['tiktok_url' => 'javascript:alert(1)'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($invalidSettingsStatus === 422, 'Owner site settings reject non-HTTPS and non-TikTok profile URLs');
+    [$restoreSettingsStatus] = request(
+        $baseUrl,
+        '/api/owner/site-settings',
+        $cookies,
+        [
+            'tiktok_url' => 'https://www.tiktok.com/@neen_0o',
+            'site_description' => 'NEEN — Free Fire content creator. Explore videos, character art, and more.',
+        ],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($restoreSettingsStatus === 200, 'Owner site settings can be restored after integration tests');
+    [$status, $ownerUsers] = request($baseUrl, '/api/owner/users?q=OwnerTarget', $cookies);
+    assertTrue(
+        $status === 200
+        && count($ownerUsers['data']['users']) === 1
+        && $ownerUsers['data']['users'][0]['id'] === $targetUserId
+        && isset($ownerUsers['data']['pagination']['total']),
+        'Owner can search, filter, sort, and paginate the account directory',
+    );
+    [$status, $ownerDetails] = request($baseUrl, '/api/owner/users/' . $targetUserId, $cookies);
+    assertTrue(
+        $status === 200
+        && $ownerDetails['data']['user']['coin_balance'] === 0
+        && $ownerDetails['data']['user']['active_sessions'] === 1
+        && count($ownerDetails['data']['user']['recent_transactions']) === 0,
+        'Owner account details show the real wallet, session count, and ledger history',
+    );
+    [$status, $profileUpdate] = request(
+        $baseUrl,
+        '/api/owner/users/' . $targetUserId . '/profile',
+        $cookies,
+        ['display_name' => 'Edited Target', 'bio' => 'Updated by the Owner'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue(
+        $status === 200
+        && $profileUpdate['data']['user']['profile']['display_name'] === 'Edited Target',
+        'Owner profile edits update only the permitted user profile fields',
+    );
+    [$status, $roleGrant] = request(
+        $baseUrl,
+        '/api/owner/users/' . $targetUserId . '/roles',
+        $cookies,
+        ['role' => 'moderator', 'operation' => 'grant'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue(
+        $status === 200 && in_array('moderator', $roleGrant['data']['user']['roles'], true),
+        'Owner can grant a non-owner administrative role',
+    );
+    [$status, $roleRevoke] = request(
+        $baseUrl,
+        '/api/owner/users/' . $targetUserId . '/roles',
+        $cookies,
+        ['role' => 'moderator', 'operation' => 'revoke'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue(
+        $status === 200 && !in_array('moderator', $roleRevoke['data']['user']['roles'], true),
+        'Owner can revoke a non-owner administrative role',
+    );
+    [$status] = request(
+        $baseUrl,
+        '/api/owner/users/' . $targetUserId . '/roles',
+        $cookies,
+        ['role' => 'owner', 'operation' => 'grant'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($status === 422, 'Owner APIs never grant or revoke the Owner role');
+    [$status] = request(
+        $baseUrl,
+        '/api/owner/users/' . $userId . '/roles',
+        $cookies,
+        ['role' => 'moderator', 'operation' => 'grant'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($status === 409, 'Owner cannot promote or demote their own account');
+    [$status] = request(
+        $baseUrl,
+        '/api/owner/users/' . $userId . '/status',
+        $cookies,
+        ['status' => 'suspended'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($status === 409, 'Owner cannot suspend their own account through the dashboard');
+    [$status] = request(
+        $baseUrl,
+        '/api/owner/users/' . $targetUserId . '/status',
+        $cookies,
+        ['status' => 'suspended'],
+        null,
+        'PATCH',
+    );
+    assertTrue($status === 403, 'Owner status changes require session-bound CSRF protection');
+    [$status, $statusChange] = request(
+        $baseUrl,
+        '/api/owner/users/' . $targetUserId . '/status',
+        $cookies,
+        ['status' => 'suspended'],
+        $csrf,
+        'PATCH',
+    );
+    $database = new PDO('sqlite:' . $databasePath);
+    $revokedSession = $database->query(
+        'SELECT revoked_at FROM user_sessions WHERE user_id = ' . $targetUserId,
+    )->fetchColumn();
+    assertTrue(
+        $status === 200 && $statusChange['data']['user']['status'] === 'suspended' && $revokedSession !== null,
+        'Suspending a user revokes all active sessions and records the status change',
+    );
+    [$status] = request(
+        $baseUrl,
+        '/api/owner/users/' . $targetUserId . '/status',
+        $cookies,
+        ['status' => 'active'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($status === 200, 'Owner can reactivate a suspended account');
+    [$status, $adjustment] = request(
+        $baseUrl,
+        '/api/admin/wallets/' . $targetUserId . '/adjustments',
+        $cookies,
+        [
+            'direction' => 'credit',
+            'balance_type' => 'earned',
+            'amount' => 25,
+            'reason' => 'Owner integration test adjustment',
+            'idempotency_key' => 'owner-test-credit-001',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 201, 'Owner can add Coins only through the existing wallet ledger API');
+    [$duplicateAdjustmentStatus, $duplicateAdjustment] = request(
+        $baseUrl,
+        '/api/admin/wallets/' . $targetUserId . '/adjustments',
+        $cookies,
+        [
+            'direction' => 'credit',
+            'balance_type' => 'earned',
+            'amount' => 25,
+            'reason' => 'Owner integration test adjustment',
+            'idempotency_key' => 'owner-test-credit-001',
+        ],
+        $csrf,
+        'POST',
+    );
+    [$status, $afterAdjustment] = request($baseUrl, '/api/owner/users/' . $targetUserId, $cookies);
+    assertTrue(
+        $duplicateAdjustmentStatus === 201
+        && $duplicateAdjustment['data']['ledger_entry_id'] === $adjustment['data']['ledger_entry_id']
+        && $status === 200
+        && $afterAdjustment['data']['user']['coin_balance'] === 25
+        && $afterAdjustment['data']['user']['earned_coin_balance'] === 25,
+        'Repeated idempotent wallet adjustments do not duplicate credits and preserve ledger balances',
+    );
+    [$status] = request(
+        $baseUrl,
+        '/api/admin/wallets/' . $targetUserId . '/adjustments',
+        $cookies,
+        [
+            'direction' => 'debit',
+            'balance_type' => 'earned',
+            'amount' => 26,
+            'reason' => 'Insufficient balance test',
+            'idempotency_key' => 'owner-test-debit-001',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 409, 'Wallet adjustments cannot make the balance negative');
+    [$status, $ownerActivity] = request($baseUrl, '/api/owner/activity?q=owner_user', $cookies);
+    assertTrue(
+        $status === 200
+        && count($ownerActivity['data']['entries']) >= 4
+        && $ownerActivity['data']['entries'][0]['actor_role'] === 'owner',
+        'Owner activity is read-only, searchable, paginated, and records the actor role',
+    );
+    $database->prepare(
+        "INSERT INTO user_roles (user_id, role_id, granted_at)
+         SELECT :user_id, id, :granted_at FROM roles WHERE name = 'owner'",
+    )->execute(['user_id' => $targetUserId, 'granted_at' => gmdate('Y-m-d H:i:s')]);
+    unset($database);
+    [$status] = request(
+        $baseUrl,
+        '/api/owner/users/' . $targetUserId . '/status',
+        $cookies,
+        ['status' => 'suspended'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($status === 403, 'One Owner cannot mutate another Owner through the user-management API');
+
+    $attendanceDb = new PDO('sqlite::memory:');
+    $attendanceDb->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $attendanceDb->exec($schema);
+    $attendanceUser = static function (PDO $db, string $username): int {
+        $now = gmdate('Y-m-d H:i:s');
+        $insert = $db->prepare(
+            'INSERT INTO users (username, email, password_hash, status, email_verified, created_at, updated_at)
+             VALUES (:username, :email, :password_hash, \'active\', 0, :created_at, :updated_at)',
+        );
+        $insert->execute([
+            'username' => $username,
+            'email' => strtolower($username) . '@attendance.test',
+            'password_hash' => password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT),
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $userId = (int) $db->lastInsertId();
+        $wallet = $db->prepare(
+            'INSERT INTO wallets
+                (user_id, coin_balance, purchased_coin_balance, earned_coin_balance, diamond_balance, currency_code, updated_at)
+             VALUES (:user_id, 0, 0, 0, 0, \'EGP\', :updated_at)',
+        );
+        $wallet->execute(['user_id' => $userId, 'updated_at' => $now]);
+        return $userId;
+    };
+    $weeklyUserId = $attendanceUser($attendanceDb, 'AttendanceWeekly');
+    $simulatedDate = '2026-01-01';
+    $weeklyAttendance = new Attendance(
+        $attendanceDb,
+        static function () use (&$simulatedDate): string {
+            return $simulatedDate;
+        },
+    );
+    for ($dayOffset = 0; $dayOffset < 7; $dayOffset++) {
+        $simulatedDate = (new DateTimeImmutable('2026-01-01', new DateTimeZone('Africa/Cairo')))
+            ->modify('+' . $dayOffset . ' days')
+            ->format('Y-m-d');
+        $checkin = $weeklyAttendance->checkIn($weeklyUserId);
+        assertTrue(
+            $checkin['created'] === true
+            && $checkin['attendance']['cycle_progress'] === $dayOffset + 1,
+            'Attendance advances exactly one cycle day for each consecutive Cairo date',
+        );
+    }
+    $weeklyState = $weeklyAttendance->state($weeklyUserId);
+    assertTrue(
+        $weeklyState['cycle_progress'] === 7
+        && count(array_filter($weeklyState['cycle_days'], static fn (array $day): bool => $day['attended'])) === 7
+        && $weeklyState['wallet']['earned_coin_balance'] === 700
+        && $weeklyState['wallet']['coin_balance'] === 700,
+        'Seven consecutive check-ins credit exactly 700 Earned Coins',
+    );
+    $simulatedDate = '2026-01-08';
+    $nextCycle = $weeklyAttendance->checkIn($weeklyUserId);
+    assertTrue(
+        $nextCycle['attendance']['cycle_number'] === 2
+        && $nextCycle['attendance']['cycle_progress'] === 1
+        && $nextCycle['attendance']['wallet']['earned_coin_balance'] === 800,
+        'A new cycle starts on the day after a completed seven-day cycle',
+    );
+    $simulatedDate = '2026-01-10';
+    $afterMissedDay = $weeklyAttendance->checkIn($weeklyUserId);
+    assertTrue(
+        $afterMissedDay['attendance']['cycle_number'] === 3
+        && $afterMissedDay['attendance']['cycle_progress'] === 1
+        && $afterMissedDay['attendance']['cycle_days'][0]['attended'] === true
+        && $afterMissedDay['attendance']['cycle_days'][1]['attended'] === false
+        && $afterMissedDay['attendance']['wallet']['earned_coin_balance'] === 900,
+        'Missing a Cairo day resets progress to day one but never removes earned Coins',
+    );
+    $independentUserId = $attendanceUser($attendanceDb, 'AttendanceIndependent');
+    $independentDate = '2026-03-01';
+    $independentAttendance = new Attendance($attendanceDb, static fn (): string => $independentDate);
+    $independentResult = $independentAttendance->checkIn($independentUserId);
+    assertTrue(
+        $independentResult['created'] === true
+        && $independentResult['attendance']['cycle_number'] === 1
+        && $independentResult['attendance']['cycle_progress'] === 1
+        && $independentResult['attendance']['wallet']['earned_coin_balance'] === 100
+        && $weeklyAttendance->state($weeklyUserId)['wallet']['earned_coin_balance'] === 900,
+        'Attendance cycles and rewards are isolated between different users',
+    );
+    $failedAttendanceUserId = $attendanceUser($attendanceDb, 'AttendanceFailed');
+    $attendanceDb->exec(
+        "CREATE TRIGGER test_fail_attendance BEFORE INSERT ON coin_ledger
+         WHEN NEW.source = 'earned_reward' AND NEW.reference_type = 'daily_attendance'
+         BEGIN SELECT RAISE(ABORT, 'simulated failure'); END",
+    );
+    $failedDate = '2026-04-01';
+    $failedAttendance = new Attendance($attendanceDb, static fn (): string => $failedDate);
+    try {
+        $failedAttendance->checkIn($failedAttendanceUserId);
+        throw new RuntimeException('Attendance must roll back when its ledger write fails.');
+    } catch (PDOException) {
+        assertTrue(
+            $attendanceDb->query(
+                'SELECT COUNT(*) FROM daily_attendance WHERE user_id = ' . $failedAttendanceUserId,
+            )->fetchColumn() == 0
+            && $attendanceDb->query(
+                'SELECT coin_balance FROM wallets WHERE user_id = ' . $failedAttendanceUserId,
+            )->fetchColumn() == 0,
+            'Failed direct Ledger writes leave no check-in and do not change balances',
+        );
+    }
+    $attendanceDb->exec('DROP TRIGGER test_fail_attendance');
+
+    echo "PASS: account security and Coins ledger; Rewards, Community Events, Diamond Recharge; admin permissions and CSRF; "
+        . "Memory Match, Picture Jigsaw, daily rewards, and attendance cycles.\n";
+} finally {
+    proc_terminate($process);
+    proc_close($process);
+    foreach (glob($temporaryDirectory . '/*') ?: [] as $file) {
+        unlink($file);
+    }
+    rmdir($temporaryDirectory);
+}
