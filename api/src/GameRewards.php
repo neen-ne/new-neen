@@ -14,7 +14,7 @@ final class GameRewards
         }
         if ($userId < 1 || $sessionId < 1 || !in_array(
             $gameSlug,
-            ['memory-match', 'picture-jigsaw', 'vault_cracker', 'loot_sequence'],
+            ['memory-match', 'picture-jigsaw', 'vault_cracker', 'loot_sequence', 'sunny_island'],
             true,
         )) {
             throw new InvalidArgumentException('Invalid completed game reference.');
@@ -51,8 +51,10 @@ final class GameRewards
             $this->verifyPictureJigsaw($sessionId);
         } elseif ($gameSlug === 'vault_cracker') {
             $this->verifyVaultCracker($sessionId);
-        } else {
+        } elseif ($gameSlug === 'loot_sequence') {
             $this->verifyLootSequence($sessionId);
+        } else {
+            $this->verifySunnyIsland($sessionId);
         }
 
         $ledgerEntryId = (new CoinsLedger($this->db))->credit(
@@ -252,6 +254,79 @@ final class GameRewards
             || $inputs !== $sequences
         ) {
             throw new ApiException('GAME_WIN_NOT_VERIFIED', 'Every Loot Sequence round must match the server pattern.', 409);
+        }
+    }
+
+    private function verifySunnyIsland(int $sessionId): void
+    {
+        $statement = $this->db->prepare(
+            'SELECT contract_json, completed_objectives_json
+             FROM sunny_island_states WHERE session_id = :session_id'
+            . ($this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : ''),
+        );
+        $statement->execute(['session_id' => $sessionId]);
+        $state = $statement->fetch();
+        if ($state === false) {
+            throw new ApiException('GAME_WIN_NOT_VERIFIED', 'The Sunny Island adventure state is unavailable.', 409);
+        }
+        try {
+            $contract = json_decode($state['contract_json'], true, 16, JSON_THROW_ON_ERROR);
+            $completed = json_decode($state['completed_objectives_json'], true, 16, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            throw new ApiException('GAME_WIN_NOT_VERIFIED', 'The Sunny Island adventure state is invalid.', 409);
+        }
+        $objectives = $contract['objectives'] ?? null;
+        if (
+            !is_array($contract)
+            || array_is_list($contract)
+            || ($contract['version'] ?? null) !== 1
+            || !is_array($objectives)
+            || !array_is_list($objectives)
+            || count($objectives) !== 3
+            || !is_array($completed)
+            || !array_is_list($completed)
+            || count($completed) !== count($objectives)
+        ) {
+            throw new ApiException('GAME_WIN_NOT_VERIFIED', 'The Sunny Island adventure contract is invalid.', 409);
+        }
+
+        $objectiveIds = SunnyIsland::objectiveIds();
+        $required = [];
+        foreach ($objectives as $objective) {
+            if (
+                !is_array($objective)
+                || !is_string($objective['id'] ?? null)
+                || !in_array($objective['id'], $objectiveIds, true)
+                || !is_string($objective['token'] ?? null)
+                || strlen($objective['token']) < 32
+                || in_array($objective['id'], $required, true)
+            ) {
+                throw new ApiException('GAME_WIN_NOT_VERIFIED', 'The Sunny Island adventure objectives are invalid.', 409);
+            }
+            $required[$objective['id']] = $objective['token'];
+        }
+        $completedIds = [];
+        foreach ($completed as $receipt) {
+            if (
+                !is_array($receipt)
+                || !is_string($receipt['id'] ?? null)
+                || !is_string($receipt['proof'] ?? null)
+                || !isset($required[$receipt['id']])
+                || !hash_equals(
+                    hash_hmac('sha256', $receipt['id'], $required[$receipt['id']]),
+                    $receipt['proof'],
+                )
+                || in_array($receipt['id'], $completedIds, true)
+            ) {
+                throw new ApiException('GAME_WIN_NOT_VERIFIED', 'A Sunny Island objective receipt is invalid.', 409);
+            }
+            $completedIds[] = $receipt['id'];
+        }
+        $requiredIds = array_keys($required);
+        sort($requiredIds);
+        sort($completedIds);
+        if ($completedIds !== $requiredIds) {
+            throw new ApiException('GAME_WIN_NOT_VERIFIED', 'Every Sunny Island objective must be verified.', 409);
         }
     }
 

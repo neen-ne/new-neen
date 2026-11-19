@@ -294,6 +294,12 @@ INSERT INTO game_catalog
 VALUES
     ('loot_sequence', 'Loot Sequence Strike', 'Remember and repeat four escalating sticker sequences.', 'active', 0, 3, 50, 'Africa/Cairo',
      CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO game_catalog
+    (slug, name, description, status, attempt_price_coins, free_attempt_limit,
+     reward_amount_coins, reset_timezone, created_at, updated_at)
+VALUES
+    ('sunny_island', 'NEEN Sunny Island', 'Explore Sunny Island and complete a daily adventure.', 'active', 0, 3, 50, 'Africa/Cairo',
+     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 CREATE TABLE user_game_daily_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
@@ -348,6 +354,22 @@ CREATE TABLE loot_sequence_states (
     sequences_json TEXT NOT NULL,
     inputs_json TEXT NOT NULL,
     round_number INTEGER NOT NULL DEFAULT 1 CHECK (round_number BETWEEN 1 AND 4)
+);
+CREATE TABLE sunny_island_progress (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    xp INTEGER NOT NULL DEFAULT 0 CHECK (xp >= 0),
+    level INTEGER NOT NULL DEFAULT 1 CHECK (level >= 1),
+    unlocked_collectibles_json TEXT NOT NULL,
+    discovered_zones_json TEXT NOT NULL,
+    total_adventures_completed INTEGER NOT NULL DEFAULT 0 CHECK (total_adventures_completed >= 0),
+    last_position_json TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE TABLE sunny_island_states (
+    session_id INTEGER PRIMARY KEY REFERENCES game_sessions(id) ON DELETE CASCADE,
+    contract_json TEXT NOT NULL,
+    completed_objectives_json TEXT NOT NULL
 );
 CREATE TABLE homepage_reward_config (
     id INTEGER PRIMARY KEY CHECK (id = 1),

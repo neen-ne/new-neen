@@ -387,6 +387,62 @@ final class Api
                 ));
             }
 
+            if ($path === '/api/games/sunny-island/state') {
+                $this->expectMethod($method, 'GET');
+                $auth = $this->requireAuth();
+                $this->send(true, ['state' => $this->sunnyIsland()->state($auth['user_id'])]);
+            }
+
+            if ($path === '/api/games/sunny-island/start') {
+                $this->expectMethod($method, 'POST');
+                $auth = $this->requireAuth();
+                $this->requireCsrf($auth);
+                $this->requireAllowedFields(['idempotency_key']);
+                $result = $this->sunnyIsland()->start(
+                    $auth['user_id'],
+                    $this->idempotencyKey($this->body['idempotency_key'] ?? null),
+                );
+                $this->send(true, $result, [], $result['created'] ? 201 : 200);
+            }
+
+            if ($path === '/api/games/sunny-island/progress') {
+                $this->expectMethod($method, 'POST');
+                $auth = $this->requireAuth();
+                $this->requireCsrf($auth);
+                $this->requireAllowedFields([
+                    'collectibles',
+                    'discovered_zones',
+                    'last_position',
+                    'session_id',
+                    'completed_objectives',
+                ]);
+                $this->send(true, $this->sunnyIsland()->syncProgress($auth['user_id'], $this->body));
+            }
+
+            if ($path === '/api/games/sunny-island/complete') {
+                $this->expectMethod($method, 'POST');
+                $auth = $this->requireAuth();
+                $this->requireCsrf($auth);
+                $this->requireAllowedFields([
+                    'session_id',
+                    'completed_objectives',
+                    'collectibles',
+                    'discovered_zones',
+                    'last_position',
+                ]);
+                $sessionId = $this->positiveInteger($this->body['session_id'] ?? null, 'session_id');
+                $progressData = array_intersect_key(
+                    $this->body,
+                    array_flip(['collectibles', 'discovered_zones', 'last_position']),
+                );
+                $this->send(true, $this->sunnyIsland()->completeAdventure(
+                    $auth['user_id'],
+                    $sessionId,
+                    $this->body['completed_objectives'] ?? null,
+                    $progressData,
+                ));
+            }
+
             if ($path === '/api/wallet/transactions') {
                 $this->expectMethod($method, 'GET');
                 $this->walletTransactions($this->requireAuth());
@@ -2546,6 +2602,11 @@ final class Api
     private function lootSequence(): LootSequence
     {
         return new LootSequence($this->db, new GameRewards($this->db));
+    }
+
+    private function sunnyIsland(): SunnyIsland
+    {
+        return new SunnyIsland($this->db, new GameRewards($this->db));
     }
 
     private function attendance(): Attendance

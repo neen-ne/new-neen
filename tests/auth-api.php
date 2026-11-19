@@ -202,6 +202,7 @@ $environment = array_merge($_ENV, [
     'NEEN_APP_URL' => $baseUrl,
     'NEEN_DB_DSN' => 'sqlite:' . $databasePath,
     'NEEN_TEST_MAIL_FILE' => $mailPath,
+    'SUNNY_ISLAND_MIN_DURATION_SECONDS' => '2',
     'XDEBUG_MODE' => 'off',
 ]);
 $process = proc_open(
@@ -1824,6 +1825,264 @@ try {
     );
     assertTrue($sequenceLimitStatus === 429, 'Loot Sequence enforces the three-start Cairo-day limit');
 
+    [$sunnyAnonymousStatus] = request($baseUrl, '/api/games/sunny-island/state', $anonymousCookies);
+    assertTrue($sunnyAnonymousStatus === 401, 'Sunny Island state requires an authenticated player');
+    [$status, $sunnyInitialResponse] = request($baseUrl, '/api/games/sunny-island/state', $cookies);
+    $sunnyInitial = $sunnyInitialResponse['data']['state'] ?? [];
+    assertTrue(
+        $status === 200
+        && $sunnyInitial['progress']['xp'] === 0
+        && $sunnyInitial['progress']['level'] === 1
+        && $sunnyInitial['progress']['unlocked_collectibles'] === []
+        && $sunnyInitial['progress']['discovered_zones'] === []
+        && $sunnyInitial['progress']['total_adventures_completed'] === 0
+        && $sunnyInitial['progress']['last_position'] === null
+        && count($sunnyInitial['codex']) === 9
+        && $sunnyInitial['adventure']['attempts_remaining_today'] === 3
+        && $sunnyInitial['adventure']['reward_amount_coins'] === 50
+        && $sunnyInitial['adventure']['active_session'] === null,
+        'Sunny Island returns initial permanent progress, the Codex, and daily adventure settings',
+    );
+    [$sunnyProgressStatus, $sunnyProgressResponse] = request(
+        $baseUrl,
+        '/api/games/sunny-island/progress',
+        $cookies,
+        [
+            'collectibles' => ['golden_compass', 'sun_crate'],
+            'discovered_zones' => ['neon_pier', 'palm_grove'],
+            'last_position' => ['zone' => 'palm_grove', 'x' => 41, 'y' => 87],
+        ],
+        $csrf,
+        'POST',
+    );
+    [$sunnyProgressReadStatus, $sunnyProgressRead] = request(
+        $baseUrl,
+        '/api/games/sunny-island/state',
+        $cookies,
+    );
+    assertTrue(
+        $sunnyProgressStatus === 200
+        && $sunnyProgressReadStatus === 200
+        && $sunnyProgressRead['data']['state']['progress']['unlocked_collectibles'] === ['golden_compass', 'sun_crate']
+        && $sunnyProgressRead['data']['state']['progress']['discovered_zones'] === ['neon_pier', 'palm_grove']
+        && $sunnyProgressRead['data']['state']['progress']['last_position'] === [
+            'zone' => 'palm_grove',
+            'x' => 41,
+            'y' => 87,
+        ],
+        'Sunny Island permanently stores collectibles, discovered zones, and the last position across requests',
+    );
+    [$sunnyStartStatus, $sunnyStarted] = request(
+        $baseUrl,
+        '/api/games/sunny-island/start',
+        $cookies,
+        ['idempotency_key' => 'sunny-island-start-001'],
+        $csrf,
+        'POST',
+    );
+    $sunnySession = $sunnyStarted['data']['session'] ?? [];
+    $sunnyObjectives = $sunnySession['objectives'] ?? [];
+    assertTrue(
+        $sunnyStartStatus === 201
+        && $sunnyStarted['data']['attempts_remaining_today'] === 2
+        && $sunnyStarted['data']['reward_amount_coins'] === 50
+        && count($sunnyObjectives) === 3
+        && count(array_unique(array_column($sunnyObjectives, 'id'))) === 3
+        && count(array_filter(
+            $sunnyObjectives,
+            static fn (array $objective): bool => !array_key_exists('token', $objective),
+        )) === count($sunnyObjectives)
+        && !array_key_exists('contract', $sunnySession),
+        'Sunny Island starts a server-backed adventure and keeps private objective tokens off the client',
+    );
+    $sunnySessionId = $sunnySession['id'];
+    $sunnyObjectiveReports = array_column($sunnyObjectives, 'id');
+    [$sunnyTooFastStatus] = request(
+        $baseUrl,
+        '/api/games/sunny-island/complete',
+        $cookies,
+        [
+            'session_id' => $sunnySessionId,
+            'completed_objectives' => $sunnyObjectiveReports,
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($sunnyTooFastStatus === 409, 'Sunny Island rejects completion before the minimum adventure duration');
+    [$sunnyInvalidObjectiveStatus] = request(
+        $baseUrl,
+        '/api/games/sunny-island/progress',
+        $cookies,
+        [
+            'session_id' => $sunnySessionId,
+            'completed_objectives' => ['not-a-contract-objective'],
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($sunnyInvalidObjectiveStatus === 422, 'Sunny Island rejects objective reports outside the server-held contract');
+    $sunnyTestDb = new PDO('sqlite:' . $databasePath);
+    $sunnyStartedAt = $sunnyTestDb->prepare(
+        "UPDATE game_sessions SET started_at = :started_at WHERE id = :session_id",
+    );
+    $sunnyStartedAt->execute([
+        'started_at' => gmdate('Y-m-d H:i:s', time() - 3),
+        'session_id' => $sunnySessionId,
+    ]);
+    unset($sunnyStartedAt, $sunnyTestDb);
+    [$sunnyIncompleteStatus] = request(
+        $baseUrl,
+        '/api/games/sunny-island/complete',
+        $cookies,
+        ['session_id' => $sunnySessionId],
+        $csrf,
+        'POST',
+    );
+    assertTrue($sunnyIncompleteStatus === 409, 'Sunny Island rejects completion when required objectives are missing');
+    $sunnyObjectiveStatus = 200;
+    $sunnyObjectiveResponse = [];
+    foreach ($sunnyObjectives as $objective) {
+        [$sunnyObjectiveStatus, $sunnyObjectiveResponse] = request(
+            $baseUrl,
+            '/api/games/sunny-island/progress',
+            $cookies,
+            [
+                'session_id' => $sunnySessionId,
+                'completed_objectives' => [$objective['id']],
+                'collectibles' => ['sunset_sticker'],
+                'discovered_zones' => ['neon_pier', 'palm_grove', 'loot_canyon', 'sunset_ridge'],
+                'last_position' => ['zone' => $objective['zone'], 'x' => 900, 'y' => 250],
+            ],
+            $csrf,
+            'POST',
+        );
+        if ($sunnyObjectiveStatus !== 200) {
+            break;
+        }
+    }
+    assertTrue(
+        $sunnyObjectiveStatus === 200
+        && $sunnyObjectiveResponse['data']['session']['objectives_completed'] === 3,
+        'Sunny Island verifies objective reports against the server contract and saved zone progress',
+    );
+    [$sunnyCompleteStatus, $sunnyComplete] = request(
+        $baseUrl,
+        '/api/games/sunny-island/complete',
+        $cookies,
+        ['session_id' => $sunnySessionId],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $sunnyCompleteStatus === 200
+        && $sunnyComplete['data']['session']['status'] === 'completed'
+        && $sunnyComplete['data']['xp_awarded'] === 100
+        && $sunnyComplete['data']['progress']['xp'] === 100
+        && $sunnyComplete['data']['progress']['level'] === 1
+        && $sunnyComplete['data']['progress']['total_adventures_completed'] === 1
+        && $sunnyComplete['data']['reward']['amount'] === 50
+        && $sunnyComplete['data']['reward']['balance_type'] === 'earned',
+        'Sunny Island awards XP and Earned Coins only after server-verifying all objectives',
+    );
+    [$sunnyFinalStateStatus, $sunnyFinalState] = request(
+        $baseUrl,
+        '/api/games/sunny-island/state',
+        $cookies,
+    );
+    assertTrue(
+        $sunnyFinalStateStatus === 200
+        && $sunnyFinalState['data']['state']['progress']['unlocked_collectibles']
+            === ['golden_compass', 'sun_crate', 'sunset_sticker']
+        && count($sunnyFinalState['data']['state']['progress']['discovered_zones']) === 4
+        && in_array(
+            $sunnyFinalState['data']['state']['progress']['last_position']['zone'],
+            ['neon_pier', 'palm_grove', 'loot_canyon', 'sunset_ridge'],
+            true,
+        ),
+        'Adventure completion preserves permanent Sunny Island discoveries',
+    );
+    $sunnyLedgerDb = new PDO('sqlite:' . $databasePath);
+    $sunnyLedgerCount = $sunnyLedgerDb->prepare(
+        "SELECT COUNT(*) FROM coin_ledger
+         WHERE user_id = :user_id AND source = 'game_reward'
+           AND reference_type = 'game_session' AND reference_id = :session_id",
+    );
+    $sunnyLedgerCount->execute(['user_id' => $userId, 'session_id' => $sunnySessionId]);
+    assertTrue((int) $sunnyLedgerCount->fetchColumn() === 1, 'Sunny Island credits exactly one immutable ledger reward');
+    unset($sunnyLedgerCount, $sunnyLedgerDb);
+    $completeSunnyAdventure = static function (
+        string $attemptKey,
+        int $expectedXp,
+        int $expectedLevel,
+        int $expectedCompleted,
+    ) use ($baseUrl, $databasePath, &$cookies, &$csrf): void {
+        [$startStatus, $started] = request(
+            $baseUrl,
+            '/api/games/sunny-island/start',
+            $cookies,
+            ['idempotency_key' => $attemptKey],
+            $csrf,
+            'POST',
+        );
+        assertTrue($startStatus === 201, 'A remaining Sunny Island daily adventure can start');
+        $session = $started['data']['session'];
+        $testDb = new PDO('sqlite:' . $databasePath);
+        $setStartedAt = $testDb->prepare(
+            'UPDATE game_sessions SET started_at = :started_at WHERE id = :session_id',
+        );
+        $setStartedAt->execute([
+            'started_at' => gmdate('Y-m-d H:i:s', time() - 3),
+            'session_id' => $session['id'],
+        ]);
+        unset($setStartedAt, $testDb);
+        $completeStatus = 200;
+        foreach ($session['objectives'] as $objective) {
+            [$completeStatus] = request(
+                $baseUrl,
+                '/api/games/sunny-island/progress',
+                $cookies,
+                [
+                    'session_id' => $session['id'],
+                    'completed_objectives' => [$objective['id']],
+                    'discovered_zones' => ['neon_pier', 'palm_grove', 'loot_canyon', 'sunset_ridge'],
+                    'last_position' => ['zone' => $objective['zone'], 'x' => 360, 'y' => 240],
+                ],
+                $csrf,
+                'POST',
+            );
+            if ($completeStatus !== 200) {
+                break;
+            }
+        }
+        [$completeStatus, $completed] = request(
+            $baseUrl,
+            '/api/games/sunny-island/complete',
+            $cookies,
+            ['session_id' => $session['id']],
+            $csrf,
+            'POST',
+        );
+        assertTrue(
+            $completeStatus === 200
+            && $completed['data']['progress']['xp'] === $expectedXp
+            && $completed['data']['progress']['level'] === $expectedLevel
+            && $completed['data']['progress']['total_adventures_completed'] === $expectedCompleted
+            && $completed['data']['reward']['amount'] === 50,
+            'Sunny Island awards XP across adventures and advances levels every 300 XP',
+        );
+    };
+    $completeSunnyAdventure('sunny-island-start-002', 200, 1, 2);
+    $completeSunnyAdventure('sunny-island-start-003', 300, 2, 3);
+    [$sunnyDailyLimitStatus] = request(
+        $baseUrl,
+        '/api/games/sunny-island/start',
+        $cookies,
+        ['idempotency_key' => 'sunny-island-start-004'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($sunnyDailyLimitStatus === 429, 'Sunny Island enforces the three-adventure Cairo-day limit');
+
     [$status, $publicLeaderboard] = request($baseUrl, '/api/events/leaderboard', $anonymousCookies);
     $leaderboards = $publicLeaderboard['data']['leaderboards'] ?? [];
     $earnedLeader = array_values(array_filter(
@@ -1927,8 +2186,8 @@ try {
     $attendanceFailureWallet = request($baseUrl, '/api/wallet', $cookies);
     assertTrue(
         $attendanceCount === 0
-        && $attendanceFailureWallet[1]['data']['coin_balance'] === 450
-        && $attendanceFailureWallet[1]['data']['earned_coin_balance'] === 350,
+        && $attendanceFailureWallet[1]['data']['coin_balance'] === 600
+        && $attendanceFailureWallet[1]['data']['earned_coin_balance'] === 500,
         'A failed check-in ledger write rolls back attendance and leaves the wallet unchanged',
     );
     $concurrentCheckins = concurrentRequests(
@@ -1992,8 +2251,8 @@ try {
     [$status, $attendanceWallet] = request($baseUrl, '/api/wallet', $cookies);
     assertTrue(
         $status === 200
-        && $attendanceWallet['data']['coin_balance'] === 550
-        && $attendanceWallet['data']['earned_coin_balance'] === 450
+        && $attendanceWallet['data']['coin_balance'] === 700
+        && $attendanceWallet['data']['earned_coin_balance'] === 600
         && $attendanceWallet['data']['purchased_coin_balance'] === 100,
         'Daily attendance credits 100 Earned Coins without changing Purchased Coins or game rewards',
     );
@@ -2005,7 +2264,7 @@ try {
         $status === 200
         && $homepageRewardBefore['data']['reward']['configured'] === false
         && $homepageRewardBefore['data']['reward']['can_claim'] === false
-        && $homepageRewardBefore['data']['reward']['wallet']['coin_balance'] === 550,
+        && $homepageRewardBefore['data']['reward']['wallet']['coin_balance'] === 700,
         'Homepage rewards start unavailable until the server configuration is explicitly set',
     );
     $database->prepare(
@@ -2076,7 +2335,7 @@ try {
     assertTrue(
         $status === 500
         && $failedHomepageClaims === 0
-        && $failedHomepageWallet[1]['data']['coin_balance'] === 550,
+        && $failedHomepageWallet[1]['data']['coin_balance'] === 700,
         'A failed homepage reward ledger write rolls back its claim and wallet credit',
     );
     $database->exec('DROP TRIGGER test_fail_homepage_reward');
@@ -2098,7 +2357,7 @@ try {
         $homepageClaimStatuses === [200, 201]
         && count($createdHomepageClaims) === 1
         && $createdHomepageClaims[0][1]['data']['amount'] === 7
-        && $createdHomepageClaims[0][1]['data']['wallet']['coin_balance'] === 557,
+        && $createdHomepageClaims[0][1]['data']['wallet']['coin_balance'] === 707,
         'Concurrent homepage claims create one earned-credit ledger entry and return the actual wallet balance',
     );
     [$status, $homepageReplay] = request(
@@ -2115,7 +2374,7 @@ try {
     assertTrue(
         $status === 200
         && $homepageReplay['data']['created'] === false
-        && $homepageReplay['data']['wallet']['coin_balance'] === 557
+        && $homepageReplay['data']['wallet']['coin_balance'] === 707
         && $homepageLedgerCount === 1,
         'Repeated homepage reward claims do not credit the wallet twice',
     );
@@ -2296,7 +2555,7 @@ try {
         && $statusRewards === 200
         && $myEventRewards['data']['rewards'][0]['reward_amount'] === 5
         && $statusWallet === 200
-        && $eventWallet['data']['coin_balance'] === 562,
+        && $eventWallet['data']['coin_balance'] === 712,
         'Event rewards are visible to participants, credited through the wallet, and not paid twice',
     );
 
@@ -2877,7 +3136,46 @@ try {
         $ownerGames['data']['games'],
         static fn (array $game): bool => $game['slug'] === 'memory-match',
     ))[0] ?? null;
-    assertTrue($status === 200 && is_array($memoryGame), 'Owner can read game records from the database');
+    $sunnyIslandGame = array_values(array_filter(
+        $ownerGames['data']['games'],
+        static fn (array $game): bool => $game['slug'] === 'sunny_island',
+    ))[0] ?? null;
+    assertTrue(
+        $status === 200 && is_array($memoryGame) && is_array($sunnyIslandGame),
+        'Owner can read existing games and the Sunny Island settings record',
+    );
+    [$sunnyOwnerUpdateStatus] = request(
+        $baseUrl,
+        '/api/owner/games/' . $sunnyIslandGame['id'],
+        $cookies,
+        ['free_attempt_limit' => 4, 'reward_amount_coins' => 75],
+        $csrf,
+        'PATCH',
+    );
+    [$sunnyOwnerStateStatus, $sunnyOwnerState] = request(
+        $baseUrl,
+        '/api/games/sunny-island/state',
+        $cookies,
+    );
+    assertTrue(
+        $sunnyOwnerUpdateStatus === 200
+        && $sunnyOwnerStateStatus === 200
+        && $sunnyOwnerState['data']['state']['adventure']['free_attempts_per_day'] === 4
+        && $sunnyOwnerState['data']['state']['adventure']['reward_amount_coins'] === 75,
+        'Owner-configured Sunny Island attempts and rewards are used by the game runtime',
+    );
+    [$sunnyOwnerRestoreStatus] = request(
+        $baseUrl,
+        '/api/owner/games/' . $sunnyIslandGame['id'],
+        $cookies,
+        [
+            'free_attempt_limit' => $sunnyIslandGame['free_attempt_limit'],
+            'reward_amount_coins' => $sunnyIslandGame['reward_amount_coins'],
+        ],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($sunnyOwnerRestoreStatus === 200, 'Sunny Island owner settings can be restored after integration testing');
     [$status] = request(
         $baseUrl,
         '/api/owner/games/' . $memoryGame['id'],
@@ -3264,7 +3562,7 @@ try {
     $attendanceDb->exec('DROP TRIGGER test_fail_attendance');
 
     echo "PASS: account security and Coins ledger; Rewards, Community Events, Diamond Recharge; admin permissions and CSRF; "
-        . "Memory Match, Picture Jigsaw, Vault Cracker, Loot Sequence, leaderboards, daily rewards, and attendance cycles.\n";
+        . "Memory Match, Picture Jigsaw, Vault Cracker, Loot Sequence, Sunny Island, leaderboards, daily rewards, and attendance cycles.\n";
 } finally {
     proc_terminate($process);
     proc_close($process);

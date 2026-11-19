@@ -85,6 +85,29 @@ CREATE TABLE IF NOT EXISTS loot_sequence_states (
     CONSTRAINT fk_loot_sequence_state_session FOREIGN KEY (session_id) REFERENCES game_sessions (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS sunny_island_progress (
+    user_id BIGINT UNSIGNED NOT NULL,
+    xp BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    level INT UNSIGNED NOT NULL DEFAULT 1,
+    unlocked_collectibles_json JSON NOT NULL,
+    discovered_zones_json JSON NOT NULL,
+    total_adventures_completed BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    last_position_json JSON NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    PRIMARY KEY (user_id),
+    CONSTRAINT chk_sunny_island_level CHECK (level >= 1),
+    CONSTRAINT fk_sunny_island_progress_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS sunny_island_states (
+    session_id BIGINT UNSIGNED NOT NULL,
+    contract_json JSON NOT NULL,
+    completed_objectives_json JSON NOT NULL,
+    PRIMARY KEY (session_id),
+    CONSTRAINT fk_sunny_island_state_session FOREIGN KEY (session_id) REFERENCES game_sessions (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO game_catalog
     (slug, name, description, status, attempt_price_coins, free_attempt_limit,
      reward_amount_coins, reset_timezone, created_at, updated_at)
@@ -96,6 +119,8 @@ VALUES
     ('vault_cracker', 'NEEN Vault Cracker', 'Crack the four-icon code in six guesses.', 'active', 0, 3, 50, 'Africa/Cairo',
      UTC_TIMESTAMP(), UTC_TIMESTAMP()),
     ('loot_sequence', 'Loot Sequence Strike', 'Remember and repeat four escalating sticker sequences.', 'active', 0, 3, 50, 'Africa/Cairo',
+     UTC_TIMESTAMP(), UTC_TIMESTAMP()),
+    ('sunny_island', 'NEEN Sunny Island', 'Explore Sunny Island and complete a daily adventure.', 'active', 0, 3, 50, 'Africa/Cairo',
      UTC_TIMESTAMP(), UTC_TIMESTAMP())
 ON DUPLICATE KEY UPDATE
     name = VALUES(name),
