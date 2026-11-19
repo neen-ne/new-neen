@@ -1250,3 +1250,249 @@
     padding: 9px 6px;
   }
 }
+
+.account-card {
+  border-color: rgb(255 255 255 / 13%);
+  background: #110e1f;
+  box-shadow: 0 18px 55px rgb(0 0 0 / 30%);
+}
+
+.account-tab.is-active {
+  background: #ff4fa3;
+  color: #08070f;
+}
+
+.account-verification-state {
+  color: #ff83c1;
+}
+
+.account-verification-state.is-verified {
+  color: #fbbf24;
+}
+
+.account-field input,
+.account-field textarea,
+.account-field select {
+  border-color: rgb(255 255 255 / 15%);
+  background: #08070f;
+  color: #f7f3ff;
+}
+
+.account-field input:focus,
+.account-field textarea:focus,
+.account-field select:focus {
+  border-color: #ff4fa3;
+  outline-color: rgb(255 79 163 / 28%);
+}
+
+.account-profile {
+  --hub-bg: #08070f;
+  --hub-panel: #110e1f;
+  --hub-panel-soft: #18132b;
+  --hub-line: rgb(255 255 255 / 14%);
+  --hub-text: #f7f3ff;
+  --hub-muted: #c9c1d3;
+  --hub-cyan: #ff83c1;
+  --hub-pink: #ff4fa3;
+  border-color: rgb(255 79 163 / 24%);
+  background:
+    radial-gradient(ellipse at 92% 0%, rgb(255 79 163 / 12%), transparent 36%),
+    radial-gradient(ellipse at 4% 92%, rgb(251 191 36 / 5%), transparent 32%),
+    linear-gradient(145deg, #08070f, #110e1f 58%, #08070f);
+  box-shadow: 0 24px 70px rgb(0 0 0 / 36%);
+}
+
+.profile-community-link {
+  background: rgb(255 255 255 / 4%);
+}
+
+.profile-community-link:hover,
+.profile-inline-link:hover,
+.profile-game-card a:hover {
+  color: #ff83c1;
+}
+
+.gamer-hero {
+  background:
+    radial-gradient(ellipse at 0% 0%, rgb(255 79 163 / 13%), transparent 52%),
+    linear-gradient(120deg, #18132b, #110e1f 62%);
+}
+
+.gamer-avatar-frame {
+  border-color: rgb(255 79 163 / 68%);
+  background: linear-gradient(145deg, #ff4fa3, #fbbf24);
+  box-shadow: 0 10px 28px rgb(255 79 163 / 18%);
+}
+
+.gamer-avatar-frame img {
+  background: #18132b;
+}
+
+.gamer-level-chip {
+  border-color: #110e1f;
+  background: #fbbf24;
+  color: #08070f;
+}
+
+.gamer-country {
+  color: #ff83c1;
+}
+
+.gamer-username,
+.gamer-bio {
+  color: #c9c1d3;
+}
+
+.gamer-verification {
+  border-color: rgb(255 79 163 / 38%);
+  background: rgb(255 79 163 / 9%);
+  color: #ffb5d8;
+}
+
+.gamer-verification.is-verified {
+  border-color: rgb(251 191 36 / 42%);
+  background: rgb(251 191 36 / 10%);
+  color: #fbbf24;
+}
+
+.gamer-xp-block > div {
+  color: #c9c1d3;
+}
+
+.gamer-xp-track {
+  border-color: rgb(255 79 163 / 28%);
+  background: #08070f;
+}
+
+.gamer-xp-track > span {
+  background: linear-gradient(90deg, #ff4fa3, #fbbf24);
+}
+
+.free-fire-id-pill {
+  background: rgb(8 7 15 / 70%);
+}
+
+.free-fire-id-pill button,
+.profile-secondary-button {
+  border-color: rgb(255 79 163 / 42%);
+  background: rgb(255 79 163 / 10%);
+  color: #ff83c1;
+}
+
+.profile-tablist {
+  background: rgb(8 7 15 / 80%);
+}
+
+.profile-tab.is-active,
+.profile-tab[aria-selected="true"] {
+  border-color: #ff4fa3;
+  background: #ff4fa3;
+  color: #08070f;
+}
+
+.profile-tab:focus-visible,
+.profile-community-link:focus-visible,
+.profile-inline-link:focus-visible,
+.profile-secondary-button:focus-visible,
+.free-fire-id-pill button:focus-visible {
+  outline-color: #ff83c1;
+}
+
+.gamer-stat-card {
+  background: linear-gradient(145deg, rgb(255 255 255 / 5%), rgb(255 255 255 / 2%));
+}
+
+.profile-game-card,
+.codex-card,
+.account-profile .account-wallet,
+.account-profile .profile-security-card,
+.account-profile .wallet-balances p,
+.account-profile .attendance-summary p,
+.account-profile .attendance-day,
+.account-profile .coin-order-card,
+.account-profile .coin-ledger-item {
+  background: #18132b;
+}
+
+.profile-game-card a {
+  color: #ff83c1;
+}
+
+.codex-art {
+  background: linear-gradient(145deg, #18132b, #08070f);
+}
+
+.codex-card.is-locked h4 {
+  color: #a99db5;
+}
+
+.account-profile .wallet-balances strong,
+.account-profile .wallet-balances b,
+.account-profile .attendance-summary strong,
+.account-profile .attendance-day-reward {
+  color: #fbbf24;
+}
+
+.account-profile .attendance-day.is-earned {
+  border-color: rgb(251 191 36 / 38%);
+  background: rgb(251 191 36 / 8%);
+}
+
+.account-profile .attendance-day.is-earned .attendance-day-state {
+  color: #fbbf24;
+}
+
+.account-profile .attendance-day.is-today {
+  box-shadow: 0 0 0 2px rgb(255 79 163 / 28%);
+}
+
+.account-profile .account-field input,
+.account-profile .account-field textarea,
+.account-profile .account-field select {
+  border-color: var(--hub-line);
+  background: #08070f;
+  color: var(--hub-text);
+}
+
+.account-profile .account-field input:focus,
+.account-profile .account-field textarea:focus,
+.account-profile .account-field select:focus {
+  border-color: #ff4fa3;
+  outline-color: rgb(255 79 163 / 28%);
+}
+
+.account-profile .account-submit {
+  background: #ff4fa3;
+  color: #08070f;
+}
+
+.account-profile .account-submit:hover {
+  background: #ff83c1;
+}
+
+.avatar-preview-wrap {
+  border-color: #ff4fa3;
+  background: #18132b;
+}
+
+.avatar-preset {
+  background: #18132b;
+}
+
+.avatar-preset.is-selected,
+.avatar-preset[aria-pressed="true"] {
+  border-color: #ff4fa3;
+  box-shadow: 0 0 0 2px rgb(255 79 163 / 18%);
+}
+
+.avatar-preset:focus-visible {
+  outline-color: #ff83c1;
+}
+
+.account-profile .account-text-button {
+  color: #ff83c1;
+}
+
+.account-profile .account-text-button:hover {
+  color: #fbbf24;
+}

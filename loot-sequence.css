@@ -164,3 +164,38 @@
     height: 47px;
   }
 }
+
+.sequence-page {
+  background:
+    radial-gradient(ellipse at 92% 18%, rgb(255 79 163 / 8%), transparent 32rem),
+    #08070f;
+}
+
+.sequence-status.is-error {
+  color: #ff9aa7;
+}
+
+.sequence-toolbar,
+.sequence-stage {
+  border-color: rgb(255 255 255 / 14%);
+  background:
+    radial-gradient(ellipse at 50% 0, rgb(255 79 163 / 8%), transparent 55%),
+    #110e1f;
+  box-shadow: 0 16px 38px rgb(0 0 0 / 26%);
+}
+
+.sequence-toolbar strong {
+  color: #fbbf24;
+}
+
+.sequence-preview li,
+.sequence-sticker {
+  border-color: rgb(255 255 255 / 14%);
+  background: #18132b;
+}
+
+.sequence-sticker:hover,
+.sequence-sticker:focus-visible {
+  border-color: #ff4fa3;
+  box-shadow: 0 0 0 2px rgb(255 79 163 / 18%);
+}

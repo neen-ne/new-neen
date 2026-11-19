@@ -1,23 +1,23 @@
 :root {
-  color-scheme: light;
-  --bg: #fff2f7;
-  --bg-raised: #ffe4ef;
-  --surface: #fffdfb;
-  --surface-raised: #fff7fa;
-  --pink: #d65f96;
-  --pink-bright: #eb88b4;
-  --magenta: #b44f87;
-  --pink-soft: #95577f;
-  --lavender: #c8c8ed;
-  --text: #45344a;
-  --text-secondary: #77667d;
-  --text-muted: #806f84;
-  --border: #f1c8da;
-  --divider: #f5d9e6;
+  color-scheme: dark;
+  --bg: #08070f;
+  --bg-raised: #110e1f;
+  --surface: #110e1f;
+  --surface-raised: #18132b;
+  --pink: #ff4fa3;
+  --pink-bright: #ff83c1;
+  --magenta: #d65f96;
+  --pink-soft: #ff83c1;
+  --lavender: #18132b;
+  --text: #f7f3ff;
+  --text-secondary: #c9c1d3;
+  --text-muted: #a99db5;
+  --border: rgb(255 255 255 / 14%);
+  --divider: rgb(255 255 255 / 10%);
   --display: "Oxanium", "Noto Sans Arabic", "Segoe UI", sans-serif;
   --brush: "Caveat", cursive;
   --body: "Exo 2", "Noto Sans Arabic", "Segoe UI", sans-serif;
-  --soft-shadow: 0 12px 30px rgb(157 100 139 / 12%);
+  --soft-shadow: 0 16px 42px rgb(0 0 0 / 28%);
   font-family: var(--body);
   background: var(--bg);
   color: var(--text);
@@ -35,9 +35,8 @@ body {
   min-width: 320px;
   margin: 0;
   background:
-    radial-gradient(circle at 5% 10%, rgb(255 255 255 / 80%) 0 3px, transparent 4px),
-    radial-gradient(circle at 96% 32%, rgb(255 255 255 / 70%) 0 3px, transparent 4px),
-    radial-gradient(ellipse at 100% 100%, rgb(200 200 237 / 45%), transparent 34rem),
+    radial-gradient(ellipse at 8% 8%, rgb(255 79 163 / 10%), transparent 34rem),
+    radial-gradient(ellipse at 92% 38%, rgb(251 191 36 / 5%), transparent 30rem),
     var(--bg);
 }
 
@@ -7197,4 +7196,328 @@ html[dir="rtl"] .home-page .home-hero .hero-art::after {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Shared dark esports foundation for content pages. */
+body:not(.home-page) {
+  color: var(--text);
+  background:
+    radial-gradient(ellipse at 10% 12%, rgb(255 79 163 / 8%), transparent 34rem),
+    radial-gradient(ellipse at 92% 38%, rgb(251 191 36 / 4%), transparent 30rem),
+    var(--bg);
+}
+
+body:not(.home-page) .site-header {
+  position: sticky;
+  z-index: 20;
+  inset: auto;
+  height: 82px;
+  border-bottom-color: var(--divider);
+  background: rgb(8 7 15 / 86%);
+  box-shadow: 0 8px 26px rgb(0 0 0 / 22%);
+  backdrop-filter: blur(18px);
+}
+
+body:not(.home-page) .site-header::after {
+  display: none;
+}
+
+body:not(.home-page) .wordmark,
+body:not(.home-page) .wordmark span {
+  color: var(--pink);
+}
+
+body:not(.home-page) .site-navigation {
+  gap: clamp(8px, 1.4vw, 22px);
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgb(17 14 31 / 88%);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 20%);
+  backdrop-filter: blur(16px);
+}
+
+body:not(.home-page) .nav-link {
+  color: var(--text-secondary);
+}
+
+body:not(.home-page) .nav-link:hover,
+body:not(.home-page) .nav-link.is-active,
+body:not(.home-page) .nav-link[aria-current="page"] {
+  color: var(--pink-bright);
+}
+
+body:not(.home-page) .nav-link[aria-current="page"]::after {
+  background: var(--pink);
+}
+
+body:not(.home-page) .nav-cta,
+body:not(.home-page) .button-primary,
+body:not(.home-page) .review-button {
+  border-color: var(--pink);
+  background: var(--pink);
+  box-shadow: 0 8px 24px rgb(255 79 163 / 20%);
+  color: #08070f;
+  font-weight: 800;
+}
+
+body:not(.home-page) .nav-cta:hover,
+body:not(.home-page) .button-primary:hover,
+body:not(.home-page) .review-button:not(:disabled):hover {
+  border-color: var(--pink-bright);
+  background: var(--pink-bright);
+  box-shadow: 0 10px 30px rgb(255 79 163 / 32%);
+  color: #08070f;
+}
+
+body:not(.home-page) .outline-link,
+body:not(.home-page) .menu-toggle {
+  border-color: rgb(255 79 163 / 48%);
+  background: rgb(24 19 43 / 88%);
+  color: var(--text);
+}
+
+body:not(.home-page) .outline-link:hover {
+  border-color: var(--pink);
+  background: rgb(255 79 163 / 12%);
+  color: var(--pink-bright);
+}
+
+body:not(.home-page) .menu-toggle span {
+  background: var(--text);
+}
+
+body:not(.home-page) .page-main {
+  padding-top: 0;
+}
+
+body:not(.home-page) .site-footer {
+  border-top-color: var(--divider);
+  background: #08070f;
+  color: var(--text-secondary);
+}
+
+body:not(.home-page) .site-footer > p,
+body:not(.home-page) .footer-links a,
+body:not(.home-page) .back-to-top {
+  color: var(--text-secondary);
+}
+
+body:not(.home-page) .footer-links a:hover,
+body:not(.home-page) .back-to-top:hover {
+  color: var(--pink-bright);
+}
+
+body:not(.home-page) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="hidden"]), select, textarea) {
+  border-color: var(--border);
+  background-color: #110e1f;
+  color: var(--text);
+  color-scheme: dark;
+}
+
+body:not(.home-page) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea)::placeholder {
+  color: #a99db5;
+  opacity: 1;
+}
+
+body:not(.home-page) :is(input, select, textarea, button, a):focus-visible {
+  outline-color: var(--pink);
+}
+
+body:not(.home-page) dialog {
+  border-color: var(--border);
+  background: #110e1f;
+  color: var(--text);
+  color-scheme: dark;
+}
+
+body:not(.home-page) dialog::backdrop {
+  background: rgb(4 3 10 / 78%);
+  backdrop-filter: blur(8px);
+}
+
+body:not(.home-page) .lightbox {
+  border-color: #18132b;
+  background: #110e1f;
+  color: var(--text);
+}
+
+body:not(.home-page) .lightbox-close,
+body:not(.home-page) .lightbox-nav {
+  border-color: var(--border);
+  background: #18132b;
+  color: var(--text);
+}
+
+body:not(.home-page) .page-intro,
+body:not(.home-page) .page-bottom-cta,
+body:not(.home-page) .gallery-page-note,
+body:not(.home-page) .about-page-note {
+  background:
+    radial-gradient(ellipse at 80% 10%, rgb(255 79 163 / 10%), transparent 34rem),
+    #110e1f;
+}
+
+body:not(.home-page) .videos-page-intro,
+body:not(.home-page) .gallery-page-intro,
+body:not(.home-page) .diamonds-intro {
+  background:
+    radial-gradient(ellipse at 14% 20%, rgb(255 79 163 / 13%), transparent 34rem),
+    radial-gradient(ellipse at 86% 90%, rgb(251 191 36 / 7%), transparent 30rem),
+    #110e1f;
+}
+
+body:not(.home-page) :is(.videos-page-intro, .gallery-page-intro, .diamonds-intro) .page-lede {
+  color: var(--text-secondary);
+}
+
+body:not(.home-page) .videos-page-content,
+body:not(.home-page) .gallery-page-content,
+body:not(.home-page) .diamonds-layout {
+  background:
+    radial-gradient(ellipse at 10% 12%, rgb(255 79 163 / 7%), transparent 30rem),
+    radial-gradient(ellipse at 92% 84%, rgb(251 191 36 / 4%), transparent 28rem),
+    #08070f;
+}
+
+body:not(.home-page) :is(.videos-page-content, .gallery-page-content, .diamonds-layout)::before {
+  background: linear-gradient(90deg, transparent, rgb(255 79 163 / 34%), transparent);
+  height: 1px;
+}
+
+body:not(.home-page) .videos-page-grid .video-card,
+body:not(.home-page) .gallery-page-grid .gallery-card {
+  border-color: #18132b;
+  background: #110e1f;
+  box-shadow: 0 18px 42px rgb(0 0 0 / 30%);
+}
+
+body:not(.home-page) .videos-page-grid .video-slot {
+  border-color: #08070f;
+}
+
+body:not(.home-page) .videos-page > .page-bottom-cta {
+  background:
+    radial-gradient(ellipse at 50% 0, rgb(255 79 163 / 14%), transparent 38rem),
+    #110e1f;
+}
+
+body:not(.home-page) .about-page-art {
+  border-color: #18132b;
+  background: #18132b;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 35%);
+}
+
+body:not(.home-page) .diamonds-page,
+body:not(.home-page) .diamonds-safety {
+  background:
+    radial-gradient(ellipse at 15% 50%, rgb(255 79 163 / 7%), transparent 30rem),
+    #110e1f;
+}
+
+body:not(.home-page) .diamonds-layout::before {
+  background: linear-gradient(90deg, transparent, rgb(255 79 163 / 34%), transparent);
+}
+
+body:not(.home-page) .diamonds-safety::before {
+  background: linear-gradient(90deg, transparent, rgb(251 191 36 / 38%), transparent);
+}
+
+body:not(.home-page) .setup-notice,
+body:not(.home-page) .order-panel,
+body:not(.home-page) .payment-instructions,
+body:not(.home-page) .review-payment-instructions,
+body:not(.home-page) .diamond-order-card {
+  border-color: var(--border);
+  background: #110e1f;
+  color: var(--text);
+  box-shadow: var(--soft-shadow);
+}
+
+body:not(.home-page) .preview-badge {
+  border-color: rgb(251 191 36 / 42%);
+  background: rgb(251 191 36 / 10%);
+  color: #fbbf24;
+}
+
+body:not(.home-page) .payment-method-option,
+body:not(.home-page) .package-option {
+  border-color: var(--border);
+  background: #18132b;
+  color: var(--text);
+}
+
+body:not(.home-page) .payment-method-option:not(:disabled):hover,
+body:not(.home-page) .payment-method-option.is-selected,
+body:not(.home-page) .package-option:hover,
+body:not(.home-page) .package-option.is-selected {
+  border-color: var(--pink);
+  background: rgb(255 79 163 / 10%);
+}
+
+body:not(.home-page) .diamond-form select,
+body:not(.home-page) .diamond-form input {
+  border-color: var(--border);
+  background: #08070f;
+  color: var(--text);
+}
+
+body:not(.home-page) .diamond-form select:focus,
+body:not(.home-page) .diamond-form input:focus {
+  border-color: var(--pink);
+  outline-color: rgb(255 79 163 / 28%);
+}
+
+body:not(.home-page) .form-error {
+  color: #ff9aa7;
+}
+
+@media (max-width: 760px) {
+  body:not(.home-page) .site-header {
+    height: 70px;
+    padding-inline: 20px;
+  }
+
+  body:not(.home-page) .site-navigation {
+    top: 70px;
+    border: 1px solid var(--border);
+    border-radius: 0 0 16px 16px;
+    background: rgb(8 7 15 / 97%);
+    box-shadow: 0 20px 38px rgb(0 0 0 / 42%);
+  }
+}
+
+body.home-page {
+  --pink-soft: #ff83c1;
+  --lavender: #18132b;
+  --text-secondary: #c9c1d3;
+  --text-muted: #a99db5;
+  --border: rgb(255 255 255 / 14%);
+  --divider: rgb(255 255 255 / 10%);
+}
+
+.home-page .home-site-shell > .site-header .nav-link[aria-current="page"] {
+  background: #ff4fa3;
+  color: #08070f;
+}
+
+.home-page .button-primary {
+  background: linear-gradient(110deg, #ff4fa3, #ff83c1);
+  color: #08070f;
+}
+
+.home-page .button-primary:hover {
+  background: linear-gradient(110deg, #ff83c1, #ff4fa3);
+  color: #08070f;
+}
+
+.home-page .video-play-button {
+  border-color: #ff83c1;
+  background: #ff4fa3;
+  color: #08070f;
+}
+
+.home-page .video-play-button:hover {
+  background: #ff83c1;
+  color: #08070f;
 }

@@ -1333,3 +1333,244 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Dark esports surfaces for the events and challenge hub. */
+.events-page {
+  background:
+    radial-gradient(ellipse at 8% 10%, rgb(255 79 163 / 7%), transparent 32rem),
+    #08070f;
+}
+
+.events-hero,
+.events-readiness {
+  background:
+    radial-gradient(ellipse at 12% 18%, rgb(255 79 163 / 13%), transparent 34rem),
+    radial-gradient(ellipse at 90% 86%, rgb(251 191 36 / 7%), transparent 27rem),
+    #110e1f;
+}
+
+.events-hero::before,
+.events-hero::after,
+.events-content::before,
+.events-readiness::before {
+  background: linear-gradient(90deg, transparent, rgb(255 79 163 / 38%), transparent);
+  height: 1px;
+}
+
+.events-hero-copy .page-lede {
+  color: #c9c1d3;
+}
+
+.events-status-card,
+.events-empty-card {
+  border-color: rgb(255 255 255 / 13%);
+  background:
+    linear-gradient(145deg, rgb(255 79 163 / 7%), transparent 56%),
+    #18132b;
+  box-shadow: 0 18px 42px rgb(0 0 0 / 32%);
+}
+
+.events-status-card .eyebrow,
+.events-card-index,
+.events-empty-card a span {
+  color: #ff83c1;
+}
+
+.events-status-card > p:last-child,
+.events-empty-card p {
+  color: #c9c1d3;
+}
+
+.events-content,
+.events-page > .events-content:nth-of-type(2),
+.events-page > .events-content:nth-of-type(3) {
+  background:
+    radial-gradient(ellipse at 88% 12%, rgb(251 191 36 / 4%), transparent 28rem),
+    #08070f;
+}
+
+.events-page > .events-content:nth-of-type(3)::before {
+  background: linear-gradient(90deg, transparent, rgb(251 191 36 / 32%), transparent);
+}
+
+.events-game-card {
+  border-color: rgb(255 255 255 / 12%);
+  background:
+    radial-gradient(ellipse at 16% 0, rgb(255 79 163 / 12%), transparent 48%),
+    linear-gradient(135deg, #18132b, #110e1f 70%);
+  box-shadow: 0 18px 38px rgb(0 0 0 / 34%), inset 0 1px rgb(255 255 255 / 5%);
+  color: #f7f3ff;
+}
+
+.events-game-card:hover,
+.events-jigsaw-card,
+.events-jigsaw-card:hover {
+  background:
+    radial-gradient(ellipse at 78% 6%, rgb(255 79 163 / 12%), transparent 45%),
+    linear-gradient(145deg, #18132b, #110e1f 72%);
+}
+
+.events-game-art {
+  background-color: #110e1f;
+}
+
+.events-game-copy {
+  background:
+    radial-gradient(circle at 100% 0, rgb(255 79 163 / 8%), transparent 47%),
+    linear-gradient(145deg, #18132b, #110e1f);
+}
+
+.events-game-index,
+.events-game-copy > strong,
+.events-jigsaw-copy > strong {
+  color: #f7f3ff;
+}
+
+.events-game-copy > small {
+  color: #c9c1d3;
+}
+
+.events-game-play {
+  border-color: #ff4fa3;
+  background: #ff4fa3;
+  box-shadow: 0 7px 20px rgb(255 79 163 / 20%);
+  color: #08070f;
+}
+
+.events-game-play b {
+  color: #08070f;
+}
+
+.playbook-games {
+  border-color: rgb(255 255 255 / 12%);
+  background:
+    radial-gradient(ellipse at 2% 8%, rgb(255 79 163 / 8%), transparent 36%),
+    linear-gradient(135deg, #110e1f, #18132b 58%, #110e1f);
+  box-shadow: 0 18px 42px rgb(0 0 0 / 30%);
+}
+
+.playbook-area-index {
+  border-color: rgb(251 191 36 / 48%);
+  background: #fbbf24;
+  color: #08070f;
+}
+
+.playbook-subsection {
+  border-top-color: rgb(255 255 255 / 14%);
+}
+
+.playbook-link-card,
+.playbook-link-card:nth-child(even) {
+  border-color: rgb(255 255 255 / 12%);
+  background:
+    radial-gradient(circle at 100% 0, rgb(255 79 163 / 9%), transparent 48%),
+    linear-gradient(145deg, #18132b, #110e1f);
+  box-shadow: 0 8px 20px rgb(0 0 0 / 25%);
+}
+
+.playbook-link-card > span,
+.playbook-link-card > b {
+  color: #ff83c1;
+}
+
+.playbook-link-card > strong {
+  color: #f7f3ff;
+}
+
+.playbook-link-card > small,
+.playbook-area-heading > p {
+  color: #c9c1d3;
+}
+
+.playbook-link-card:hover {
+  border-color: #ff4fa3;
+  box-shadow: 0 13px 30px rgb(255 79 163 / 12%);
+}
+
+.events-module-nav {
+  border-bottom-color: rgb(255 255 255 / 14%);
+}
+
+.events-module-nav a {
+  color: #c9c1d3;
+}
+
+.events-module-nav a:hover {
+  border-color: rgb(255 79 163 / 50%);
+  color: #ff83c1;
+}
+
+.events-module-nav a[aria-current="page"] {
+  border-color: #ff4fa3;
+  background: #ff4fa3;
+  color: #08070f;
+}
+
+.events-empty-state,
+.leaderboard-panel,
+.challenge-hub-card {
+  border-color: rgb(255 255 255 / 13%);
+  background:
+    linear-gradient(145deg, rgb(255 79 163 / 7%), transparent 58%),
+    #18132b;
+  box-shadow: 0 18px 42px rgb(0 0 0 / 30%);
+}
+
+.events-empty-symbol {
+  border-color: rgb(251 191 36 / 50%);
+  color: #fbbf24;
+}
+
+.events-empty-state .events-guard-note,
+.events-module > .events-guard-note,
+.events-crumbs a,
+.leaderboard-panel > .eyebrow,
+.leaderboard-rank,
+.challenge-hub-card > .eyebrow {
+  color: #ff83c1;
+}
+
+.leaderboard-status.is-error,
+.challenge-hub-status.is-error {
+  color: #ff9aa7;
+}
+
+.leaderboard-row,
+.leaderboard-empty {
+  border-top-color: rgb(255 255 255 / 12%);
+}
+
+.leaderboard-identity small,
+.leaderboard-score,
+.leaderboard-empty,
+.leaderboard-panel > p:not(.eyebrow),
+.challenge-hub-card > p:not(.eyebrow),
+.challenge-hub-meta {
+  color: #c9c1d3;
+}
+
+.challenge-hub-meta strong {
+  color: #fbbf24;
+}
+
+.events-game-card:focus-visible,
+.playbook-game-card:focus-visible,
+.playbook-link-card:focus-visible,
+.events-module-nav a:focus-visible {
+  outline-color: #ff83c1;
+}
+
+html[dir="rtl"] .playbook-area-heading > p {
+  justify-self: start;
+  text-align: right;
+}
+
+html[dir="rtl"] .playbook-link-card > span {
+  padding-right: 0;
+  padding-left: 20px;
+}
+
+html[dir="rtl"] .playbook-link-card > b {
+  right: auto;
+  left: 15px;
+}

@@ -1179,3 +1179,378 @@
     display: flex;
   }
 }
+
+/* Keep the colorful island playable while bringing its HUD into the site theme. */
+.sunny-page {
+  background:
+    radial-gradient(ellipse at 9% 10%, rgb(255 79 163 / 10%), transparent 28rem),
+    radial-gradient(ellipse at 92% 18%, rgb(251 191 36 / 5%), transparent 24rem),
+    #08070f;
+  color: #f7f3ff;
+}
+
+.sunny-crumbs {
+  color: #a99db5;
+}
+
+.sunny-crumbs a,
+.sunny-account-link,
+.sunny-intro-copy .eyebrow {
+  color: #ff83c1;
+}
+
+.sunny-intro h1 {
+  color: #f7f3ff;
+}
+
+.sunny-intro h1 span,
+.sunny-quest-heading .eyebrow,
+.sunny-codex-header h2 span {
+  color: #fbbf24;
+}
+
+.sunny-intro-copy > p:last-child {
+  color: #c9c1d3;
+}
+
+.sunny-account-link {
+  border-color: rgb(255 79 163 / 45%);
+  background: rgb(255 79 163 / 8%);
+}
+
+.sunny-account-link:hover {
+  border-color: #ff4fa3;
+  background: rgb(255 79 163 / 14%);
+}
+
+.sunny-game-shell {
+  border-color: rgb(255 255 255 / 12%);
+  background: #110e1f;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 35%), 0 1px 0 rgb(255 255 255 / 5%) inset;
+}
+
+.sunny-avatar-badge {
+  border-color: #ff4fa3;
+  background: #18132b;
+  box-shadow: 0 3px 0 #d65f96;
+}
+
+.sunny-level-badge {
+  border-color: #110e1f;
+  background: #fbbf24;
+  box-shadow: 0 2px 0 #b78113;
+  color: #08070f;
+}
+
+.sunny-player-progress strong {
+  color: #f7f3ff;
+}
+
+.sunny-player-progress small {
+  color: #c9c1d3;
+}
+
+.sunny-avatar-picker {
+  color: #c9c1d3;
+}
+
+.sunny-avatar-picker select {
+  border-color: rgb(255 255 255 / 15%);
+  background: #18132b;
+  color: #f7f3ff;
+}
+
+.sunny-avatar-picker select:focus-visible {
+  outline-color: rgb(255 79 163 / 45%);
+}
+
+.sunny-xp-track {
+  background: #08070f;
+}
+
+.sunny-xp-track span {
+  background: linear-gradient(90deg, #ff4fa3, #fbbf24);
+}
+
+.sunny-wallet {
+  border: 1px solid rgb(251 191 36 / 30%);
+  background: rgb(251 191 36 / 8%);
+  color: #fbbf24;
+}
+
+.sunny-wallet small {
+  color: #c9c1d3;
+}
+
+.sunny-wallet strong {
+  color: #fbbf24;
+}
+
+.sunny-quiet-button,
+.sunny-main-button,
+.sunny-complete-button {
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+
+.sunny-quiet-button {
+  border-color: rgb(255 255 255 / 16%);
+  background: #18132b;
+  color: #f7f3ff;
+}
+
+.sunny-quiet-button span {
+  color: #ff83c1;
+}
+
+.sunny-main-button {
+  border-color: #ff4fa3;
+  background: #ff4fa3;
+  box-shadow: 0 4px 0 #b83276;
+  color: #08070f;
+}
+
+.sunny-main-button:hover {
+  background: #ff83c1;
+}
+
+.sunny-status,
+.sunny-attempt-pill,
+.sunny-dash-status {
+  color: #c9c1d3;
+}
+
+.sunny-status.is-error {
+  color: #ff9aa7;
+}
+
+.sunny-dash-status.is-cooling {
+  color: #fbbf24;
+}
+
+.sunny-controls-hint {
+  color: #a99db5;
+}
+
+.sunny-controls-hint span {
+  color: #ff83c1;
+}
+
+.sunny-quest-panel,
+.sunny-travel-card,
+.sunny-feature-strip article {
+  border-color: rgb(255 255 255 / 13%);
+  background: #18132b;
+}
+
+.sunny-quest-heading h2,
+.sunny-objective strong,
+.sunny-travel-card strong,
+.sunny-feature-strip strong {
+  color: #f7f3ff;
+}
+
+.sunny-quest-heading > p:last-child,
+.sunny-empty-objectives,
+.sunny-objective small,
+.sunny-quest-footer > span,
+.sunny-travel-card small,
+.sunny-feature-strip small {
+  color: #c9c1d3;
+}
+
+.sunny-empty-objectives,
+.sunny-objective {
+  border-color: rgb(255 255 255 / 13%);
+  background: #110e1f;
+}
+
+.sunny-objective.is-complete {
+  border-color: rgb(251 191 36 / 38%);
+  background: rgb(251 191 36 / 8%);
+}
+
+.sunny-objective-check {
+  background: #18132b;
+  color: #c9c1d3;
+}
+
+.sunny-objective.is-complete .sunny-objective-check {
+  background: #fbbf24;
+  color: #08070f;
+}
+
+.sunny-quest-footer {
+  border-top-color: rgb(255 255 255 / 13%);
+}
+
+.sunny-quest-footer > strong {
+  color: #fbbf24;
+}
+
+.sunny-complete-button {
+  background: #fbbf24;
+  box-shadow: 0 3px 0 #b78113;
+  color: #08070f;
+}
+
+.sunny-travel-icon {
+  background: rgb(251 191 36 / 14%);
+  color: #fbbf24;
+}
+
+.sunny-feature-strip article > span {
+  color: #ff83c1;
+}
+
+.sunny-codex-dialog {
+  border-color: rgb(255 255 255 / 16%);
+  background: #110e1f;
+  color: #f7f3ff;
+}
+
+.sunny-codex-header .eyebrow {
+  color: #ff83c1;
+}
+
+.sunny-codex-summary {
+  color: #c9c1d3;
+}
+
+.sunny-dialog-close {
+  border: 1px solid rgb(255 255 255 / 15%);
+  background: #18132b;
+  color: #f7f3ff;
+}
+
+.sunny-codex-item {
+  border-color: rgb(255 255 255 / 14%);
+  background: #18132b;
+}
+
+.sunny-codex-art {
+  background: #110e1f;
+}
+
+.sunny-codex-item strong {
+  color: #f7f3ff;
+}
+
+.sunny-codex-item small {
+  color: #c9c1d3;
+}
+
+.sunny-codex-item.is-found small {
+  color: #fbbf24;
+}
+
+.sunny-toast {
+  border-color: #ff4fa3;
+  background: rgb(17 14 31 / 94%);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 38%);
+  color: #f7f3ff;
+}
+
+.sunny-zone-banner {
+  border-color: rgb(255 79 163 / 55%);
+  background: rgb(17 14 31 / 90%);
+  color: #f7f3ff;
+}
+
+.sunny-minimap {
+  border-color: rgb(255 255 255 / 16%);
+  background: rgb(17 14 31 / 92%);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 32%);
+}
+
+.sunny-minimap-title {
+  color: #c9c1d3;
+}
+
+.sunny-minimap-title span:last-child {
+  color: #fbbf24;
+}
+
+.sunny-minimap-title button {
+  background: rgb(255 79 163 / 14%);
+  color: #ff83c1;
+}
+
+.sunny-map-safe-zone {
+  fill: rgb(255 79 163 / 10%);
+  stroke: #ff4fa3;
+  filter: drop-shadow(0 0 5px rgb(255 79 163 / 80%));
+}
+
+.sunny-map-player {
+  fill: #ff83c1;
+  stroke: #08070f;
+}
+
+.sunny-map-labels {
+  color: #a99db5;
+}
+
+.sunny-map-legend {
+  color: #ff83c1;
+}
+
+.sunny-map-legend span {
+  border-top-color: #ff4fa3;
+}
+
+.sunny-interaction {
+  border-color: #ff4fa3;
+  background: rgb(17 14 31 / 94%);
+  box-shadow: 0 7px 22px rgb(0 0 0 / 35%);
+  color: #f7f3ff;
+}
+
+.sunny-interaction button {
+  background: #fbbf24;
+  color: #08070f;
+}
+
+.sunny-victory-banner span {
+  color: #ff83c1;
+}
+
+.sunny-victory-banner strong {
+  color: #fbbf24;
+  text-shadow: 0 3px 0 #08070f, 0 0 18px rgb(251 191 36 / 42%);
+}
+
+.sunny-canvas-frame {
+  border-color: rgb(255 79 163 / 72%);
+  background: #08070f;
+  box-shadow: 0 0 0 1px rgb(255 79 163 / 18%), 0 14px 32px rgb(0 0 0 / 35%);
+}
+
+.sunny-victory-banner {
+  border-color: rgb(251 191 36 / 65%);
+  background:
+    radial-gradient(ellipse at 50% 0, rgb(255 79 163 / 18%), transparent 72%),
+    rgb(17 14 31 / 94%);
+  color: #fbbf24;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .sunny-touch-buttons button {
+    border-color: rgb(255 79 163 / 58%);
+    background: rgb(17 14 31 / 88%);
+    color: #f7f3ff;
+  }
+
+  .sunny-touch-buttons [data-touch-action] {
+    background: rgb(255 79 163 / 94%);
+    color: #08070f;
+  }
+
+  .sunny-touch-buttons [data-dash-button] {
+    background: rgb(24 19 43 / 94%);
+  }
+}
+
+html[dir="rtl"] .sunny-dash-status {
+  text-align: right;
+}
