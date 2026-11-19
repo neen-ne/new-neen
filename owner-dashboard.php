@@ -51,7 +51,7 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#FFF2F7" />
+    <meta name="theme-color" content="#08070f" />
     <meta name="robots" content="noindex, nofollow" />
     <title data-i18n="documentTitle">Owner Dashboard — NEEN</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -70,19 +70,27 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
           <span class="admin-brand-label" data-i18n="ownerControlRoom">OWNER CONTROL ROOM</span>
         </a>
         <nav class="admin-nav" aria-label="Dashboard sections" data-i18n-aria-label="sectionsLabel">
-          <button type="button" class="admin-nav-item is-active" data-section="overview" aria-current="page"><span class="admin-nav-index">01</span><span data-i18n="overview">Overview</span></button>
-          <button type="button" class="admin-nav-item" data-section="users"><span class="admin-nav-index">02</span><span data-i18n="users">Users</span></button>
-          <button type="button" class="admin-nav-item" data-section="wallet"><span class="admin-nav-index">03</span><span data-i18n="wallet">Wallet &amp; Transactions</span></button>
-          <button type="button" class="admin-nav-item" data-section="modules"><span class="admin-nav-index">04</span><span data-i18n="modules">Connected Modules</span></button>
-          <button type="button" class="admin-nav-item" data-section="activity"><span class="admin-nav-index">05</span><span data-i18n="activity">Admin Activity</span></button>
+          <button type="button" class="admin-nav-item is-active" data-section="overview" aria-current="page"><span class="admin-nav-index">01</span><span data-i18n="dailyOperations">Daily Operations</span></button>
+          <button type="button" class="admin-nav-item" data-section="users"><span class="admin-nav-index">02</span><span data-i18n="playersWallet">Players &amp; Wallet</span></button>
+          <button type="button" class="admin-nav-item" data-section="wallet"><span class="admin-nav-index">00</span><span data-i18n="allSections">All Sections</span></button>
+          <button type="button" class="admin-nav-item" data-section="modules"><span class="admin-nav-index">03</span><span data-i18n="gamesRewardsNav">Games &amp; Rewards</span></button>
+          <button type="button" class="admin-nav-item" data-section="activity"><span class="admin-nav-index">04</span><span data-i18n="siteAudit">Site Settings &amp; Audit Log</span></button>
         </nav>
         <div class="admin-sidebar-footer"><span class="admin-live-dot" aria-hidden="true"></span><span data-i18n="ownerVerified">OWNER ROLE SERVER-VERIFIED</span></div>
       </aside>
 
       <main class="admin-main">
         <header class="admin-topbar">
-          <div class="admin-topbar-title"><p class="admin-eyebrow" data-i18n="ownerOperations">NEEN / OWNER OPERATIONS</p><h1 data-i18n="ownerDashboard">Owner Dashboard</h1></div>
+          <div class="admin-topbar-title">
+            <p class="admin-eyebrow" data-i18n="ownerOperations">NEEN / OWNER COMMAND CENTER</p>
+            <h1 data-i18n="ownerDashboard">NEEN Owner Command Center</h1>
+            <span class="owner-live-status"><span class="admin-live-dot" aria-hidden="true"></span><span data-i18n="ownerVerified">OWNER ROLE SERVER-VERIFIED</span></span>
+          </div>
           <div class="owner-header-actions">
+            <div class="owner-command-links">
+              <a class="owner-command-link" href="events-admin.php?section=diamond-orders" data-i18n="eventsOrdersAdmin">Events &amp; Diamond Orders Admin</a>
+              <a class="owner-command-link is-secondary" href="index.html" data-i18n="backToSite">Back to Live Site</a>
+            </div>
             <button class="owner-language-toggle" type="button" data-language-toggle data-i18n-aria-label="switchLanguage">عربي</button>
             <div class="admin-identity">
               <span class="admin-avatar" aria-hidden="true"><?= $escape(strtoupper(substr($owner['username'], 0, 1))) ?></span>
@@ -94,8 +102,22 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
 
         <div class="admin-content owner-content">
           <section class="admin-section is-active" data-panel="overview" aria-labelledby="overview-title">
-            <div class="admin-section-heading"><div><p class="admin-eyebrow"><span data-i18n="liveDatabase">LIVE DATABASE</span> / 01</p><h2 id="overview-title" data-i18n="overview">Overview</h2></div><p data-i18n="overviewDesc">Current account, wallet, event, game, and order data from the connected database.</p></div>
+            <div class="admin-section-heading"><div><p class="admin-eyebrow"><span data-i18n="liveDatabase">LIVE DATABASE</span> / 01</p><h2 id="overview-title" data-i18n="overview">Daily Operations</h2></div><p data-i18n="overviewDesc">A live snapshot of users, open diamond orders, Coins in circulation, and active games.</p></div>
             <div class="owner-stat-grid" data-owner-stats aria-live="polite"><p class="admin-state" data-i18n="loadingStats">Loading live statistics…</p></div>
+            <div class="owner-quick-action-grid">
+              <article class="owner-quick-action-card" data-owner-order-queue>
+                <div class="owner-quick-action-heading"><p class="admin-eyebrow" data-i18n="diamondQueue">DIAMOND ORDER QUEUE</p><strong data-owner-pending-count aria-live="polite">—</strong></div>
+                <h3 data-i18n="reviewDiamondOrders">Review diamond orders</h3>
+                <p data-i18n="diamondQueueDesc">Check JOD packages, Free Fire Player IDs, and UWallet / CliQ transfer references before approving or fulfilling.</p>
+                <a class="owner-quick-link" href="events-admin.php?section=diamond-orders" data-i18n="openDiamondQueue">Open order queue ↗</a>
+              </article>
+              <article class="owner-quick-action-card owner-reward-shortcut">
+                <div class="owner-quick-action-heading"><p class="admin-eyebrow" data-i18n="homepageReward">HOMEPAGE REWARD</p><span aria-hidden="true">✦</span></div>
+                <h3 data-i18n="rewardQuickConfig">Configure daily reward</h3>
+                <p data-i18n="rewardQuickConfigDesc">Update the server-backed claim amount and eligibility window without searching the admin menus.</p>
+                <a class="owner-quick-link" href="events-admin.php?section=homepage-rewards" data-i18n="configureReward">Configure homepage reward ↗</a>
+              </article>
+            </div>
             <div class="owner-chart-grid">
               <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="thirtyDays">30 DAYS</p><h3 data-i18n="newAccounts">New accounts</h3></div></div><div class="owner-chart" data-chart="users"></div></article>
               <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="thirtyDays">30 DAYS</p><h3 data-i18n="coinActivity">Coins activity</h3></div></div><div class="owner-chart" data-chart="wallet_transactions"></div></article>
@@ -104,7 +126,7 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
             </div>
             <div class="owner-overview-grid">
               <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="latest">LATEST</p><h3 data-i18n="recentUsers">Recent registrations</h3></div><button type="button" class="admin-text-button" data-open-section="users" data-i18n="viewUsers">View users ↗</button></div><div data-recent-users><p class="admin-state" data-i18n="loadingUsers">Loading registrations…</p></div></article>
-              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="latest">LATEST</p><h3 data-i18n="recentOrders">Recent diamond orders</h3></div><a class="admin-text-button" href="events-admin.php" data-i18n="openAdmin">Open admin modules ↗</a></div><div data-recent-orders><p class="admin-state" data-i18n="loadingOrders">Loading orders…</p></div></article>
+              <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="latest">LATEST</p><h3 data-i18n="recentOrders">Recent diamond orders</h3></div><a class="admin-text-button" href="events-admin.php?section=diamond-orders" data-i18n="openDiamondQueue">Open order queue ↗</a></div><div data-recent-orders><p class="admin-state" data-i18n="loadingOrders">Loading orders…</p></div></article>
               <article class="admin-panel"><div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="latest">LATEST</p><h3 data-i18n="recentActivity">Recent admin activity</h3></div><button type="button" class="admin-text-button" data-open-section="activity" data-i18n="viewActivity">View activity ↗</button></div><div data-recent-activity><p class="admin-state" data-i18n="loadingActivity">Loading audit records…</p></div></article>
             </div>
           </section>
@@ -142,20 +164,11 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
           </section>
 
           <section class="admin-section" data-panel="modules" aria-labelledby="modules-title" hidden>
-            <div class="admin-section-heading"><div><p class="admin-eyebrow"><span data-i18n="existingServices">EXISTING SERVICES</span> / 04</p><h2 id="modules-title" data-i18n="modules">Connected Modules</h2></div><p data-i18n="modulesDesc">Open the existing permission-checked administration console for modules already backed by services and database records.</p></div>
+            <div class="admin-section-heading"><div><p class="admin-eyebrow"><span data-i18n="runtimeSettings">RUNTIME-BACKED SETTINGS</span> / 03</p><h2 id="modules-title" data-i18n="gamesRewardsNav">Games &amp; Rewards</h2></div><p data-i18n="modulesDesc">Tune daily starts and verified-win rewards for every live game. Open the linked console for other service-backed modules.</p></div>
             <article class="admin-panel">
               <div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="runtimeSettings">RUNTIME-BACKED SETTINGS</p><h3 data-i18n="gamesRewards">Games &amp; Rewards</h3></div></div>
               <p class="admin-module-description" data-i18n="gameSettingsNote">The daily free-attempt limit and verified-win Coins reward are connected to the game runtime. Board size, paid attempts, and other hard-coded rules are not editable here.</p>
               <div data-owner-games aria-live="polite"><p class="admin-state" data-i18n="loadingGameSettings">Loading game settings…</p></div>
-            </article>
-            <article class="admin-panel">
-              <div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="publicConfiguration">PUBLIC SITE CONFIGURATION</p><h3 data-i18n="siteSettings">Site Settings</h3></div></div>
-              <form class="admin-form-grid owner-settings-form" data-owner-site-settings>
-                <label class="admin-form-wide"><span data-i18n="tiktokProfile">TikTok profile URL</span><input name="tiktok_url" type="url" maxlength="80" required dir="ltr" /></label>
-                <label class="admin-form-wide"><span data-i18n="siteDescription">Site description</span><textarea name="site_description" maxlength="300" required></textarea></label>
-                <button class="admin-primary-button" type="submit" data-i18n="saveSettings">Save site settings</button>
-              </form>
-              <p class="admin-state" data-owner-settings-updated></p>
             </article>
             <div class="owner-module-grid">
               <a class="owner-module-card" href="events-admin.php"><span>01</span><strong data-i18n="existingAdmin">Existing Admin Dashboard</strong><small data-i18n="existingAdminDesc">Games, rewards, attendance, community events, diamond packages and orders, Coins packages and orders.</small><b data-i18n="openConsole">Open console ↗</b></a>
@@ -165,7 +178,16 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
           </section>
 
           <section class="admin-section" data-panel="activity" aria-labelledby="activity-title" hidden>
-            <div class="admin-section-heading"><div><p class="admin-eyebrow"><span data-i18n="readOnlyAudit">READ-ONLY AUDIT</span> / 05</p><h2 id="activity-title" data-i18n="activity">Admin Activity</h2></div><p data-i18n="activityDesc">Central, read-only view of recorded administrative actions, actor, entity, available metadata, IP address, and timestamp.</p></div>
+            <div class="admin-section-heading"><div><p class="admin-eyebrow"><span data-i18n="siteAudit">SITE SETTINGS &amp; AUDIT LOG</span> / 04</p><h2 id="activity-title" data-i18n="siteAudit">Site Settings &amp; Audit Log</h2></div><p data-i18n="activityDesc">Update public site details and review a chronological, read-only record of administrative actions.</p></div>
+            <article class="admin-panel">
+              <div class="admin-panel-heading"><div><p class="admin-eyebrow" data-i18n="publicConfiguration">PUBLIC SITE CONFIGURATION</p><h3 data-i18n="siteSettings">Site Settings</h3></div></div>
+              <form class="admin-form-grid owner-settings-form" data-owner-site-settings>
+                <label class="admin-form-wide"><span data-i18n="tiktokProfile">TikTok profile URL</span><input name="tiktok_url" type="url" maxlength="80" required dir="ltr" /></label>
+                <label class="admin-form-wide"><span data-i18n="siteDescription">Site description</span><textarea name="site_description" maxlength="300" required></textarea></label>
+                <button class="admin-primary-button" type="submit" data-i18n="saveSettings">Save site settings</button>
+              </form>
+              <p class="admin-state" data-owner-settings-updated></p>
+            </article>
             <div class="admin-panel">
               <form class="admin-order-search" data-owner-activity-search><label><span data-i18n="searchActivity">Search actor or action</span><input name="q" maxlength="100" dir="ltr" data-i18n-placeholder="searchPlaceholder" placeholder="Search..." /></label><button class="admin-secondary-button" type="submit" data-i18n="search">Search</button><button class="admin-secondary-button" type="button" data-owner-activity-refresh data-i18n="refresh">Refresh</button></form>
               <div data-owner-activity aria-live="polite"><p class="admin-state" data-i18n="loadingActivity">Loading audit records…</p></div>

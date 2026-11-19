@@ -1111,17 +1111,23 @@
     }
   });
 
-  loadGames();
-  if (permissions.has("review_coin_orders")) loadOrders();
-  if (permissions.has("view_audit_logs")) loadAudit();
-  if (permissions.has("manage_homepage_rewards")) loadHomepageRewardConfig();
-  if (permissions.has("view_admin_users")) loadAdminUsers("", true);
-  if (permissions.has("manage_community_events")) loadCommunityEvents();
-  if (permissions.has("review_event_suggestions")) loadEventSuggestions();
-  if (permissions.has("manage_diamond_packages")) loadDiamondPackages();
-  if (permissions.has("manage_diamond_orders")) loadDiamondOrders();
-  if (permissions.has("manage_coin_packages") || permissions.has("manage_coin_payment_methods")) {
-    loadCatalog("packages");
-    loadCatalog("methods");
+  const requestedSection = new URLSearchParams(window.location.search).get("section");
+  const requestedNavItem = navItems.find((item) => item.dataset.section === requestedSection && !item.disabled);
+  if (requestedNavItem?.dataset.section) {
+    openSection(requestedNavItem.dataset.section);
+  } else {
+    loadGames();
+    if (permissions.has("review_coin_orders")) loadOrders();
+    if (permissions.has("view_audit_logs")) loadAudit();
+    if (permissions.has("manage_homepage_rewards")) loadHomepageRewardConfig();
+    if (permissions.has("view_admin_users")) loadAdminUsers("", true);
+    if (permissions.has("manage_community_events")) loadCommunityEvents();
+    if (permissions.has("review_event_suggestions")) loadEventSuggestions();
+    if (permissions.has("manage_diamond_packages")) loadDiamondPackages();
+    if (permissions.has("manage_diamond_orders")) loadDiamondOrders();
+    if (permissions.has("manage_coin_packages") || permissions.has("manage_coin_payment_methods")) {
+      loadCatalog("packages");
+      loadCatalog("methods");
+    }
   }
 })();

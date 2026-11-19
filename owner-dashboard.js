@@ -27,9 +27,20 @@
   };
   const translations = {
     en: {
-      overview: "Overview", users: "Users", wallet: "Wallet & Transactions", modules: "Connected Modules",
-      activity: "Admin Activity", ownerVerified: "OWNER ROLE SERVER-VERIFIED", ownerDashboard: "Owner Dashboard",
-      language: "Language", signOut: "Sign out", overviewDesc: "Current account, wallet, event, game, and order data from the connected database.",
+      overview: "Daily Operations", users: "Users", wallet: "Wallet & Transactions", modules: "Connected Modules",
+      activity: "Admin Activity", ownerVerified: "LIVE · OWNER VERIFIED", ownerDashboard: "NEEN Owner Command Center",
+      dailyOperations: "Daily Operations", playersWallet: "Players & Wallet", allSections: "All Sections",
+      gamesRewardsNav: "Games & Rewards", siteAudit: "Site Settings & Audit Log",
+      eventsOrdersAdmin: "Events & Diamond Orders Admin", backToSite: "Back to Live Site",
+      diamondQueue: "DIAMOND ORDER QUEUE", reviewDiamondOrders: "Review diamond orders",
+      diamondQueueDesc: "Check JOD packages, Free Fire Player IDs, and UWallet / CliQ transfer references before approving or fulfilling.",
+      openDiamondQueue: "Open order queue ↗", homepageReward: "HOMEPAGE REWARD",
+      rewardQuickConfig: "Configure daily reward",
+      rewardQuickConfigDesc: "Update the server-backed claim amount and eligibility window without searching the admin menus.",
+      configureReward: "Configure homepage reward ↗", attentionNeeded: "Needs attention",
+      noPendingOrders: "No open orders", coinBalancesSplit: "Earned + Purchased Coins",
+      activeGamesNote: "Active server-validated games",
+      language: "Language", signOut: "Sign out", overviewDesc: "A live snapshot of users, open diamond orders, Coins in circulation, and active games.",
       newAccounts: "New accounts", coinActivity: "Coins activity", rechargeOrders: "Recharge orders", eventVotes: "Event votes",
       recentUsers: "Recent registrations", viewUsers: "View users ↗", recentOrders: "Recent diamond orders",
       openAdmin: "Open admin modules ↗", recentActivity: "Recent admin activity", viewActivity: "View activity ↗",
@@ -40,11 +51,11 @@
       adjustCoins: "Adjust Coins", direction: "Direction", balanceType: "Balance type", amount: "Amount",
       reason: "Reason (required)", submitAdjustment: "Submit adjustment",
       adjustmentWarning: "Every adjustment is permanent in the ledger. Verify the account, balance type, amount, and reason before submitting.",
-      modulesDesc: "Open the existing permission-checked administration console for modules already backed by services and database records.",
+      modulesDesc: "Tune daily starts and verified-win rewards for every live game. Open the linked console for other service-backed modules.",
       existingAdmin: "Existing Admin Dashboard", existingAdminDesc: "Games, rewards, attendance, community events, diamond packages and orders, Coins packages and orders.",
       openConsole: "Open console ↗", charts: "Extended reports",
       reportsScope: "The Overview charts are real 30-day database series. Additional reporting dimensions are not yet implemented.",
-      notAvailable: "Not available", activityDesc: "Central, read-only view of recorded administrative actions, actor, entity, available metadata, IP address, and timestamp.",
+      notAvailable: "Not available", activityDesc: "Update public site details and review a chronological, read-only record of administrative actions.",
       searchActivity: "Search actor or action", account: "Account", email: "Email", created: "Registered", lastActive: "Last active",
       coins: "Coins", diamonds: "Diamonds", roles: "Roles", actions: "Actions", manage: "Manage",
       page: "Page", of: "of", previous: "Previous", next: "Next", noResults: "No records found.",
@@ -78,7 +89,7 @@
       totalCoins: "Coins in wallets", totalOrders: "Diamond orders", pendingOrders: "Open diamond orders",
       cancel: "Cancel", networkError: "Request could not be completed. Check your connection and try again.",
       documentTitle: "Owner Dashboard — NEEN", ownerControlRoom: "OWNER CONTROL ROOM",
-      ownerOperations: "NEEN / OWNER OPERATIONS", ownerRole: "Owner", ownerNavLabel: "Owner navigation",
+      ownerOperations: "NEEN / OWNER COMMAND CENTER", ownerRole: "Owner", ownerNavLabel: "Owner navigation",
       homeLabel: "NEEN Home", sectionsLabel: "Dashboard sections", switchLanguage: "Switch dashboard language",
       liveDatabase: "LIVE DATABASE", thirtyDays: "30 DAYS", latest: "LATEST",
       accountManagement: "ACCOUNT MANAGEMENT", immutableLedger: "IMMUTABLE COINS LEDGER",
@@ -159,9 +170,20 @@
       entity_coin_payment_methods: "Coins payment methods",
     },
     ar: {
-      overview: "نظرة عامة", users: "المستخدمون", wallet: "المحفظة والمعاملات", modules: "الأنظمة المتصلة",
-      activity: "سجل نشاط الإدارة", ownerVerified: "تم التحقق من صلاحية المالك", ownerDashboard: "لوحة المالك",
-      language: "اللغة", signOut: "تسجيل الخروج", overviewDesc: "بيانات الحساب والمحفظة والفعاليات والألعاب والطلبات من قاعدة البيانات.",
+      overview: "العمليات اليومية", users: "المستخدمون", wallet: "المحفظة والمعاملات", modules: "الأنظمة المتصلة",
+      activity: "سجل نشاط الإدارة", ownerVerified: "مباشر · تم التحقق من المالك", ownerDashboard: "مركز قيادة مالك NEEN",
+      dailyOperations: "العمليات اليومية", playersWallet: "اللاعبون والمحفظة", allSections: "كل الأقسام",
+      gamesRewardsNav: "الألعاب والمكافآت", siteAudit: "إعدادات الموقع وسجل النشاط",
+      eventsOrdersAdmin: "إدارة الفعاليات وطلبات الجواهر", backToSite: "العودة إلى الموقع",
+      diamondQueue: "قائمة طلبات الجواهر", reviewDiamondOrders: "مراجعة طلبات الجواهر",
+      diamondQueueDesc: "تحقق من باقات JOD ومعرفات لاعبي Free Fire ومراجع تحويل UWallet أو CliQ قبل الاعتماد أو التسليم.",
+      openDiamondQueue: "فتح قائمة الطلبات ↗", homepageReward: "مكافأة الصفحة الرئيسية",
+      rewardQuickConfig: "إعداد المكافأة اليومية",
+      rewardQuickConfigDesc: "حدّث قيمة المكافأة ومدة الاستحقاق المرتبطتين بالخادم مباشرة.",
+      configureReward: "إعداد مكافأة الصفحة الرئيسية ↗", attentionNeeded: "تتطلب الانتباه",
+      noPendingOrders: "لا توجد طلبات مفتوحة", coinBalancesSplit: "Coins المكتسبة والمشتراة",
+      activeGamesNote: "ألعاب نشطة يتحقق منها الخادم",
+      language: "اللغة", signOut: "تسجيل الخروج", overviewDesc: "ملخص مباشر للمستخدمين وطلبات الجواهر المفتوحة ورصيد Coins والألعاب النشطة.",
       newAccounts: "الحسابات الجديدة", coinActivity: "نشاط العملات", rechargeOrders: "طلبات الشحن", eventVotes: "أصوات الفعاليات",
       recentUsers: "أحدث التسجيلات", viewUsers: "عرض المستخدمين ↗", recentOrders: "أحدث طلبات الجواهر",
       openAdmin: "فتح أقسام الإدارة ↗", recentActivity: "أحدث نشاط إداري", viewActivity: "عرض السجل ↗",
@@ -172,11 +194,11 @@
       adjustCoins: "تعديل العملات", direction: "العملية", balanceType: "نوع الرصيد", amount: "الكمية",
       reason: "السبب (إلزامي)", submitAdjustment: "تنفيذ التعديل",
       adjustmentWarning: "يُسجل كل تعديل نهائيًا. تحقق من الحساب ونوع الرصيد والكمية والسبب قبل التنفيذ.",
-      modulesDesc: "افتح لوحة الإدارة الحالية المحمية بالصلاحيات لإدارة الأنظمة المرتبطة بالخدمات وقاعدة البيانات.",
+      modulesDesc: "اضبط المحاولات اليومية ومكافآت الفوز المتحقق لكل الألعاب. افتح لوحة الإدارة للأنظمة الأخرى المرتبطة بالخدمات.",
       existingAdmin: "لوحة الإدارة الحالية", existingAdminDesc: "الألعاب والمكافآت والحضور والفعاليات وباقات الجواهر وطلباتها وباقات Coins وطلباتها.",
       openConsole: "فتح لوحة الإدارة ↗", charts: "تقارير إضافية",
       reportsScope: "المخططات في النظرة العامة مبنية على بيانات حقيقية لآخر 30 يومًا. لم تنفذ أبعاد تقارير أخرى بعد.",
-      notAvailable: "غير متاح", activityDesc: "سجل مركزي للقراءة فقط يعرض العمليات الإدارية والمنفذ والكيان والبيانات المتاحة وعنوان الشبكة والتوقيت.",
+      notAvailable: "غير متاح", activityDesc: "حدّث بيانات الموقع العامة وراجع سجلًا زمنيًا للقراءة فقط للعمليات الإدارية.",
       searchActivity: "بحث بالمنفذ أو العملية", account: "الحساب", email: "البريد", created: "تاريخ التسجيل", lastActive: "آخر نشاط",
       coins: "Coins", diamonds: "جواهر", roles: "الأدوار", actions: "إجراءات", manage: "إدارة",
       page: "صفحة", of: "من", previous: "السابق", next: "التالي", noResults: "لا توجد سجلات.",
@@ -210,7 +232,7 @@
       totalCoins: "Coins في المحافظ", totalOrders: "طلبات الجواهر", pendingOrders: "طلبات جواهر مفتوحة",
       cancel: "إلغاء", networkError: "تعذر إكمال الطلب. تحقق من الاتصال وحاول مجددًا.",
       documentTitle: "لوحة المالك — NEEN", ownerControlRoom: "غرفة تحكم المالك",
-      ownerOperations: "NEEN / إدارة المالك", ownerRole: "المالك", ownerNavLabel: "تنقل المالك",
+      ownerOperations: "NEEN / مركز قيادة المالك", ownerRole: "المالك", ownerNavLabel: "تنقل المالك",
       homeLabel: "الرئيسية — NEEN", sectionsLabel: "أقسام لوحة التحكم", switchLanguage: "تغيير لغة لوحة التحكم",
       liveDatabase: "قاعدة البيانات المباشرة", thirtyDays: "آخر 30 يومًا", latest: "الأحدث",
       accountManagement: "إدارة الحسابات", immutableLedger: "سجل Coins غير القابل للتغيير",
@@ -417,6 +439,12 @@
   };
 
   const openSection = (section) => {
+    const showAll = section === "wallet";
+    const activePanels = showAll
+      ? panels.map((panel) => panel.dataset.panel)
+      : section === "users"
+        ? ["users", "wallet"]
+        : [section];
     navItems.forEach((item) => {
       const active = item.dataset.section === section;
       item.classList.toggle("is-active", active);
@@ -424,17 +452,15 @@
       else item.removeAttribute("aria-current");
     });
     panels.forEach((panel) => {
-      const active = panel.dataset.panel === section;
+      const active = activePanels.includes(panel.dataset.panel);
       panel.hidden = !active;
       panel.classList.toggle("is-active", active);
     });
-    if (section === "overview") loadOverview();
-    if (section === "users") loadUsers();
-    if (section === "activity") loadActivity();
-    if (section === "modules") {
-      loadGames();
-      loadSiteSettings();
-    }
+    if (activePanels.includes("overview")) loadOverview();
+    if (activePanels.includes("users")) loadUsers();
+    if (activePanels.includes("activity")) loadSiteSettings();
+    if (activePanels.includes("modules")) loadGames();
+    if (activePanels.includes("activity")) loadActivity();
   };
 
   const renderChart = (container, rows) => {
@@ -477,6 +503,9 @@
         action.addEventListener("click", () => selectUser(item.id, "users"));
         row.append(main, action);
       } else if (type === "orders") {
+        const isPending = ["pending", "payment_verification", "paid", "processing"].includes(item.order_status);
+        row.classList.toggle("owner-compact-order", true);
+        row.classList.toggle("is-attention", isPending);
         main.append(markLtr(make("strong", "", `${item.order_number} · ${item.username}`)));
         const orderMeta = make("small");
         orderMeta.append(
@@ -484,6 +513,8 @@
           ltrText(item.player_id),
           " · ",
           ltrText(formatNumber(item.diamond_amount)),
+          " · ",
+          ltrText(`${item.price} ${item.currency_code}`),
           " · ",
           ltrText(formatDate(item.created_at)),
         );
@@ -493,7 +524,8 @@
           reference.append(`${t("paymentReference")}: `, ltrText(item.payment_reference));
           main.append(reference);
         }
-        row.append(main, make("span", "", translateCode(item.order_status)));
+        const status = make("span", `admin-status-pill${isPending ? " is-attention" : ""}`, translateCode(item.order_status));
+        row.append(main, status);
       } else {
         const title = make("strong");
         title.append(
@@ -523,27 +555,26 @@
     try {
       const { overview } = await apiRequest("/api/owner/dashboard");
       const count = overview.counts;
+      const pendingOrders = Number(count.diamond_orders_pending) || 0;
       const values = [
-        ["totalUsers", count.users_total],
-        ["newUsers", count.users_new_30d],
-        ["activeUsers", count.users_active_30d],
-        ["totalCoins", count.coins_circulating],
-        ["walletTransactions", count.wallet_transactions_total],
-        ["totalOrders", count.diamond_orders_total],
-        ["pendingOrders", count.diamond_orders_pending],
-        ["eventsActive", `${formatNumber(count.events_active)} / ${formatNumber(count.events_total)}`],
-        ["votesTotal", count.event_votes_total],
-        ["rewards", count.event_rewards_total],
-        ["claims", count.homepage_reward_claims],
-        ["checkIns", count.attendance_checkins],
-        ["gamesActive", `${formatNumber(count.games_active)} / ${formatNumber(count.games_total)}`],
+        ["totalUsers", count.users_total, ""],
+        ["pendingOrders", pendingOrders, pendingOrders > 0 ? t("attentionNeeded") : t("noPendingOrders")],
+        ["totalCoins", count.coins_circulating, t("coinBalancesSplit")],
+        ["gamesActive", `${formatNumber(count.games_active)} / ${formatNumber(count.games_total)}`, t("activeGamesNote")],
       ];
-      const cards = values.map(([label, value]) => {
+      const cards = values.map(([label, value, note]) => {
         const card = make("article", "owner-stat-card");
-        card.append(make("span", "", t(label)), markLtr(make("strong", "", typeof value === "number" ? formatNumber(value) : value)));
+        const formattedValue = typeof value === "number" ? formatNumber(value) : value;
+        if (label === "pendingOrders" && pendingOrders > 0) card.classList.add("has-attention");
+        card.append(make("span", "", t(label)), markLtr(make("strong", "", formattedValue)));
+        if (note) card.append(make("small", "", note));
         return card;
       });
       stats.replaceChildren(...cards);
+      const orderQueue = document.querySelector("[data-owner-order-queue]");
+      const pendingCount = document.querySelector("[data-owner-pending-count]");
+      if (orderQueue instanceof HTMLElement) orderQueue.classList.toggle("has-pending", pendingOrders > 0);
+      if (pendingCount instanceof HTMLElement) pendingCount.textContent = formatNumber(pendingOrders);
       for (const key of ["users", "wallet_transactions", "diamond_orders", "event_votes"]) {
         const chart = document.querySelector(`[data-chart="${key}"]`);
         if (chart instanceof HTMLElement) renderChart(chart, overview.series[key]);
@@ -1138,6 +1169,7 @@
     if (!document.querySelector('[data-panel="users"]').hidden) loadUsers(state.userPage);
     if (!document.querySelector('[data-panel="activity"]').hidden) loadActivity(state.activityPage);
     if (!document.querySelector('[data-panel="modules"]').hidden) renderGames(state.games);
+    if (!document.querySelector('[data-panel="activity"]').hidden) loadSiteSettings();
   };
   if (languageToggle instanceof HTMLButtonElement) {
     languageToggle.addEventListener("click", () => {

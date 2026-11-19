@@ -82,7 +82,7 @@ if ($hasPermission('manage_coin_packages') || $hasPermission('manage_coin_paymen
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#FFF2F7" />
+    <meta name="theme-color" content="#08070f" />
     <meta name="robots" content="noindex, nofollow" />
     <title>NEEN Admin Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -132,13 +132,18 @@ if ($hasPermission('manage_coin_packages') || $hasPermission('manage_coin_paymen
       <main class="admin-main">
         <header class="admin-topbar">
           <div class="admin-topbar-title">
-            <p class="admin-eyebrow">NEEN / RESTRICTED OPERATIONS</p>
-            <h1>Administration</h1>
+            <p class="admin-eyebrow">NEEN / EVENTS &amp; COMMERCE OPS</p>
+            <h1>Events &amp; Commerce Admin</h1>
           </div>
-          <div class="admin-identity">
-            <span class="admin-avatar" aria-hidden="true"><?= $escape(strtoupper(substr($admin['username'], 0, 1))) ?></span>
-            <span class="admin-identity-copy"><strong><?= $escape($admin['username']) ?></strong><small><?= $escape(implode(', ', $admin['roles'])) ?></small></span>
-            <button class="admin-logout" type="button" data-logout>Sign out</button>
+          <div class="admin-topbar-actions">
+            <?php if (in_array('owner', $admin['roles'], true)): ?>
+              <a class="admin-owner-link" href="owner-dashboard.php">Owner Command Center ↗</a>
+            <?php endif; ?>
+            <div class="admin-identity">
+              <span class="admin-avatar" aria-hidden="true"><?= $escape(strtoupper(substr($admin['username'], 0, 1))) ?></span>
+              <span class="admin-identity-copy"><strong><?= $escape($admin['username']) ?></strong><small><?= $escape(implode(', ', $admin['roles'])) ?></small></span>
+              <button class="admin-logout" type="button" data-logout>Sign out</button>
+            </div>
           </div>
         </header>
 
@@ -206,7 +211,7 @@ if ($hasPermission('manage_coin_packages') || $hasPermission('manage_coin_paymen
           </section>
 
           <?php if ($hasPermission('manage_homepage_rewards')): ?>
-          <section class="admin-section" data-panel="homepage-rewards" aria-labelledby="homepage-rewards-title" hidden>
+          <section class="admin-section" id="homepage-reward-config" data-panel="homepage-rewards" aria-labelledby="homepage-rewards-title" hidden>
             <div class="admin-section-heading"><div><p class="admin-eyebrow">REWARD RULES / 09</p><h2 id="homepage-rewards-title">Homepage Rewards</h2></div><p>Claims are disabled until an authorized administrator configures the reward amount and claim window.</p></div>
             <div class="admin-panel">
               <div data-homepage-reward-config><p class="admin-state">Loading homepage reward settings…</p></div>
@@ -268,7 +273,7 @@ if ($hasPermission('manage_coin_packages') || $hasPermission('manage_coin_paymen
           <?php endif; ?>
 
           <?php if ($hasPermission('manage_diamond_orders')): ?>
-          <section class="admin-section" data-panel="diamond-orders" aria-labelledby="diamond-orders-title" hidden>
+          <section class="admin-section" id="diamond-orders-queue" data-panel="diamond-orders" aria-labelledby="diamond-orders-title" hidden>
             <div class="admin-section-heading"><div><p class="admin-eyebrow">RECHARGE QUEUE</p><h2 id="diamond-orders-title">Diamond Recharge Orders</h2></div><p>Payment and delivery remain manual until approved providers are configured. Every transition records its administrator and note.</p></div>
             <div class="admin-panel">
               <form class="admin-order-search" data-diamond-order-search><label>Search order number or Player ID<input name="q" maxlength="150" /></label><button class="admin-secondary-button" type="submit">Search</button><button class="admin-secondary-button" type="button" data-refresh-diamond-orders>Show all</button></form>
