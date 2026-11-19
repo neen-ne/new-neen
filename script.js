@@ -481,6 +481,105 @@ const arabicTranslations = {
   "When an event is published, its official details and participation rules will be shown here.": "عند نشر فعالية، ستظهر تفاصيلها الرسمية وقواعد المشاركة هنا.",
   "Your NEEN Events Hub profile, points, and participation history.": "ملفك الشخصي ونقاطك وسجل مشاركتك في مركز فعاليات نين.",
   "قيد الإعداد · Setup pending": "قيد الإعداد · الإعداد معلّق",
+  "FREE FIRE": "فري فاير",
+  "CREATOR": "صانعة المحتوى",
+  "@NEEN_0O • FREE FIRE CREATOR": "@NEEN_0O • صانعة محتوى فري فاير",
+  "Watch Free Fire highlights, play five server-validated Coin games, claim Cairo-time daily rewards, and request JOD Diamond top-ups.": "شاهد أبرز لحظات فري فاير، والعب خمس ألعاب كوين يتحقق منها الخادم، واحصل على المكافآت اليومية بتوقيت القاهرة، واطلب شحن الماس بالدينار الأردني.",
+  "PLAY. COMPETE. EARN": "العب. نافس. اكسب",
+  "Play & Earn Coins": "العب واكسب كوينز",
+  "Top-Up Diamonds": "اشحن الماس",
+  "COMPETE": "نافس",
+  "EARN": "اكسب",
+  "5 Coin Mini-Games": "5 ألعاب كوين",
+  "Cairo Daily Rewards": "مكافآت يومية بتوقيت القاهرة",
+  "JOD Jordan Top-Up": "شحن الأردن بالدينار الأردني",
+  "Community Events": "فعاليات المجتمع",
+  "NEEN hub highlights": "أبرز أقسام مركز نين",
+  "/ ABOUT NEEN": "/ عن نين",
+  "THE NEEN GAMING ARENA": "ساحة ألعاب نين",
+  "NEEN Gaming Arena": "ساحة ألعاب نين",
+  "Five games. One world. Play daily challenges and earn server-verified Coins.": "خمس ألعاب. عالم واحد. العب التحديات اليومية واكسب كوينز يتحقق منها الخادم.",
+  "Open Challenges Hub": "افتح مركز التحديات",
+  "FLAGSHIP ADVENTURE": "المغامرة الرئيسية",
+  "NEEN Sunny Island": "جزيرة نين المشمسة",
+  "01 / ISLAND": "01 / الجزيرة",
+  "A 2D cartoon Free Fire adventure across Rim Nam Docks, Peak Ruins, Factory & Drop Yard, and Clock Tower Summit.": "مغامرة كرتونية ثنائية الأبعاد في فري فاير عبر أرصفة ريم نام وأطلال بيك وساحة المصنع والدروبات وقمة برج الساعة.",
+  "Rim Nam Docks": "أرصفة ريم نام",
+  "Peak Ruins": "أطلال بيك",
+  "Factory & Drop Yard": "ساحة المصنع والدروبات",
+  "Clock Tower Summit": "قمة برج الساعة",
+  "Sunny Island zones": "مناطق الجزيرة المشمسة",
+  "Launch Adventure": "ابدأ المغامرة",
+  "50 Earned Coins / verified win": "50 كوين مكتسب / للفوز الموثّق",
+  "YOUR ISLAND. YOUR NEXT DROP.": "جزيرتك. غنيمتك التالية.",
+  "NEEN's signature Free Fire character sticker": "ملصق شخصية نين المميز من فري فاير",
+  "02 / CODE BREAK": "02 / فك الشفرة",
+  "03 / MEMORY RUN": "03 / اختبار الذاكرة",
+  "04 / MATCH & WIN": "04 / طابق واربح",
+  "05 / PUZZLE DROP": "05 / لغز الغنائم",
+  "Crack the secret icon code in six tries.": "اكشف شفرة الأيقونات السرية خلال ست محاولات.",
+  "Watch the sequence, then strike back from memory.": "شاهد التسلسل ثم أعده من ذاكرتك.",
+  "Flip, remember, and pair the loot.": "اقلب البطاقات وتذكّر وطابق الغنائم.",
+  "Rebuild the picture and complete the drop.": "أعد تركيب الصورة وأكمل التحدي.",
+  "Vault Cracker": "كاسر الخزنة",
+  "Loot Sequence": "تسلسل الغنائم",
+  "Memory Match": "مطابقة الذاكرة",
+  "Picture Jigsaw": "تركيب الصور",
+  "Launch Game": "ابدأ اللعبة",
+  "Coin mini-games": "ألعاب الكوين",
+  "NEEN HOURLY DROP": "غنائم نين كل ساعة",
+  "WALLET HUD": "واجهة المحفظة",
+  "/ WALLET HUD": "/ واجهة المحفظة",
+  "ESPORTS DROP": "غنائم الإيسبورت",
+  "& WALLET HUD": "وواجهة المحفظة",
+  "LOCAL 3D PREVIEW": "معاينة ثلاثية الأبعاد محلية",
+  "NOT A WALLET REWARD": "ليست مكافأة للمحفظة",
+  "LOCAL": "محلي",
+  "SERVER-CREDITED REWARD": "مكافأة تُضاف عبر الخادم",
+  "Homepage Reward": "مكافأة الصفحة الرئيسية",
+  "Reward:": "المكافأة:",
+  "Earned Coins": "كوينز مكتسبة",
+  "Wallet balance:": "رصيد المحفظة:",
+  "Coins": "كوينز",
+  "Homepage wallet reward": "مكافأة محفظة الصفحة الرئيسية",
+  "Loading reward status…": "جارٍ تحميل حالة المكافأة…",
+  "Checking your account reward status…": "جارٍ التحقق من حالة مكافأة حسابك…",
+  "Not configured": "غير مُعدّة",
+  "Reward unavailable": "المكافأة غير متاحة",
+  "A manager must configure and enable this reward.": "يجب على المدير إعداد هذه المكافأة وتفعيلها.",
+  "Claim homepage reward": "احصل على مكافأة الصفحة الرئيسية",
+  "Already claimed": "تم الحصول عليها",
+  "Sign in to claim": "سجّل الدخول للحصول عليها",
+  "Sign in to NEEN to check and claim a homepage reward.": "سجّل الدخول إلى نين للتحقق من مكافأة الصفحة الرئيسية والحصول عليها.",
+  "Submitting claim to the server…": "جارٍ إرسال طلب المكافأة إلى الخادم…",
+  "This reward was already claimed; your wallet was not changed.": "تم الحصول على هذه المكافأة من قبل؛ لم يتغير رصيد محفظتك.",
+  "Reward status unavailable": "حالة المكافأة غير متاحة",
+  "The reward service is unavailable.": "خدمة المكافآت غير متاحة.",
+  "The claim could not be completed.": "تعذّر إكمال طلب المكافأة.",
+  "Open Vault Cracker": "افتح لعبة كاسر الخزنة",
+  "Open Loot Sequence": "افتح لعبة تسلسل الغنائم",
+  "Open Memory Match": "افتح لعبة مطابقة الذاكرة",
+  "Open Picture Jigsaw": "افتح لعبة تركيب الصور",
+  "Creator Spotlight": "منشئة المحتوى",
+  "CREATOR SPOTLIGHT": "منشئة المحتوى",
+  "ABOUT NEEN": "عن نين",
+  "Free Fire highlights, events, updates, skins, and community rewards — made with creativity, passion, and the NEEN style.": "أبرز لحظات فري فاير والفعاليات والتحديثات والسكنات ومكافآت المجتمع، بإبداع وشغف وبأسلوب نين.",
+  "TIKTOK HIGHLIGHTS": "أبرز مقاطع تيك توك",
+  "HIGHLIGHTS.": "أبرز اللحظات.",
+  "Three Free Fire moments from @NEEN_0O. Select Play Clip to load a video, or open it directly on TikTok.": "ثلاث لحظات من فري فاير مع @NEEN_0O. اختر تشغيل المقطع لتحميل الفيديو أو افتحه مباشرةً على تيك توك.",
+  "Play Clip": "شغّل المقطع",
+  "Play NEEN TikTok video 1": "شغّل فيديو نين الأول على تيك توك",
+  "Play NEEN TikTok video 2": "شغّل فيديو نين الثاني على تيك توك",
+  "Play NEEN TikTok video 3": "شغّل فيديو نين الثالث على تيك توك",
+  "THE CHARACTER": "الشخصية",
+  "ARCHIVE": "الأرشيف",
+  "JORDAN DIAMONDS & COMMUNITY": "ألماس الأردن والمجتمع",
+  "GEAR UP?": "هل أنت مستعد؟",
+  "Explore JOD diamond packages or join the NEEN community on TikTok.": "استكشف باقات الماس بالدينار الأردني أو انضم إلى مجتمع نين على تيك توك.",
+  "View JOD Diamond Packages": "عرض باقات الماس بالدينار الأردني",
+  "Join the TikTok Community ↗": "انضم إلى مجتمع تيك توك ↗",
+  "ARCADE": "الألعاب",
+  "NEEN (@NEEN_0O) — Free Fire creator hub. Watch highlights, play Coin games, claim daily rewards, and explore JOD diamond top-ups.": "نين (@NEEN_0O) — مركز صانعة محتوى فري فاير. شاهد أبرز اللحظات والعب ألعاب الكوين واحصل على المكافآت اليومية واستكشف شحن الماس بالدينار الأردني.",
 };
 
 const englishToArabic = new Map(Object.entries(arabicTranslations));
@@ -512,6 +611,30 @@ try {
 
 const localizeValue = (value, language) => {
   const key = normalizeLocalizedText(value);
+  const englishClaimAvailability = key.match(/^Claim availability ends (.+) \(UTC\)\.$/);
+  if (language === "ar" && englishClaimAvailability) {
+    return `ينتهي وقت المطالبة في ${englishClaimAvailability[1]} (UTC).`;
+  }
+  const arabicClaimAvailability = key.match(/^ينتهي وقت المطالبة في (.+) \(UTC\)\.$/);
+  if (language === "en" && arabicClaimAvailability) {
+    return `Claim availability ends ${arabicClaimAvailability[1]} (UTC).`;
+  }
+  const englishNextRewardWindow = key.match(/^You have claimed this reward window\. Next window: (.+)\.$/);
+  if (language === "ar" && englishNextRewardWindow) {
+    return `لقد حصلت على مكافأة هذه الفترة. الفترة التالية: ${englishNextRewardWindow[1]}.`;
+  }
+  const arabicNextRewardWindow = key.match(/^لقد حصلت على مكافأة هذه الفترة\. الفترة التالية: (.+)\.$/);
+  if (language === "en" && arabicNextRewardWindow) {
+    return `You have claimed this reward window. Next window: ${arabicNextRewardWindow[1]}.`;
+  }
+  const englishCoinCredit = key.match(/^([\d٠-٩][\d٠-٩,٬.٫\s]*) Earned Coins were credited to your wallet\.$/);
+  if (language === "ar" && englishCoinCredit) {
+    return `تمت إضافة ${englishCoinCredit[1].trim()} كوينز مكتسبة إلى محفظتك.`;
+  }
+  const arabicCoinCredit = key.match(/^تمت إضافة ([\d٠-٩][\d٠-٩,٬.٫\s]*) كوينز مكتسبة إلى محفظتك\.$/);
+  if (language === "en" && arabicCoinCredit) {
+    return `${arabicCoinCredit[1].trim()} Earned Coins were credited to your wallet.`;
+  }
   const englishDiamondAmount = key.match(/^([\d٠-٩][\d٠-٩,٬.٫\s]*) diamonds$/);
   if (language === "ar" && englishDiamondAmount) {
     return `${englishDiamondAmount[1]} جوهرة`;
@@ -907,7 +1030,7 @@ if (homeHero instanceof HTMLElement && homeHeroArt instanceof HTMLElement && fin
 }
 
 const revealTargets = document.querySelectorAll(
-  ".section-heading, .home-feature, .home-video-inner, .home-gallery-preview, .page-intro, .video-card, .about-page-art, .about-page-copy, .gallery-card, .diamonds-layout, .diamonds-safety, .page-bottom-cta",
+  ".section-heading, .home-feature, .hub-highlight-card, .arcade-spotlight, .arcade-card, .home-video-inner, .home-gallery-preview, .creator-spotlight, .loot-drop-section, .page-intro, .video-card, .about-page-art, .about-page-copy, .gallery-card, .diamonds-layout, .diamonds-safety, .page-bottom-cta",
 );
 
 if ("IntersectionObserver" in window) {
@@ -927,6 +1050,36 @@ if ("IntersectionObserver" in window) {
 
   revealTargets.forEach((element) => revealObserver.observe(element));
 }
+
+const allowedHomeVideoIds = new Set([
+  "7699119888232713492",
+  "7700614337265683733",
+  "7700918878892756230",
+]);
+
+document.querySelectorAll("[data-tiktok-load]").forEach((button) => {
+  if (!(button instanceof HTMLButtonElement)) return;
+
+  button.addEventListener("click", () => {
+    const videoId = button.dataset.videoId;
+    const videoSlot = button.closest(".home-video-card")?.querySelector("[data-tiktok-slot]");
+    if (!videoId || !allowedHomeVideoIds.has(videoId) || !(videoSlot instanceof HTMLElement)) return;
+
+    const iframe = document.createElement("iframe");
+    iframe.src = `https://www.tiktok.com/player/v1/${videoId}?music_info=1&description=1`;
+    iframe.title = button.dataset.videoTitle || "NEEN TikTok video";
+    iframe.loading = "eager";
+    iframe.allow = "encrypted-media; fullscreen; picture-in-picture; web-share";
+    iframe.allowFullscreen = true;
+    iframe.referrerPolicy = "strict-origin-when-cross-origin";
+
+    const poster = videoSlot.querySelector(".home-video-poster");
+    if (poster instanceof HTMLImageElement) poster.hidden = true;
+    button.hidden = true;
+    videoSlot.append(iframe);
+    iframe.focus();
+  });
+});
 
 const galleryButtons = [...document.querySelectorAll(".gallery-image-button")];
 const lightbox = document.querySelector(".lightbox");
