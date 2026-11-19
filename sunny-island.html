@@ -38,7 +38,10 @@
         <section class="sunny-game-shell" aria-label="Sunny Island game">
           <div class="sunny-topbar">
             <div class="sunny-player-card">
-              <span class="sunny-level-badge" data-level>1</span>
+              <span class="sunny-avatar-badge">
+                <img data-avatar-portrait src="/assets/hero-loot/snoop-sticker-01.png" alt="NEEN avatar: Moonlit Fox" />
+                <span class="sunny-level-badge" data-level>1</span>
+              </span>
               <div class="sunny-player-progress">
                 <strong>Island Level <span data-level-label>1</span></strong>
                 <span class="sunny-xp-track"><span data-xp-fill></span></span>
@@ -49,6 +52,20 @@
               <span aria-hidden="true">✦</span>
               <div><small>Earned Coins</small><strong data-earned-balance>—</strong></div>
             </div>
+            <label class="sunny-avatar-picker">
+              <span>Avatar style</span>
+              <select data-avatar-select aria-label="Choose your NEEN avatar">
+                <option value="snoop-sticker-01">01 · Moonlit Fox</option>
+                <option value="snoop-sticker-02">02 · NEEN Duo</option>
+                <option value="snoop-sticker-03">03 · Rocket Duo</option>
+                <option value="snoop-sticker-04">04 · Crown King</option>
+                <option value="snoop-sticker-05">05 · Neon Fox</option>
+                <option value="snoop-sticker-06">06 · Cosmic Buddy</option>
+                <option value="snoop-sticker-07">07 · Study Duo</option>
+                <option value="snoop-sticker-08">08 · Victory Duo</option>
+                <option value="snoop-sticker-09">09 · Sunset Fox</option>
+              </select>
+            </label>
             <div class="sunny-actions-top">
               <button class="sunny-quiet-button" type="button" data-codex-open aria-haspopup="dialog">Island Codex <span data-codex-count>0/9</span></button>
               <button class="sunny-main-button" type="button" data-adventure-start>Start Daily Adventure</button>

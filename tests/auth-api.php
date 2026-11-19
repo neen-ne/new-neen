@@ -2139,8 +2139,11 @@ try {
         $sunnyPageStatus === 200
         && str_contains($sunnyPage, 'data-island-canvas')
         && str_contains($sunnyPage, 'data-codex-dialog')
+        && str_contains($sunnyPage, 'data-avatar-select')
+        && str_contains($sunnyPage, 'data-avatar-portrait')
+        && substr_count($sunnyPage, '<option value="snoop-sticker-') === 9
         && str_contains($sunnyPage, 'sunny-island.js'),
-        'Sunny Island serves its playable canvas, collectible Codex, and frontend engine',
+        'Sunny Island serves the playable canvas, Codex, and all nine NEEN avatar styles',
     );
 
     [$status] = request($baseUrl, '/api/attendance/daily', $anonymousCookies);

@@ -9,6 +9,8 @@
   const objectivesNode = document.querySelector("[data-objectives]");
   const startButton = document.querySelector("[data-adventure-start]");
   const completeButton = document.querySelector("[data-adventure-complete]");
+  const avatarSelect = document.querySelector("[data-avatar-select]");
+  const avatarPortrait = document.querySelector("[data-avatar-portrait]");
   const actionButton = document.querySelector("[data-action-button]");
   const touchActionButton = document.querySelector("[data-touch-action]");
   const jumpButton = document.querySelector("[data-jump-button]");
@@ -65,6 +67,28 @@
     { id: "sunset_sticker", zone: "neon_pier", x: 755, y: 340, label: "Sunset Sticker" },
     { id: "canyon_sticker", zone: "sunset_ridge", x: 1165, y: 720, label: "Canyon Sticker" },
   ];
+  const AVATAR_STICKERS = [
+    { id: "snoop-sticker-01", name: "Moonlit Fox", image: "/assets/hero-loot/snoop-sticker-01.png", crop: [38, 0, 335, 360] },
+    { id: "snoop-sticker-02", name: "NEEN Duo", image: "/assets/hero-loot/snoop-sticker-02.png", crop: [230, 98, 175, 270] },
+    { id: "snoop-sticker-03", name: "Rocket Duo", image: "/assets/hero-loot/snoop-sticker-03.png", crop: [26, 54, 180, 214] },
+    { id: "snoop-sticker-04", name: "Crown King", image: "/assets/hero-loot/snoop-sticker-04.png", crop: [14, 0, 260, 294] },
+    { id: "snoop-sticker-05", name: "Neon Fox", image: "/assets/hero-loot/snoop-sticker-05.png", crop: [22, 0, 374, 356] },
+    { id: "snoop-sticker-06", name: "Cosmic Buddy", image: "/assets/hero-loot/snoop-sticker-06.png", crop: [65, 16, 280, 232] },
+    { id: "snoop-sticker-07", name: "Study Duo", image: "/assets/hero-loot/snoop-sticker-07.png", crop: [235, 70, 155, 176] },
+    { id: "snoop-sticker-08", name: "Victory Duo", image: "/assets/hero-loot/snoop-sticker-08.png", crop: [230, 52, 175, 194] },
+    { id: "snoop-sticker-09", name: "Sunset Fox", image: "/assets/hero-loot/snoop-sticker-09.png", crop: [167, 0, 218, 234] },
+  ];
+  const AVATAR_STORAGE_KEY = "neen_sunny_avatar";
+  const readSavedAvatar = () => {
+    try {
+      const saved = window.localStorage.getItem(AVATAR_STORAGE_KEY);
+      return AVATAR_STICKERS.some((avatar) => avatar.id === saved)
+        ? saved
+        : AVATAR_STICKERS[0].id;
+    } catch {
+      return AVATAR_STICKERS[0].id;
+    }
+  };
   const AMBIENT_ART = Array.from({ length: 5 }, (_, index) => ({
     zone: ["neon_pier", "palm_grove", "loot_canyon", "sunset_ridge", "palm_grove"][index],
     x: [1140, 650, 1290, 930, 1350][index],
@@ -102,6 +126,7 @@
       last_position: null,
     },
     codex: [],
+    avatarId: readSavedAvatar(),
     adventure: { attempts_remaining_today: 0, free_attempts_per_day: 3, reward_amount_coins: 50 },
     earnedCoins: null,
     position: { zone: "neon_pier", x: 150, y: 520 },
@@ -167,6 +192,24 @@
     statusNode.classList.toggle("is-error", isError);
   };
 
+  const setAvatar = (avatarId, persist = false) => {
+    const avatar = AVATAR_STICKERS.find((item) => item.id === avatarId);
+    if (!avatar) return;
+    state.avatarId = avatar.id;
+    if (avatarPortrait instanceof HTMLImageElement) {
+      avatarPortrait.src = avatar.image;
+      avatarPortrait.alt = `NEEN avatar: ${avatar.name}`;
+    }
+    if (avatarSelect instanceof HTMLSelectElement) avatarSelect.value = avatar.id;
+    if (!persist) return;
+    try {
+      window.localStorage.setItem(AVATAR_STORAGE_KEY, avatar.id);
+      setStatus(`${avatar.name} avatar selected and saved in this browser.`);
+    } catch {
+      setStatus("Avatar changed, but your browser could not save this selection.", true);
+    }
+  };
+
   const formatNumber = (value) => new Intl.NumberFormat().format(Number(value) || 0);
 
   const imageFor = (id) => state.images.get(id);
@@ -187,6 +230,14 @@
       image.src = `/assets/hero-loot/${ambient.imageId}.png`;
       image.addEventListener("load", () => state.dirty = true, { once: true });
       state.images.set(ambient.imageId, image);
+    }
+    for (const avatar of AVATAR_STICKERS) {
+      const key = `avatar-${avatar.id}`;
+      if (state.images.has(key)) continue;
+      const image = new Image();
+      image.decoding = "async";
+      image.src = avatar.image;
+      state.images.set(key, image);
     }
   };
 
@@ -1128,9 +1179,12 @@
     const jumpProgress = state.jumpUntil > now ? 1 - (state.jumpUntil - now) / 560 : 0;
     const jumpHeight = state.jumpUntil > now ? Math.sin(jumpProgress * Math.PI) * 47 : 0;
     const dashActive = state.dashUntil > now;
-    const bob = moving ? Math.sin(time * .025) * 5 : Math.sin(time * .004) * 2;
+    const runCycle = moving ? Math.sin(time * 14) : Math.sin(time * 2) * .15;
+    const bob = moving ? Math.sin(time * 14) * 2.5 : Math.sin(time * 2) * 2;
     const squashX = state.jumpUntil > now && jumpProgress < .12 ? 1.13 : 1;
     const squashY = state.jumpUntil > now && jumpProgress < .12 ? .82 : 1;
+    const avatar = AVATAR_STICKERS.find((item) => item.id === state.avatarId) || AVATAR_STICKERS[0];
+    const avatarImage = imageFor(`avatar-${avatar.id}`);
     const x = state.position.x;
     const y = state.position.y - jumpHeight + bob;
     ctx.save();
@@ -1139,68 +1193,165 @@
     ctx.beginPath();
     ctx.ellipse(0, 26 + jumpHeight * .42, 29 - jumpHeight * .15, 11 - jumpHeight * .04, 0, 0, Math.PI * 2);
     ctx.fill();
-    if (dashActive) {
-      ctx.globalAlpha = .38;
-      ctx.fillStyle = "#fff";
-      ctx.beginPath();
-      ctx.ellipse(-state.facing.x * 36, 0, 35, 20, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    }
     ctx.scale(squashX, squashY);
-    ctx.fillStyle = "#8a5948";
+    ctx.scale(state.facing.x < -.15 ? -1 : 1, 1);
+    if (dashActive) {
+    ctx.globalAlpha = .18;
+    ctx.fillStyle = "#86f5ff";
     ctx.beginPath();
-    ctx.ellipse(-16, 4, 13, 21, -.18, 0, Math.PI * 2);
+    ctx.ellipse(-38, -20, 38, 40, 0, 0, Math.PI * 2);
     ctx.fill();
-    drawRoundRect(ctx, -28, -5, 17, 26, 7, "#e78052", "#24495a");
-    ctx.fillStyle = "#24495a";
+    ctx.globalAlpha = 1;
+    }
+
+    drawRoundRect(ctx, -27, -18, 16, 30, 7, "#15264a", "#34547d");
+    ctx.fillStyle = "#f4d0b5";
+    ctx.strokeStyle = "#25375b";
+    ctx.lineWidth = 8;
+    ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.ellipse(-10, 20 + (moving ? Math.sin(time * .03) * 3 : 0), 9, 6, 0, 0, Math.PI * 2);
-    ctx.ellipse(10, 20 + (moving ? -Math.sin(time * .03) * 3 : 0), 9, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#f39a5d";
-    ctx.strokeStyle = "#24495a";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.ellipse(0, 1, 24, 26, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(-7, 9);
+    ctx.quadraticCurveTo(-8 + runCycle * 5, 19, -10 + runCycle * 6, 26);
+    ctx.moveTo(7, 9);
+    ctx.quadraticCurveTo(8 - runCycle * 5, 19, 10 - runCycle * 6, 26);
     ctx.stroke();
-    ctx.fillStyle = "#f3bf60";
+    drawRoundRect(ctx, -18 + runCycle * 6, 23, 18, 8, 4, "#f7f5ef", "#304468");
+    drawRoundRect(ctx, 1 - runCycle * 6, 23, 18, 8, 4, "#f7f5ef", "#304468");
+
+    ctx.fillStyle = "#171b36";
+    ctx.strokeStyle = "#25375b";
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(0, -29, 23, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#f7d0a1";
-    ctx.beginPath();
-    ctx.ellipse(1, -24, 16, 15, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#304e5a";
-    ctx.beginPath();
-    ctx.arc(-6, -27, 2.2, 0, Math.PI * 2);
-    ctx.arc(7, -27, 2.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#b8664c";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(1, -21, 5, .15, Math.PI - .15);
-    ctx.stroke();
-    ctx.fillStyle = "#42d5dc";
-    ctx.strokeStyle = "#28546a";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.roundRect(-20, -38, 40, 9, 4);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#ffcf57";
-    ctx.beginPath();
-    ctx.moveTo(-8, -49);
-    ctx.lineTo(-6, -62);
-    ctx.lineTo(0, -54);
-    ctx.lineTo(7, -63);
-    ctx.lineTo(10, -49);
+    ctx.moveTo(-16, -12);
+    ctx.quadraticCurveTo(-14, -23, -6, -23);
+    ctx.lineTo(6, -23);
+    ctx.quadraticCurveTo(15, -21, 17, -11);
+    ctx.lineTo(13, 9);
+    ctx.quadraticCurveTo(0, 15, -13, 9);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+    ctx.fillStyle = "#101a34";
+    ctx.beginPath();
+    ctx.moveTo(-13, 5);
+    ctx.lineTo(13, 5);
+    ctx.lineTo(19, 17);
+    ctx.quadraticCurveTo(0, 22, -19, 17);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#e5bf61";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-12, 8);
+    ctx.lineTo(12, 8);
+    ctx.stroke();
+    drawRoundRect(ctx, -3, 10, 6, 7, 2, "#f2cb68", "#d59644");
+
+    ctx.lineWidth = 12;
+    ctx.strokeStyle = "#1c2e57";
+    ctx.beginPath();
+    ctx.moveTo(-13, -17);
+    ctx.quadraticCurveTo(-23 + runCycle * 3, -11, -22 + runCycle * 5, 0);
+    ctx.moveTo(13, -17);
+    ctx.quadraticCurveTo(23 - runCycle * 3, -11, 22 - runCycle * 5, 0);
+    ctx.stroke();
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = "#2787c5";
+    ctx.beginPath();
+    ctx.moveTo(-13, -17);
+    ctx.quadraticCurveTo(-23 + runCycle * 3, -11, -22 + runCycle * 5, 0);
+    ctx.moveTo(13, -17);
+    ctx.quadraticCurveTo(23 - runCycle * 3, -11, 22 - runCycle * 5, 0);
+    ctx.stroke();
+    ctx.strokeStyle = "#80f8ff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-18, -16);
+    ctx.lineTo(-14, -10);
+    ctx.lineTo(-20, -4);
+    ctx.moveTo(18, -16);
+    ctx.lineTo(14, -10);
+    ctx.lineTo(20, -4);
+    ctx.stroke();
+
+    ctx.fillStyle = "#f0c8aa";
+    ctx.beginPath();
+    ctx.arc(-22 + runCycle * 5, 1, 5, 0, Math.PI * 2);
+    ctx.arc(22 - runCycle * 5, 1, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#dde4ed";
+    ctx.strokeStyle = "#25375b";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, -15, 8, .15, Math.PI - .15);
+    ctx.stroke();
+    ctx.strokeStyle = "#80f8ff";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, -15, 5, .15, Math.PI - .15);
+    ctx.stroke();
+
+    if (avatarImage?.complete && avatarImage.naturalWidth) {
+    const [sourceX, sourceY, sourceWidth, sourceHeight] = avatar.crop;
+    const scale = Math.min(78 / sourceWidth, 82 / sourceHeight);
+    const width = sourceWidth * scale;
+    const height = sourceHeight * scale;
+    ctx.drawImage(
+      avatarImage,
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
+      -width / 2,
+      -98,
+      width,
+      height,
+    );
+    } else {
+    ctx.fillStyle = "#e5e9f4";
+    ctx.strokeStyle = "#354d72";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-21, -48);
+    ctx.lineTo(-25, -77);
+    ctx.lineTo(-5, -63);
+    ctx.lineTo(0, -80);
+    ctx.lineTo(8, -62);
+    ctx.lineTo(25, -78);
+    ctx.lineTo(21, -47);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#efc9ae";
+    ctx.beginPath();
+    ctx.ellipse(0, -48, 19, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#101b31";
+    ctx.fillRect(-20, -58, 40, 9);
+    ctx.strokeStyle = "#2cd7e5";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-14, -53);
+    ctx.lineTo(14, -53);
+    ctx.stroke();
+    ctx.fillStyle = "#e8bb54";
+    ctx.beginPath();
+    ctx.moveTo(0, -72);
+    ctx.lineTo(5, -65);
+    ctx.lineTo(0, -58);
+    ctx.lineTo(-5, -65);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#513a59";
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(-8, -42);
+    ctx.quadraticCurveTo(-4, -38, 0, -42);
+    ctx.moveTo(0, -42);
+    ctx.quadraticCurveTo(5, -38, 9, -42);
+    ctx.stroke();
+    }
     ctx.restore();
   };
 
@@ -1338,14 +1489,26 @@
     if (!codexDialog.open) codexDialog.showModal();
   };
 
+  const normalizeKey = (key) => ({
+    arrowup: "ArrowUp",
+    arrowdown: "ArrowDown",
+    arrowleft: "ArrowLeft",
+    arrowright: "ArrowRight",
+  }[key.toLowerCase()] || key.toLowerCase());
+
+  if (avatarSelect instanceof HTMLSelectElement) {
+    avatarSelect.addEventListener("change", () => setAvatar(avatarSelect.value, true));
+  }
+
   canvas.addEventListener("pointerdown", (event) => {
     if (event.pointerType === "touch") event.preventDefault();
     canvas.focus({ preventScroll: true });
   });
   window.addEventListener("keydown", (event) => {
     if (codexDialog.open && event.key !== "Escape") return;
-    const key = event.key.toLowerCase();
-    if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) event.preventDefault();
+    if (event.target === avatarSelect) return;
+    const key = normalizeKey(event.key);
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(key)) event.preventDefault();
     if (key === " " && !event.repeat) {
       if (state.activeInteraction) void interact();
       else jump();
@@ -1363,13 +1526,12 @@
       openCodex();
       return;
     }
-    if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
-      state.keys.add(key.startsWith("arrow") ? key.replace("arrow", "Arrow") : key);
+    if (["w", "a", "s", "d", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
+      state.keys.add(key);
     }
   });
   window.addEventListener("keyup", (event) => {
-    const key = event.key.toLowerCase();
-    state.keys.delete(key.startsWith("arrow") ? key.replace("arrow", "Arrow") : key);
+    state.keys.delete(normalizeKey(event.key));
   });
   window.addEventListener("blur", () => state.keys.clear());
 
@@ -1472,6 +1634,7 @@
     { id: "canyon_sticker", name: "Canyon Sticker", image: "/assets/hero-loot/snoop-sticker-04.png" },
   ];
   state.codex = initialCatalog;
+  setAvatar(state.avatarId);
   loadImages(initialCatalog);
   renderProgress();
   renderMap();

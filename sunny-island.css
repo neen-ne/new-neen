@@ -94,19 +94,42 @@
   gap: 11px;
 }
 
-.sunny-level-badge {
+.sunny-avatar-badge {
   display: grid;
-  width: 43px;
-  height: 43px;
+  position: relative;
+  width: 52px;
+  height: 52px;
   flex: 0 0 auto;
   place-items: center;
-  border: 3px solid #fff;
-  border-radius: 15px 15px 15px 5px;
+  border: 2px solid #fff;
+  border-radius: 16px 16px 16px 5px;
+  background: radial-gradient(circle at 50% 35%, #f5ffff, #cceef2);
+  box-shadow: 0 3px 0 #85bfc7;
+}
+
+.sunny-avatar-badge img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px rgb(34 67 86 / 18%));
+}
+
+.sunny-level-badge {
+  position: absolute;
+  right: -6px;
+  bottom: -5px;
+  display: grid;
+  width: 21px;
+  height: 21px;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
   background: #e99a43;
-  box-shadow: 0 3px 0 #c67335;
+  box-shadow: 0 2px 0 #c67335;
   color: white;
   font-family: var(--display);
-  font-size: 19px;
+  font-size: 10px;
   font-weight: 800;
 }
 
@@ -124,6 +147,32 @@
 .sunny-player-progress small {
   color: #718996;
   font-size: 9px;
+}
+
+.sunny-avatar-picker {
+  display: grid;
+  min-width: 154px;
+  gap: 4px;
+  color: #587582;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.sunny-avatar-picker select {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 30px 0 10px;
+  border: 1px solid #d5e7eb;
+  border-radius: 10px;
+  background: #f7fcfc;
+  color: #2e596a;
+  font: inherit;
+  font-size: 10px;
+}
+
+.sunny-avatar-picker select:focus-visible {
+  outline: 3px solid rgb(55 177 191 / 32%);
+  outline-offset: 2px;
 }
 
 .sunny-xp-track {
@@ -848,6 +897,9 @@
   }
   .sunny-player-card {
     min-width: 0;
+  }
+  .sunny-avatar-picker {
+    grid-column: 1 / -1;
   }
   .sunny-player-progress {
     width: min(160px, 35vw);
