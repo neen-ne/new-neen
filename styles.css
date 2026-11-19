@@ -8425,20 +8425,21 @@ html[dir="rtl"] .home-page .loot-drop-hud {
 
 .home-page .home-hero .hero-content h1 {
   margin: 16px 0 0;
-  color: #b44f87;
+  color: #c92a7b;
+  -webkit-text-fill-color: #c92a7b;
   font-family: var(--display);
   font-size: clamp(68px, 8vw, 118px);
   font-weight: 800;
   letter-spacing: -0.055em;
   line-height: 0.9;
-  text-shadow: 0 2px 0 #fff, 0 5px 0 rgb(180 79 135 / 16%);
+  text-shadow: 0 8px 24px rgb(180 79 135 / 22%);
 }
 
 .home-page .home-hero .hero-content h1 .hero-word {
-  color: #d65f96;
-  background: linear-gradient(115deg, #d65f96, #b44f87);
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #c92a7b;
+  background: none;
+  -webkit-text-fill-color: #c92a7b;
+  text-shadow: 0 8px 24px rgb(180 79 135 / 22%);
 }
 
 .home-page .home-hero .hero-content h1::after {
@@ -8447,9 +8448,9 @@ html[dir="rtl"] .home-page .loot-drop-hud {
 }
 
 .home-page .home-hero .hero-sparkle {
-  color: #b44f87;
+  color: #d65f96;
   filter: none;
-  -webkit-text-fill-color: #b44f87;
+  -webkit-text-fill-color: #d65f96;
 }
 
 .home-page .home-hero .hero-copy {
@@ -8665,12 +8666,14 @@ html[dir="rtl"] .home-page .loot-drop-heading {
     max-height: none;
     grid-column: 1;
     grid-row: 1;
-    aspect-ratio: 16 / 10.5;
+    aspect-ratio: 4 / 3.4;
+    min-height: 270px;
     justify-self: center;
   }
 
   .home-page .home-hero .hero-art img {
-    object-position: 52% 22%;
+    object-fit: cover;
+    object-position: 56% 14%;
   }
 
   .home-page .home-hero .hero-content {
@@ -8737,6 +8740,18 @@ html[dir="rtl"] .home-page .loot-drop-heading {
 
   html[dir="rtl"] .home-page .loot-drop-heading {
     margin: 10px 10px 0 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-page .home-hero .hero-art {
+    aspect-ratio: 4 / 3.4;
+    min-height: 270px;
+  }
+
+  .home-page .home-hero .hero-art img {
+    object-fit: cover;
+    object-position: 56% 14%;
   }
 }
 
