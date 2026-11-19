@@ -1251,143 +1251,121 @@
   }
 }
 
-.account-card {
-  border-color: rgb(255 255 255 / 13%);
-  background: #110e1f;
-  box-shadow: 0 18px 55px rgb(0 0 0 / 30%);
-}
-
 .account-tab.is-active {
-  background: #ff4fa3;
-  color: #08070f;
-}
-
-.account-verification-state {
-  color: #ff83c1;
-}
-
-.account-verification-state.is-verified {
-  color: #fbbf24;
-}
-
-.account-field input,
-.account-field textarea,
-.account-field select {
-  border-color: rgb(255 255 255 / 15%);
-  background: #08070f;
-  color: #f7f3ff;
-}
-
-.account-field input:focus,
-.account-field textarea:focus,
-.account-field select:focus {
-  border-color: #ff4fa3;
-  outline-color: rgb(255 79 163 / 28%);
+  background: var(--magenta);
+  color: #fff;
 }
 
 .account-profile {
-  --hub-bg: #08070f;
-  --hub-panel: #110e1f;
-  --hub-panel-soft: #18132b;
-  --hub-line: rgb(255 255 255 / 14%);
-  --hub-text: #f7f3ff;
-  --hub-muted: #c9c1d3;
-  --hub-cyan: #ff83c1;
-  --hub-pink: #ff4fa3;
-  border-color: rgb(255 79 163 / 24%);
+  --hub-bg: var(--bg);
+  --hub-panel: var(--surface);
+  --hub-panel-soft: var(--surface-raised);
+  --hub-line: var(--border);
+  --hub-text: var(--text);
+  --hub-muted: var(--text-secondary);
+  --hub-cyan: var(--magenta);
+  --hub-pink: var(--pink);
+  border-color: var(--border);
   background:
-    radial-gradient(ellipse at 92% 0%, rgb(255 79 163 / 12%), transparent 36%),
-    radial-gradient(ellipse at 4% 92%, rgb(251 191 36 / 5%), transparent 32%),
-    linear-gradient(145deg, #08070f, #110e1f 58%, #08070f);
-  box-shadow: 0 24px 70px rgb(0 0 0 / 36%);
+    radial-gradient(ellipse at 92% 0%, rgb(214 95 150 / 9%), transparent 36%),
+    linear-gradient(145deg, var(--surface), var(--surface-raised) 58%, var(--surface));
+  box-shadow: var(--soft-shadow);
+  color-scheme: light;
+}
+
+.account-profile .section-eyebrow,
+.profile-community-link,
+.profile-inline-link,
+.profile-game-card a,
+.account-profile .account-text-button {
+  color: var(--magenta);
 }
 
 .profile-community-link {
-  background: rgb(255 255 255 / 4%);
+  background: var(--surface-raised);
 }
 
 .profile-community-link:hover,
 .profile-inline-link:hover,
 .profile-game-card a:hover {
-  color: #ff83c1;
+  color: #773557;
 }
 
 .gamer-hero {
-  background:
-    radial-gradient(ellipse at 0% 0%, rgb(255 79 163 / 13%), transparent 52%),
-    linear-gradient(120deg, #18132b, #110e1f 62%);
+  background: linear-gradient(120deg, var(--surface-raised), var(--surface) 62%);
 }
 
 .gamer-avatar-frame {
-  border-color: rgb(255 79 163 / 68%);
-  background: linear-gradient(145deg, #ff4fa3, #fbbf24);
-  box-shadow: 0 10px 28px rgb(255 79 163 / 18%);
+  border-color: rgb(180 79 135 / 48%);
+  background: linear-gradient(145deg, var(--pink-bright), var(--magenta));
+  box-shadow: 0 10px 24px rgb(157 100 139 / 15%);
 }
 
-.gamer-avatar-frame img {
-  background: #18132b;
+.gamer-avatar-frame img,
+.avatar-preview-wrap {
+  background: var(--surface-raised);
 }
 
 .gamer-level-chip {
-  border-color: #110e1f;
-  background: #fbbf24;
-  color: #08070f;
+  border-color: var(--surface);
+  background: var(--magenta);
+  color: #fff;
 }
 
 .gamer-country {
-  color: #ff83c1;
+  color: var(--magenta);
 }
 
 .gamer-username,
 .gamer-bio {
-  color: #c9c1d3;
+  color: var(--hub-muted);
 }
 
 .gamer-verification {
-  border-color: rgb(255 79 163 / 38%);
-  background: rgb(255 79 163 / 9%);
-  color: #ffb5d8;
+  border-color: rgb(180 79 135 / 28%);
+  background: rgb(214 95 150 / 8%);
+  color: #773557;
 }
 
 .gamer-verification.is-verified {
-  border-color: rgb(251 191 36 / 42%);
-  background: rgb(251 191 36 / 10%);
-  color: #fbbf24;
+  border-color: rgb(38 115 77 / 30%);
+  background: rgb(38 115 77 / 8%);
+  color: #26734d;
 }
 
 .gamer-xp-block > div {
-  color: #c9c1d3;
+  color: var(--hub-muted);
 }
 
 .gamer-xp-track {
-  border-color: rgb(255 79 163 / 28%);
-  background: #08070f;
+  border-color: var(--hub-line);
+  background: var(--surface-raised);
 }
 
 .gamer-xp-track > span {
-  background: linear-gradient(90deg, #ff4fa3, #fbbf24);
+  background: linear-gradient(90deg, var(--pink), var(--magenta));
 }
 
 .free-fire-id-pill {
-  background: rgb(8 7 15 / 70%);
+  background: var(--surface-raised);
 }
 
 .free-fire-id-pill button,
 .profile-secondary-button {
-  border-color: rgb(255 79 163 / 42%);
-  background: rgb(255 79 163 / 10%);
-  color: #ff83c1;
+  border-color: rgb(180 79 135 / 32%);
+  background: rgb(214 95 150 / 8%);
+  color: var(--magenta);
 }
 
 .profile-tablist {
-  background: rgb(8 7 15 / 80%);
+  background: var(--surface-raised);
 }
 
 .profile-tab.is-active,
 .profile-tab[aria-selected="true"] {
-  border-color: #ff4fa3;
-  background: #ff4fa3;
-  color: #08070f;
+  border-color: var(--magenta);
+  background: var(--magenta);
+  color: #fff;
 }
 
 .profile-tab:focus-visible,
@@ -1395,13 +1373,10 @@
 .profile-inline-link:focus-visible,
 .profile-secondary-button:focus-visible,
 .free-fire-id-pill button:focus-visible {
-  outline-color: #ff83c1;
+  outline-color: var(--magenta);
 }
 
-.gamer-stat-card {
-  background: linear-gradient(145deg, rgb(255 255 255 / 5%), rgb(255 255 255 / 2%));
-}
-
+.gamer-stat-card,
 .profile-game-card,
 .codex-card,
 .account-profile .account-wallet,
@@ -1411,88 +1386,82 @@
 .account-profile .attendance-day,
 .account-profile .coin-order-card,
 .account-profile .coin-ledger-item {
-  background: #18132b;
-}
-
-.profile-game-card a {
-  color: #ff83c1;
+  border-color: var(--hub-line);
+  background: var(--surface);
 }
 
 .codex-art {
-  background: linear-gradient(145deg, #18132b, #08070f);
+  background: linear-gradient(145deg, var(--surface-raised), var(--surface));
 }
 
 .codex-card.is-locked h4 {
-  color: #a99db5;
+  color: var(--text-muted);
 }
 
 .account-profile .wallet-balances strong,
 .account-profile .wallet-balances b,
 .account-profile .attendance-summary strong,
 .account-profile .attendance-day-reward {
-  color: #fbbf24;
+  color: var(--magenta);
 }
 
 .account-profile .attendance-day.is-earned {
-  border-color: rgb(251 191 36 / 38%);
-  background: rgb(251 191 36 / 8%);
+  border-color: rgb(38 115 77 / 28%);
+  background: rgb(38 115 77 / 7%);
 }
 
 .account-profile .attendance-day.is-earned .attendance-day-state {
-  color: #fbbf24;
+  color: #26734d;
 }
 
 .account-profile .attendance-day.is-today {
-  box-shadow: 0 0 0 2px rgb(255 79 163 / 28%);
+  box-shadow: 0 0 0 2px rgb(214 95 150 / 18%);
 }
 
 .account-profile .account-field input,
 .account-profile .account-field textarea,
 .account-profile .account-field select {
   border-color: var(--hub-line);
-  background: #08070f;
+  background: var(--surface);
   color: var(--hub-text);
+  color-scheme: light;
 }
 
 .account-profile .account-field input:focus,
 .account-profile .account-field textarea:focus,
 .account-profile .account-field select:focus {
-  border-color: #ff4fa3;
-  outline-color: rgb(255 79 163 / 28%);
+  border-color: var(--magenta);
+  outline-color: rgb(180 79 135 / 22%);
 }
 
 .account-profile .account-submit {
-  background: #ff4fa3;
-  color: #08070f;
+  background: var(--magenta);
+  color: #fff;
 }
 
 .account-profile .account-submit:hover {
-  background: #ff83c1;
+  background: #95577f;
 }
 
 .avatar-preview-wrap {
-  border-color: #ff4fa3;
-  background: #18132b;
+  border-color: var(--magenta);
 }
 
 .avatar-preset {
-  background: #18132b;
+  border-color: var(--hub-line);
+  background: var(--surface);
 }
 
 .avatar-preset.is-selected,
 .avatar-preset[aria-pressed="true"] {
-  border-color: #ff4fa3;
-  box-shadow: 0 0 0 2px rgb(255 79 163 / 18%);
+  border-color: var(--magenta);
+  box-shadow: 0 0 0 2px rgb(180 79 135 / 16%);
 }
 
 .avatar-preset:focus-visible {
-  outline-color: #ff83c1;
-}
-
-.account-profile .account-text-button {
-  color: #ff83c1;
+  outline-color: var(--magenta);
 }
 
 .account-profile .account-text-button:hover {
-  color: #fbbf24;
+  color: #773557;
 }

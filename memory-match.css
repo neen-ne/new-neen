@@ -244,62 +244,6 @@
   text-align: center;
 }
 
-.memory-panel {
-  border-color: rgb(255 255 255 / 12%);
-  background:
-    radial-gradient(ellipse at 92% 0, rgb(255 79 163 / 9%), transparent 34%),
-    #110e1f;
-  box-shadow: 0 18px 48px rgb(0 0 0 / 32%);
-}
-
-.memory-status.is-error {
-  color: #ff9aa7;
-}
-
-.memory-card {
-  border-color: rgb(255 255 255 / 16%);
-  background:
-    radial-gradient(circle at 50% 50%, rgb(255 79 163 / 13%) 0 19%, transparent 20%),
-    linear-gradient(145deg, #18132b, #110e1f);
-  box-shadow: 0 7px 18px rgb(0 0 0 / 26%);
-}
-
-.memory-card-back {
-  color: #fbbf24;
-  background:
-    radial-gradient(circle at 50% 50%, rgb(251 191 36 / 9%) 0 19%, transparent 20%),
-    linear-gradient(145deg, rgb(255 255 255 / 3%), transparent 62%);
-}
-
-.memory-card-face {
-  background:
-    radial-gradient(ellipse at 50% 0, rgb(255 79 163 / 12%), transparent 58%),
-    #110e1f;
-}
-
-.memory-card-face .memory-image-fallback {
-  color: #c9c1d3;
-}
-
-.memory-card.is-matched {
-  border-color: #fbbf24;
-  box-shadow: 0 0 0 2px rgb(251 191 36 / 20%), 0 8px 20px rgb(0 0 0 / 28%);
-}
-
-.memory-card.is-matched::after {
-  border-color: rgb(251 191 36 / 55%);
-}
-
-.memory-signin,
-.memory-finish {
-  border-color: rgb(255 255 255 / 14%);
-  background: #18132b;
-}
-
-.memory-reward {
-  color: #fbbf24 !important;
-}
-
 @media (max-width: 560px) {
   .memory-game {
     width: min(100% - 28px, 1020px);

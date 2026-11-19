@@ -82,7 +82,7 @@ if ($hasPermission('manage_coin_packages') || $hasPermission('manage_coin_paymen
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#08070f" />
+    <meta name="theme-color" content="#FFF2F7" />
     <meta name="robots" content="noindex, nofollow" />
     <title>NEEN Admin Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />

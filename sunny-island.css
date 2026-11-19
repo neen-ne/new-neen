@@ -1180,377 +1180,310 @@
   }
 }
 
-/* Keep the colorful island playable while bringing its HUD into the site theme. */
 .sunny-page {
+  color-scheme: light;
   background:
-    radial-gradient(ellipse at 9% 10%, rgb(255 79 163 / 10%), transparent 28rem),
-    radial-gradient(ellipse at 92% 18%, rgb(251 191 36 / 5%), transparent 24rem),
-    #08070f;
-  color: #f7f3ff;
+    radial-gradient(ellipse at 9% 10%, rgb(255 255 255 / 90%), transparent 26%),
+    radial-gradient(ellipse at 92% 18%, rgb(200 200 237 / 32%), transparent 24%),
+    var(--bg);
 }
 
-.sunny-crumbs {
-  color: #a99db5;
+.sunny-crumbs,
+.sunny-intro-copy > p:last-child {
+  color: var(--text-secondary);
 }
 
 .sunny-crumbs a,
 .sunny-account-link,
 .sunny-intro-copy .eyebrow {
-  color: #ff83c1;
+  color: var(--magenta);
 }
 
 .sunny-intro h1 {
-  color: #f7f3ff;
+  color: var(--text);
 }
 
 .sunny-intro h1 span,
-.sunny-quest-heading .eyebrow,
-.sunny-codex-header h2 span {
-  color: #fbbf24;
-}
-
-.sunny-intro-copy > p:last-child {
-  color: #c9c1d3;
+.sunny-controls-hint span {
+  color: var(--pink);
 }
 
 .sunny-account-link {
-  border-color: rgb(255 79 163 / 45%);
-  background: rgb(255 79 163 / 8%);
-}
-
-.sunny-account-link:hover {
-  border-color: #ff4fa3;
-  background: rgb(255 79 163 / 14%);
+  border-color: var(--border);
+  background: var(--surface);
 }
 
 .sunny-game-shell {
-  border-color: rgb(255 255 255 / 12%);
-  background: #110e1f;
-  box-shadow: 0 24px 70px rgb(0 0 0 / 35%), 0 1px 0 rgb(255 255 255 / 5%) inset;
+  border-color: var(--border);
+  background: var(--surface);
+  box-shadow: var(--soft-shadow);
 }
 
 .sunny-avatar-badge {
-  border-color: #ff4fa3;
-  background: #18132b;
-  box-shadow: 0 3px 0 #d65f96;
+  border-color: var(--surface);
+  background: linear-gradient(145deg, var(--surface-raised), #fff);
+  box-shadow: 0 3px 0 var(--pink-bright);
 }
 
 .sunny-level-badge {
-  border-color: #110e1f;
+  border-color: var(--surface);
   background: #fbbf24;
-  box-shadow: 0 2px 0 #b78113;
-  color: #08070f;
+  box-shadow: 0 2px 0 #d97706;
+  color: #7c2d12;
 }
 
-.sunny-player-progress strong {
-  color: #f7f3ff;
+.sunny-player-progress strong,
+.sunny-quest-heading h2,
+.sunny-objective strong {
+  color: var(--text);
 }
 
-.sunny-player-progress small {
-  color: #c9c1d3;
-}
-
-.sunny-avatar-picker {
-  color: #c9c1d3;
+.sunny-player-progress small,
+.sunny-avatar-picker,
+.sunny-controls-hint,
+.sunny-status,
+.sunny-attempt-pill,
+.sunny-dash-status,
+.sunny-quest-heading > p:last-child,
+.sunny-objective small,
+.sunny-feature-strip small,
+.sunny-codex-summary {
+  color: var(--text-secondary);
 }
 
 .sunny-avatar-picker select {
-  border-color: rgb(255 255 255 / 15%);
-  background: #18132b;
-  color: #f7f3ff;
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
 }
 
 .sunny-avatar-picker select:focus-visible {
-  outline-color: rgb(255 79 163 / 45%);
+  outline-color: var(--magenta);
 }
 
 .sunny-xp-track {
-  background: #08070f;
+  background: var(--bg-raised);
 }
 
 .sunny-xp-track span {
-  background: linear-gradient(90deg, #ff4fa3, #fbbf24);
-}
-
-.sunny-wallet {
-  border: 1px solid rgb(251 191 36 / 30%);
-  background: rgb(251 191 36 / 8%);
-  color: #fbbf24;
-}
-
-.sunny-wallet small {
-  color: #c9c1d3;
-}
-
-.sunny-wallet strong {
-  color: #fbbf24;
-}
-
-.sunny-quiet-button,
-.sunny-main-button,
-.sunny-complete-button {
-  border: 1px solid transparent;
-  border-radius: 10px;
+  background: linear-gradient(90deg, var(--pink-bright), var(--magenta));
 }
 
 .sunny-quiet-button {
-  border-color: rgb(255 255 255 / 16%);
-  background: #18132b;
-  color: #f7f3ff;
+  background: var(--surface-raised);
+  color: var(--text);
 }
 
 .sunny-quiet-button span {
-  color: #ff83c1;
+  color: var(--text-muted);
 }
 
-.sunny-main-button {
-  border-color: #ff4fa3;
-  background: #ff4fa3;
-  box-shadow: 0 4px 0 #b83276;
-  color: #08070f;
+.sunny-main-button,
+.sunny-complete-button {
+  background: var(--magenta);
+  box-shadow: 0 4px 0 #773557;
+  color: #fff;
 }
 
-.sunny-main-button:hover {
-  background: #ff83c1;
-}
-
-.sunny-status,
-.sunny-attempt-pill,
-.sunny-dash-status {
-  color: #c9c1d3;
+.sunny-main-button:hover,
+.sunny-complete-button:hover {
+  background: #95577f;
 }
 
 .sunny-status.is-error {
-  color: #ff9aa7;
+  color: #8e3e52;
 }
 
 .sunny-dash-status.is-cooling {
-  color: #fbbf24;
-}
-
-.sunny-controls-hint {
-  color: #a99db5;
-}
-
-.sunny-controls-hint span {
-  color: #ff83c1;
-}
-
-.sunny-quest-panel,
-.sunny-travel-card,
-.sunny-feature-strip article {
-  border-color: rgb(255 255 255 / 13%);
-  background: #18132b;
-}
-
-.sunny-quest-heading h2,
-.sunny-objective strong,
-.sunny-travel-card strong,
-.sunny-feature-strip strong {
-  color: #f7f3ff;
-}
-
-.sunny-quest-heading > p:last-child,
-.sunny-empty-objectives,
-.sunny-objective small,
-.sunny-quest-footer > span,
-.sunny-travel-card small,
-.sunny-feature-strip small {
-  color: #c9c1d3;
-}
-
-.sunny-empty-objectives,
-.sunny-objective {
-  border-color: rgb(255 255 255 / 13%);
-  background: #110e1f;
-}
-
-.sunny-objective.is-complete {
-  border-color: rgb(251 191 36 / 38%);
-  background: rgb(251 191 36 / 8%);
-}
-
-.sunny-objective-check {
-  background: #18132b;
-  color: #c9c1d3;
-}
-
-.sunny-objective.is-complete .sunny-objective-check {
-  background: #fbbf24;
-  color: #08070f;
-}
-
-.sunny-quest-footer {
-  border-top-color: rgb(255 255 255 / 13%);
-}
-
-.sunny-quest-footer > strong {
-  color: #fbbf24;
-}
-
-.sunny-complete-button {
-  background: #fbbf24;
-  box-shadow: 0 3px 0 #b78113;
-  color: #08070f;
-}
-
-.sunny-travel-icon {
-  background: rgb(251 191 36 / 14%);
-  color: #fbbf24;
-}
-
-.sunny-feature-strip article > span {
-  color: #ff83c1;
-}
-
-.sunny-codex-dialog {
-  border-color: rgb(255 255 255 / 16%);
-  background: #110e1f;
-  color: #f7f3ff;
-}
-
-.sunny-codex-header .eyebrow {
-  color: #ff83c1;
-}
-
-.sunny-codex-summary {
-  color: #c9c1d3;
-}
-
-.sunny-dialog-close {
-  border: 1px solid rgb(255 255 255 / 15%);
-  background: #18132b;
-  color: #f7f3ff;
-}
-
-.sunny-codex-item {
-  border-color: rgb(255 255 255 / 14%);
-  background: #18132b;
-}
-
-.sunny-codex-art {
-  background: #110e1f;
-}
-
-.sunny-codex-item strong {
-  color: #f7f3ff;
-}
-
-.sunny-codex-item small {
-  color: #c9c1d3;
-}
-
-.sunny-codex-item.is-found small {
-  color: #fbbf24;
-}
-
-.sunny-toast {
-  border-color: #ff4fa3;
-  background: rgb(17 14 31 / 94%);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 38%);
-  color: #f7f3ff;
-}
-
-.sunny-zone-banner {
-  border-color: rgb(255 79 163 / 55%);
-  background: rgb(17 14 31 / 90%);
-  color: #f7f3ff;
-}
-
-.sunny-minimap {
-  border-color: rgb(255 255 255 / 16%);
-  background: rgb(17 14 31 / 92%);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 32%);
-}
-
-.sunny-minimap-title {
-  color: #c9c1d3;
-}
-
-.sunny-minimap-title span:last-child {
-  color: #fbbf24;
-}
-
-.sunny-minimap-title button {
-  background: rgb(255 79 163 / 14%);
-  color: #ff83c1;
-}
-
-.sunny-map-safe-zone {
-  fill: rgb(255 79 163 / 10%);
-  stroke: #ff4fa3;
-  filter: drop-shadow(0 0 5px rgb(255 79 163 / 80%));
-}
-
-.sunny-map-player {
-  fill: #ff83c1;
-  stroke: #08070f;
-}
-
-.sunny-map-labels {
-  color: #a99db5;
-}
-
-.sunny-map-legend {
-  color: #ff83c1;
-}
-
-.sunny-map-legend span {
-  border-top-color: #ff4fa3;
-}
-
-.sunny-interaction {
-  border-color: #ff4fa3;
-  background: rgb(17 14 31 / 94%);
-  box-shadow: 0 7px 22px rgb(0 0 0 / 35%);
-  color: #f7f3ff;
-}
-
-.sunny-interaction button {
-  background: #fbbf24;
-  color: #08070f;
-}
-
-.sunny-victory-banner span {
-  color: #ff83c1;
-}
-
-.sunny-victory-banner strong {
-  color: #fbbf24;
-  text-shadow: 0 3px 0 #08070f, 0 0 18px rgb(251 191 36 / 42%);
+  color: #92400e;
 }
 
 .sunny-canvas-frame {
-  border-color: rgb(255 79 163 / 72%);
-  background: #08070f;
-  box-shadow: 0 0 0 1px rgb(255 79 163 / 18%), 0 14px 32px rgb(0 0 0 / 35%);
+  border-color: var(--surface);
+  box-shadow: 0 0 0 1px var(--border), 0 14px 28px rgb(157 100 139 / 14%);
+}
+
+.sunny-zone-banner,
+.sunny-minimap {
+  border-color: rgb(241 200 218 / 90%);
+  background: rgb(255 253 251 / 94%);
+  color: var(--text);
+  box-shadow: var(--soft-shadow);
+}
+
+.sunny-minimap-title {
+  color: var(--text-secondary);
+}
+
+.sunny-minimap-title span:last-child {
+  color: var(--magenta);
+}
+
+.sunny-minimap-title button {
+  background: var(--bg-raised);
+  color: var(--text);
+}
+
+.sunny-map-labels,
+.sunny-map-legend {
+  color: var(--text-secondary);
+}
+
+.sunny-interaction {
+  border-color: var(--pink-bright);
+  background: var(--surface);
+  box-shadow: 0 5px 0 rgb(157 100 139 / 14%);
+  color: var(--text);
+}
+
+.sunny-interaction button {
+  background: var(--magenta);
+  color: #fff;
 }
 
 .sunny-victory-banner {
-  border-color: rgb(251 191 36 / 65%);
-  background:
-    radial-gradient(ellipse at 50% 0, rgb(255 79 163 / 18%), transparent 72%),
-    rgb(17 14 31 / 94%);
-  color: #fbbf24;
+  border-color: var(--pink-bright);
+  background: linear-gradient(135deg, var(--surface), var(--surface-raised));
+  box-shadow: 0 0 0 5px rgb(214 95 150 / 14%), var(--soft-shadow);
+  color: var(--text);
 }
 
-@media (hover: none) and (pointer: coarse) {
+.sunny-victory-banner span,
+.sunny-victory-banner strong {
+  color: var(--magenta);
+  text-shadow: none;
+}
+
+.sunny-toast {
+  border-color: var(--border);
+  background: rgb(255 253 251 / 96%);
+  box-shadow: var(--soft-shadow);
+  color: var(--text);
+}
+
+.sunny-quest-panel {
+  border-color: var(--border);
+  background: linear-gradient(155deg, var(--surface), var(--surface-raised));
+}
+
+.sunny-quest-heading .eyebrow,
+.sunny-quest-footer > strong {
+  color: var(--magenta);
+}
+
+.sunny-empty-objectives {
+  border-color: var(--pink-bright);
+  color: var(--text-secondary);
+}
+
+.sunny-objective {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.sunny-objective.is-complete {
+  border-color: rgb(38 115 77 / 28%);
+  background: rgb(38 115 77 / 7%);
+}
+
+.sunny-quest-footer {
+  border-top-color: var(--divider);
+}
+
+.sunny-quest-footer > span {
+  color: var(--text-secondary);
+}
+
+.sunny-complete-button {
+  background: var(--magenta);
+}
+
+.sunny-travel-card {
+  background: var(--surface-raised);
+}
+
+.sunny-travel-card strong,
+.sunny-feature-strip strong {
+  color: var(--text);
+}
+
+.sunny-travel-card small {
+  color: var(--text-secondary);
+}
+
+.sunny-feature-strip article {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.sunny-feature-strip article > span {
+  color: var(--magenta);
+}
+
+.sunny-codex-dialog {
+  border-color: var(--border);
+  background: var(--surface);
+  box-shadow: 0 24px 80px rgb(157 100 139 / 24%);
+  color: var(--text);
+  color-scheme: light;
+}
+
+.sunny-codex-dialog::backdrop {
+  background: rgb(69 52 74 / 40%);
+}
+
+.sunny-codex-header .eyebrow,
+.sunny-codex-header h2 span {
+  color: var(--magenta);
+}
+
+.sunny-dialog-close {
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+}
+
+.sunny-codex-summary,
+.sunny-codex-item small {
+  color: var(--text-secondary);
+}
+
+.sunny-codex-item {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.sunny-codex-art {
+  background: var(--surface-raised);
+}
+
+.sunny-codex-item strong {
+  color: var(--text);
+}
+
+@media (max-width: 760px) {
+  .sunny-joystick-ring {
+    border-color: rgb(180 79 135 / 38%);
+    background: rgb(255 253 251 / 50%);
+  }
+
+  .sunny-joystick-knob {
+    border-color: #fff;
+    background: rgb(214 95 150 / 86%);
+  }
+
   .sunny-touch-buttons button {
-    border-color: rgb(255 79 163 / 58%);
-    background: rgb(17 14 31 / 88%);
-    color: #f7f3ff;
+    border-color: #fff;
+    background: rgb(180 79 135 / 94%);
+    box-shadow: 0 4px 0 rgb(119 53 87 / 25%);
+    color: #fff;
   }
 
   .sunny-touch-buttons [data-touch-action] {
-    background: rgb(255 79 163 / 94%);
-    color: #08070f;
+    background: rgb(251 191 36 / 96%);
+    color: #7c2d12;
   }
 
   .sunny-touch-buttons [data-dash-button] {
-    background: rgb(24 19 43 / 94%);
+    background: rgb(149 87 127 / 94%);
   }
-}
-
-html[dir="rtl"] .sunny-dash-status {
-  text-align: right;
 }

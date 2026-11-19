@@ -51,7 +51,7 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#08070f" />
+    <meta name="theme-color" content="#FFF2F7" />
     <meta name="robots" content="noindex, nofollow" />
     <title data-i18n="documentTitle">Owner Dashboard — NEEN</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />

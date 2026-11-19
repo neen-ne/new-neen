@@ -660,63 +660,6 @@ html[dir="rtl"] .owner-body .owner-role-pill {
   }
 }
 
-.owner-body {
-  color: #f7f3ff;
-  background:
-    radial-gradient(ellipse at 92% 8%, rgb(255 79 163 / 8%), transparent 34rem),
-    #08070f;
-}
-
-.owner-shell {
-  background: #08070f;
-}
-
-.owner-sidebar {
-  border-color: rgb(255 255 255 / 12%);
-  background: rgb(17 14 31 / 94%);
-}
-
-.owner-sidebar .admin-nav-item.is-active,
-.owner-sidebar .admin-nav-item:hover:not(:disabled) {
-  border-color: rgb(255 79 163 / 36%);
-  background: linear-gradient(110deg, rgb(255 79 163 / 17%), rgb(251 191 36 / 7%));
-  color: #f7f3ff;
-}
-
-.owner-sidebar .admin-nav-item[aria-current="page"]::before {
-  width: 3px;
-  height: 22px;
-  border-radius: 999px;
-  background: #ff4fa3;
-  content: "";
-}
-
-.owner-sidebar .admin-nav-index {
-  color: #fbbf24;
-}
-
-.owner-live-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 9px;
-  padding: 6px 9px;
-  border: 1px solid rgb(251 191 36 / 30%);
-  border-radius: 999px;
-  background: rgb(251 191 36 / 7%);
-  color: #fbbf24;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-}
-
-.owner-live-status .admin-live-dot {
-  width: 6px;
-  height: 6px;
-  background: #fbbf24;
-  box-shadow: 0 0 0 4px rgb(251 191 36 / 12%);
-}
-
 .owner-header-actions {
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -736,10 +679,10 @@ html[dir="rtl"] .owner-body .owner-role-pill {
   align-items: center;
   justify-content: center;
   padding: 0 12px;
-  border: 1px solid rgb(255 79 163 / 45%);
+  border: 1px solid rgb(180 79 135 / 28%);
   border-radius: 999px;
-  background: rgb(255 79 163 / 10%);
-  color: #ff83c1;
+  background: var(--surface);
+  color: var(--magenta);
   font-size: 9px;
   font-weight: 800;
   text-align: center;
@@ -749,64 +692,49 @@ html[dir="rtl"] .owner-body .owner-role-pill {
 
 .owner-command-link:hover,
 .admin-owner-link:hover {
-  border-color: #ff4fa3;
-  background: #ff4fa3;
-  color: #08070f;
+  border-color: var(--magenta);
+  background: var(--bg-raised);
+  color: #773557;
 }
 
 .owner-command-link.is-secondary {
-  border-color: rgb(255 255 255 / 15%);
-  background: #18132b;
-  color: #f7f3ff;
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
 }
 
 .owner-command-link.is-secondary:hover {
-  border-color: #fbbf24;
-  background: rgb(251 191 36 / 10%);
-  color: #fbbf24;
+  border-color: var(--pink);
+  background: var(--surface-raised);
+  color: var(--magenta);
 }
 
-.owner-language-toggle {
-  border-color: rgb(255 255 255 / 15%);
-  background: #18132b;
-  color: #fbbf24;
+.owner-live-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+  padding: 6px 9px;
+  border: 1px solid rgb(214 95 150 / 24%);
+  border-radius: 999px;
+  background: rgb(214 95 150 / 7%);
+  color: var(--magenta);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
 }
 
-.owner-language-toggle:hover {
-  border-color: #fbbf24;
-  background: rgb(251 191 36 / 10%);
-}
-
-.owner-stat-grid {
-  gap: 13px;
-}
-
-.owner-stat-card {
-  position: relative;
-  min-height: 126px;
-  border-color: rgb(255 255 255 / 13%);
-  background:
-    radial-gradient(ellipse at 100% 0, rgb(255 79 163 / 9%), transparent 52%),
-    #18132b;
-  box-shadow: 0 12px 30px rgb(0 0 0 / 28%);
-}
-
-.owner-stat-card:nth-child(3) {
-  background:
-    radial-gradient(ellipse at 100% 0, rgb(251 191 36 / 10%), transparent 52%),
-    #18132b;
-}
-
-.owner-stat-card strong {
-  color: #f7f3ff;
+.owner-live-status .admin-live-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--pink);
+  box-shadow: 0 0 0 4px rgb(214 95 150 / 12%);
 }
 
 .owner-stat-card.has-attention {
-  border-color: rgb(255 79 163 / 55%);
-  background:
-    radial-gradient(ellipse at 100% 0, rgb(255 79 163 / 18%), transparent 52%),
-    #18132b;
-  box-shadow: 0 0 0 1px rgb(255 79 163 / 14%), 0 12px 34px rgb(255 79 163 / 10%);
+  border-color: rgb(180 79 135 / 54%);
+  background: linear-gradient(145deg, #fff7fa, #fffdfb);
+  box-shadow: 0 0 0 1px rgb(180 79 135 / 9%), 0 8px 26px rgb(65 45 63 / 7%);
 }
 
 .owner-stat-card.has-attention::after {
@@ -816,9 +744,13 @@ html[dir="rtl"] .owner-body .owner-role-pill {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #ff4fa3;
-  box-shadow: 0 0 0 5px rgb(255 79 163 / 14%);
+  background: var(--magenta);
+  box-shadow: 0 0 0 4px rgb(180 79 135 / 12%);
   content: "";
+}
+
+.owner-stat-card {
+  position: relative;
 }
 
 .owner-quick-action-grid {
@@ -833,19 +765,15 @@ html[dir="rtl"] .owner-body .owner-role-pill {
   align-content: start;
   gap: 11px;
   padding: clamp(17px, 2.5vw, 24px);
-  border: 1px solid rgb(255 255 255 / 13%);
+  border: 1px solid var(--border);
   border-radius: 16px;
-  background:
-    radial-gradient(ellipse at 100% 0, rgb(251 191 36 / 7%), transparent 52%),
-    #110e1f;
-  box-shadow: 0 14px 34px rgb(0 0 0 / 28%);
+  background: var(--surface);
+  box-shadow: var(--soft-shadow);
 }
 
 .owner-quick-action-card.has-pending {
-  border-color: rgb(255 79 163 / 52%);
-  background:
-    radial-gradient(ellipse at 100% 0, rgb(255 79 163 / 13%), transparent 54%),
-    #110e1f;
+  border-color: rgb(180 79 135 / 46%);
+  background: linear-gradient(145deg, #fff7fa, var(--surface));
 }
 
 .owner-quick-action-heading {
@@ -857,39 +785,40 @@ html[dir="rtl"] .owner-body .owner-role-pill {
 
 .owner-quick-action-heading .admin-eyebrow {
   margin: 0;
-  color: #ff83c1;
+  color: var(--pink-soft);
 }
 
-.owner-quick-action-heading > strong {
+.owner-quick-action-heading > strong,
+.owner-quick-action-heading > span {
   display: grid;
   min-width: 34px;
   min-height: 34px;
   place-items: center;
   padding-inline: 8px;
-  border: 1px solid rgb(251 191 36 / 35%);
+  border: 1px solid rgb(214 95 150 / 26%);
   border-radius: 11px;
-  background: rgb(251 191 36 / 9%);
-  color: #fbbf24;
+  background: rgb(214 95 150 / 7%);
+  color: var(--magenta);
   font-family: var(--display);
   font-size: 14px;
 }
 
 .owner-quick-action-card.has-pending .owner-quick-action-heading > strong {
-  border-color: rgb(255 79 163 / 55%);
-  background: rgb(255 79 163 / 12%);
-  color: #ff83c1;
+  border-color: rgb(180 79 135 / 42%);
+  background: rgb(180 79 135 / 9%);
+  color: #773557;
 }
 
 .owner-quick-action-card h3 {
   margin: 0;
-  color: #f7f3ff;
+  color: var(--text);
   font-family: var(--display);
   font-size: clamp(17px, 2vw, 22px);
 }
 
 .owner-quick-action-card > p {
   margin: 0;
-  color: #c9c1d3;
+  color: var(--text-secondary);
   font-size: 10px;
   line-height: 1.7;
 }
@@ -897,119 +826,48 @@ html[dir="rtl"] .owner-body .owner-role-pill {
 .owner-quick-link {
   width: fit-content;
   margin-top: 3px;
-  color: #fbbf24;
+  color: var(--magenta);
   font-size: 9px;
   font-weight: 800;
   text-decoration: none;
 }
 
 .owner-quick-link:hover {
-  color: #ff83c1;
+  color: #773557;
 }
 
 .owner-chart-bar i {
-  background: linear-gradient(180deg, #ff83c1, #d65f96);
-}
-
-.owner-chart-tooltip {
-  color: #f7f3ff;
+  background: linear-gradient(180deg, var(--pink-bright), var(--magenta));
 }
 
 .owner-compact-order.is-attention {
   margin-inline: -8px;
   padding: 9px 8px;
   border-radius: 10px;
-  background: rgb(255 79 163 / 7%);
+  background: rgb(214 95 150 / 7%);
 }
 
 .owner-compact-order .admin-status-pill.is-attention {
-  border-color: rgb(255 79 163 / 40%);
-  background: rgb(255 79 163 / 12%);
-  color: #ff83c1;
-}
-
-.owner-table-action,
-.owner-pagination button {
-  border-color: rgb(255 79 163 / 35%);
-  background: #18132b;
-  color: #ff83c1;
+  border-color: rgb(180 79 135 / 38%);
+  background: rgb(180 79 135 / 9%);
+  color: #773557;
 }
 
 .owner-table-action:hover,
 .owner-pagination button:not(:disabled):hover {
-  border-color: #ff4fa3;
-  background: rgb(255 79 163 / 12%);
-  color: #ff83c1;
-}
-
-.owner-profile-form input,
-.owner-profile-form textarea,
-.owner-role-form select,
-.owner-adjustment-form select,
-.owner-game-form input,
-.owner-game-form textarea,
-.owner-game-form select,
-.owner-settings-form textarea,
-.owner-settings-form input {
-  border-color: rgb(255 255 255 / 15%);
-  background: #08070f;
-  color: #f7f3ff;
-}
-
-.owner-profile-form input:focus,
-.owner-profile-form textarea:focus,
-.owner-role-form select:focus,
-.owner-adjustment-form select:focus,
-.owner-game-form input:focus,
-.owner-game-form textarea:focus,
-.owner-game-form select:focus,
-.owner-settings-form textarea:focus,
-.owner-settings-form input:focus {
-  border-color: #ff4fa3;
-  outline: 2px solid rgb(255 79 163 / 24%);
-  outline-offset: 1px;
-}
-
-.owner-warning {
-  color: #ff9aa7;
-}
-
-.owner-role-pill {
-  background: rgb(255 79 163 / 10%);
-  color: #ff83c1;
-}
-
-.owner-wallet-summary span {
-  border-color: rgb(251 191 36 / 27%);
-  background: rgb(251 191 36 / 5%);
-  color: #fbbf24;
-}
-
-.owner-game-card,
-.owner-module-card {
-  border-color: rgb(255 255 255 / 13%);
-  background: #18132b;
-  box-shadow: 0 12px 28px rgb(0 0 0 / 25%);
-}
-
-.owner-module-card b {
-  color: #fbbf24;
-}
-
-.owner-module-unavailable {
-  background: #110e1f;
+  border-color: var(--pink);
+  background: var(--surface-raised);
+  color: #773557;
 }
 
 .owner-content .admin-state.is-error {
-  border-color: rgb(255 154 167 / 38%);
-  background: rgb(255 154 167 / 8%);
-  color: #ffb0b9;
+  border-color: rgb(177 73 91 / 35%);
+  background: rgb(255 236 239 / 58%);
+  color: #8e3e52;
 }
 
-.owner-shell > .admin-main :is(button, select, input, textarea, a):focus-visible,
-.owner-language-toggle:focus-visible,
-.owner-pagination button:focus-visible {
-  outline-color: #ff83c1;
+.owner-shell > .admin-main :is(button, select, input, textarea, a):focus-visible {
+  outline-color: var(--pink-soft);
 }
 
 @media (max-width: 900px) {
@@ -1059,10 +917,6 @@ html[dir="rtl"] .owner-body .owner-role-pill {
 
   .owner-command-link {
     flex: 1 1 auto;
-  }
-
-  .owner-stat-card {
-    padding: 10px;
   }
 }
 
