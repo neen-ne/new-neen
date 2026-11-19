@@ -433,6 +433,18 @@
   stroke-width: 7;
 }
 
+.sunny-map-safe-zone {
+  fill: rgb(70 207 231 / 9%);
+  stroke: #28a9d0;
+  stroke-dasharray: 5 3;
+  stroke-width: 2;
+  animation: sunny-safe-zone-pulse 4s linear infinite;
+}
+
+@keyframes sunny-safe-zone-pulse {
+  to { stroke-dashoffset: -32; }
+}
+
 .sunny-map-zone {
   fill: #d9e8d2;
   stroke: #fff;
@@ -465,6 +477,23 @@
   font-weight: 800;
 }
 
+.sunny-map-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-top: 5px;
+  color: #428aa0;
+  font-size: 6px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.sunny-map-legend span {
+  width: 15px;
+  border-top: 2px dashed #28a9d0;
+}
+
 .sunny-interaction {
   position: absolute;
   z-index: 4;
@@ -487,6 +516,55 @@
 .sunny-interaction[hidden],
 .sunny-toast[hidden] {
   display: none;
+}
+
+.sunny-victory-banner[hidden] {
+  display: none;
+}
+
+.sunny-victory-banner {
+  position: absolute;
+  z-index: 6;
+  top: 47%;
+  left: 50%;
+  display: grid;
+  gap: 6px;
+  min-width: min(320px, calc(100% - 34px));
+  padding: 18px 26px 20px;
+  border: 2px solid #fff4bf;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgb(29 75 94 / 96%), rgb(36 113 122 / 94%));
+  box-shadow: 0 0 0 5px rgb(252 210 96 / 35%), 0 16px 42px rgb(20 57 70 / 34%);
+  color: #fff;
+  text-align: center;
+  transform: translate(-50%, -50%) scale(.78) rotate(-2deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sunny-victory-banner.is-celebrating {
+  animation: sunny-victory-pop .55s cubic-bezier(.16, 1.4, .45, 1) forwards;
+}
+
+.sunny-victory-banner span {
+  color: #b6edf0;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .16em;
+}
+
+.sunny-victory-banner strong {
+  color: #ffda70;
+  font-family: var(--display);
+  font-size: clamp(29px, 5vw, 48px);
+  line-height: 1;
+  text-shadow: 0 3px 0 #a85a40, 0 0 18px rgb(255 222 102 / 42%);
+}
+
+@keyframes sunny-victory-pop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.65) rotate(-7deg); }
+  72% { opacity: 1; transform: translate(-50%, -50%) scale(1.06) rotate(2deg); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
 }
 
 .sunny-interaction button {
@@ -1083,6 +1161,17 @@
   }
   .sunny-codex-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sunny-map-safe-zone,
+  .sunny-victory-banner.is-celebrating {
+    animation: none;
+  }
+  .sunny-victory-banner.is-celebrating {
+    transform: translate(-50%, -50%);
+    opacity: 1;
   }
 }
 

@@ -39,22 +39,22 @@
 
   const WORLD = { width: 1600, height: 1000, viewWidth: 1000, viewHeight: 620 };
   const ZONES = {
-    neon_pier: "Neon Pier",
-    palm_grove: "Palm Grove",
-    loot_canyon: "Loot Canyon",
-    sunset_ridge: "Sunset Ridge",
+    neon_pier: "Moonlit Stilt Bay",
+    palm_grove: "Crownleaf Manor",
+    loot_canyon: "Skycrate Foundry",
+    sunset_ridge: "Solstice Bellspire",
   };
   const PORTALS = {
-    neon_pier: [{ x: 1490, y: 520, zone: "palm_grove", label: "Follow the boardwalk to Palm Grove" }],
+    neon_pier: [{ x: 1490, y: 520, zone: "palm_grove", label: "Follow the boardwalk to Crownleaf Manor" }],
     palm_grove: [
-      { x: 85, y: 520, zone: "neon_pier", label: "Return to Neon Pier" },
-      { x: 1510, y: 510, zone: "loot_canyon", label: "Take the canyon trail" },
+      { x: 85, y: 520, zone: "neon_pier", label: "Return to Moonlit Stilt Bay" },
+      { x: 1510, y: 510, zone: "loot_canyon", label: "Take the foundry road" },
     ],
     loot_canyon: [
-      { x: 85, y: 510, zone: "palm_grove", label: "Return to Palm Grove" },
-      { x: 1510, y: 500, zone: "sunset_ridge", label: "Climb to Sunset Ridge" },
+      { x: 85, y: 510, zone: "palm_grove", label: "Return to Crownleaf Manor" },
+      { x: 1510, y: 500, zone: "sunset_ridge", label: "Climb to Solstice Bellspire" },
     ],
-    sunset_ridge: [{ x: 85, y: 500, zone: "loot_canyon", label: "Descend to Loot Canyon" }],
+    sunset_ridge: [{ x: 85, y: 500, zone: "loot_canyon", label: "Descend to Skycrate Foundry" }],
   };
   const PICKUPS = [
     { id: "snoop_badge", zone: "neon_pier", x: 390, y: 690, label: "Snoop Badge" },
@@ -100,9 +100,9 @@
     { id: "pier-beacon-b", zone: "neon_pier", x: 1110, y: 600, label: "East Beacon" },
   ];
   const QUEST_BOARD = { id: "quest-board", zone: "neon_pier", x: 290, y: 530, label: "Daily Adventure Board" };
-  const DROP_MARKER = { id: "drop-marker", zone: "palm_grove", x: 350, y: 495, label: "Palm Grove Sun Drops" };
-  const LIGHTHOUSE = { id: "summit-lighthouse", zone: "sunset_ridge", x: 1330, y: 390, label: "Summit Lighthouse" };
-  const SUPPLY_DROP = { id: "canyon-supply-drop", zone: "loot_canyon", x: 1260, y: 735, label: "Timed Canyon Supply Drop" };
+  const DROP_MARKER = { id: "drop-marker", zone: "palm_grove", x: 350, y: 495, label: "Crownleaf Supply Crates" };
+  const BELLSPIRE = { id: "summit-bellspire", zone: "sunset_ridge", x: 1330, y: 390, label: "Solstice Bellspire" };
+  const SUPPLY_DROP = { id: "foundry-air-drop", zone: "loot_canyon", x: 1260, y: 735, label: "Timed Foundry Air Drop" };
   const INTERACTION_RADIUS = 74;
   const colors = {
     ink: "#24495a",
@@ -148,6 +148,7 @@
     dashCooldownUntil: 0,
     toastUntil: 0,
     toastMessage: "",
+    victoryTimer: 0,
     animationFrame: 0,
     startedAt: performance.now(),
     lastDashHudUpdate: 0,
@@ -395,6 +396,20 @@
     node.hidden = false;
   };
 
+  const celebrateVictory = () => {
+    const banner = document.querySelector("[data-victory-banner]");
+    if (!(banner instanceof HTMLElement)) return;
+    window.clearTimeout(state.victoryTimer);
+    banner.hidden = false;
+    banner.classList.remove("is-celebrating");
+    void banner.offsetWidth;
+    banner.classList.add("is-celebrating");
+    state.victoryTimer = window.setTimeout(() => {
+      banner.hidden = true;
+      banner.classList.remove("is-celebrating");
+    }, 4200);
+  };
+
   const progressPayload = (extra = {}) => ({
     collectibles: [...new Set(state.progress.unlocked_collectibles)],
     discovered_zones: [...new Set(state.progress.discovered_zones)],
@@ -497,7 +512,7 @@
     }
     if (QUEST_BOARD.zone === zone) objects.push({ ...QUEST_BOARD, type: "board" });
     if (DROP_MARKER.zone === zone) objects.push({ ...DROP_MARKER, type: "drops" });
-    if (LIGHTHOUSE.zone === zone) objects.push({ ...LIGHTHOUSE, type: "lighthouse" });
+    if (BELLSPIRE.zone === zone) objects.push({ ...BELLSPIRE, type: "bellspire" });
     for (const portal of PORTALS[zone] || []) {
       objects.push({ ...portal, type: "portal" });
     }
@@ -542,7 +557,7 @@
       return false;
     }
     if (id === "find_relic" && !state.progress.unlocked_collectibles.includes("golden_compass")) {
-      toast("Find the Golden Compass in Loot Canyon first.");
+      toast(`Find the Golden Compass in ${ZONES.loot_canyon} first.`);
       return false;
     }
     state.busy = true;
@@ -655,9 +670,9 @@
       } else {
         await markObjective("collect_drops");
       }
-    } else if (item.type === "lighthouse") {
+    } else if (item.type === "bellspire") {
       if (objectiveFor("reach_sunset_ridge")) await markObjective("reach_sunset_ridge");
-      else toast("The whole island glows beneath the lighthouse.");
+      else toast("The whole island glows from the Solstice Bellspire.");
     } else if (item.type === "supply") {
       const drop = PICKUPS.find((pickup) => pickup.zone === "loot_canyon"
         && !state.progress.unlocked_collectibles.includes(pickup.id));
@@ -722,6 +737,7 @@
         : "";
       toast(`Adventure complete! +${result.xp_awarded} XP · +${formatNumber(result.reward.amount)} Earned Coins.${levelText}`, 5200);
       setStatus(`Adventure complete! ${formatNumber(result.reward.amount)} Earned Coins added to your wallet.`);
+      celebrateVictory();
       if (result.reward.amount > 0) spawnBurst(state.position.x, state.position.y, "#ffda62", 36);
       await loadStateAfterComplete(result);
     } catch (error) {
@@ -820,12 +836,165 @@
     ctx.restore();
   };
 
+  const drawStiltHut = (ctx, x, floor, scale = 1) => {
+    ctx.save();
+    ctx.translate(x, floor);
+    ctx.scale(scale, scale);
+    ctx.strokeStyle = "#79583f";
+    ctx.lineWidth = 12;
+    for (const postX of [-56, -18, 22, 57]) {
+      ctx.beginPath();
+      ctx.moveTo(postX, -22);
+      ctx.lineTo(postX + (postX < 0 ? 5 : -5), 92);
+      ctx.stroke();
+    }
+    drawRoundRect(ctx, -77, -103, 154, 79, 7, "#b57c53", "#704c3b");
+    ctx.fillStyle = "#e7b46b";
+    ctx.beginPath();
+    ctx.moveTo(-92, -98);
+    ctx.lineTo(-54, -153);
+    ctx.lineTo(13, -150);
+    ctx.lineTo(93, -96);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#76503b";
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.fillStyle = "#5b463e";
+    ctx.fillRect(-57, -84, 37, 37);
+    ctx.fillRect(22, -84, 37, 37);
+    ctx.strokeStyle = "#ffda88";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(-57, -84, 37, 37);
+    ctx.strokeRect(22, -84, 37, 37);
+    ctx.fillStyle = "#8b5a42";
+    ctx.fillRect(-9, -73, 21, 49);
+    ctx.fillStyle = "#7de8e9";
+    ctx.fillRect(-49, -77, 20, 23);
+    ctx.fillRect(30, -77, 20, 23);
+    ctx.fillStyle = "#d8a162";
+    ctx.fillRect(-87, -25, 174, 9);
+    ctx.restore();
+  };
+
+  const drawBoat = (ctx, x, y, scale, color) => {
+    ctx.save();
+    ctx.translate(x, y + Math.sin(x * .03 + y) * 2);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = color;
+    ctx.strokeStyle = "#285d70";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-65, -7);
+    ctx.lineTo(64, -7);
+    ctx.lineTo(43, 19);
+    ctx.quadraticCurveTo(0, 32, -43, 19);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#f4e3b2";
+    ctx.beginPath();
+    ctx.moveTo(-3, -8);
+    ctx.lineTo(27, -8);
+    ctx.lineTo(11, -44);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#795a43";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -48);
+    ctx.lineTo(0, -7);
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawCargoContainer = (ctx, x, y, width, height, color) => {
+    ctx.fillStyle = color;
+    ctx.strokeStyle = "#344d5c";
+    ctx.lineWidth = 4;
+    ctx.fillRect(x, y, width, height);
+    ctx.strokeRect(x, y, width, height);
+    ctx.strokeStyle = "rgb(255 255 255 / 27%)";
+    ctx.lineWidth = 3;
+    for (let ribX = x + 12; ribX < x + width; ribX += 19) {
+      ctx.beginPath();
+      ctx.moveTo(ribX, y + 5);
+      ctx.lineTo(ribX, y + height - 5);
+      ctx.stroke();
+    }
+    ctx.fillStyle = "rgb(255 255 255 / 22%)";
+    ctx.fillRect(x + 7, y + 7, width - 14, 5);
+  };
+
+  const drawHazardBarrel = (ctx, x, y, color = "#e29642") => {
+    ctx.save();
+    ctx.translate(x, y);
+    drawRoundRect(ctx, -15, -27, 30, 52, 7, color, "#684b3e");
+    ctx.fillStyle = "#313c43";
+    ctx.fillRect(-13, -8, 26, 10);
+    ctx.strokeStyle = "#f7e5a5";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-10, -5);
+    ctx.lineTo(10, -5);
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawCrystalCover = (ctx, x, y) => {
+    ctx.fillStyle = "rgb(105 218 237 / 52%)";
+    ctx.strokeStyle = "#4aafc9";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(x - 64, y + 20);
+    ctx.lineTo(x - 54, y - 31);
+    ctx.lineTo(x - 30, y - 22);
+    ctx.lineTo(x - 15, y - 52);
+    ctx.lineTo(x + 6, y - 28);
+    ctx.lineTo(x + 31, y - 44);
+    ctx.lineTo(x + 56, y - 22);
+    ctx.lineTo(x + 64, y + 20);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = "rgb(255 255 255 / 78%)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x - 14, y - 41);
+    ctx.lineTo(x - 4, y + 8);
+    ctx.lineTo(x + 23, y - 24);
+    ctx.stroke();
+  };
+
+  const drawWatchtower = (ctx, x, y) => {
+    ctx.fillStyle = "#80614b";
+    ctx.fillRect(x - 9, y - 7, 18, 110);
+    ctx.fillStyle = "#d5b886";
+    ctx.strokeStyle = "#795c48";
+    ctx.lineWidth = 4;
+    ctx.fillRect(x - 43, y - 70, 86, 62);
+    ctx.strokeRect(x - 43, y - 70, 86, 62);
+    ctx.fillStyle = "#405c61";
+    ctx.fillRect(x - 25, y - 55, 16, 22);
+    ctx.fillRect(x + 9, y - 55, 16, 22);
+    ctx.fillStyle = "#a36b4c";
+    ctx.beginPath();
+    ctx.moveTo(x - 53, y - 70);
+    ctx.lineTo(x, y - 105);
+    ctx.lineTo(x + 53, y - 70);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#684e40";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+  };
+
   const drawBackground = (ctx, zone, time) => {
     const sky = {
-      neon_pier: ["#78d8ea", "#d9f8f2"],
-      palm_grove: ["#89d8ac", "#d4efa6"],
-      loot_canyon: ["#f5a46f", "#ffe4a3"],
-      sunset_ridge: ["#f79d79", "#f7d387"],
+      neon_pier: ["#5fcadd", "#b8f1e7"],
+      palm_grove: ["#8bcf9c", "#e0e9a2"],
+      loot_canyon: ["#9ab8bc", "#e2b678"],
+      sunset_ridge: ["#ed987b", "#f8d68b"],
     }[zone] || ["#78d8ea", "#d9f8f2"];
     const gradient = ctx.createLinearGradient(0, 0, 0, WORLD.height);
     gradient.addColorStop(0, sky[0]);
@@ -833,157 +1002,239 @@
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, WORLD.width, WORLD.height);
     if (zone === "neon_pier") {
-      ctx.fillStyle = "#55c7d8";
-      ctx.fillRect(0, 0, WORLD.width, 290);
-      ctx.fillStyle = "#61d5dc";
-      for (let index = 0; index < 16; index++) {
-        const y = 33 + index * 15;
-        ctx.globalAlpha = .25 + Math.sin(time * 2 + index) * .07;
-        ctx.strokeStyle = "#eafffc";
+      ctx.fillStyle = "#42bfd0";
+      ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+      ctx.fillStyle = "#45c8d4";
+      for (let index = 0; index < 19; index++) {
+        const y = 35 + index * 38;
+        ctx.globalAlpha = .24 + Math.sin(time * 2.4 + index) * .08;
+        ctx.strokeStyle = index % 2 ? "#eafffc" : "#b6fbf1";
         ctx.lineWidth = 3;
         ctx.beginPath();
-        for (let x = 0; x <= WORLD.width; x += 35) {
-          const waveY = y + Math.sin((x * .009) + time * 1.7 + index) * 5;
+        for (let x = 0; x <= WORLD.width; x += 42) {
+          const waveY = y + Math.sin(x * .008 + time * 1.5 + index) * 6;
           if (x === 0) ctx.moveTo(x, waveY);
           else ctx.lineTo(x, waveY);
         }
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
-      ctx.fillStyle = "#f6d893";
-      ctx.fillRect(0, 705, WORLD.width, 295);
-      ctx.fillStyle = "#edc979";
-      ctx.fillRect(0, 830, WORLD.width, 170);
-      ctx.fillStyle = "#a96f52";
-      ctx.fillRect(0, 285, WORLD.width, 440);
-      ctx.fillStyle = "#d99462";
-      for (let x = 0; x < WORLD.width; x += 92) {
-        ctx.fillRect(x, 285, 7, 440);
+      ctx.fillStyle = "#276e70";
+      ctx.beginPath();
+      ctx.ellipse(360, 248, 280, 96, -.05, 0, Math.PI * 2);
+      ctx.ellipse(1240, 220, 330, 110, .04, 0, Math.PI * 2);
+      ctx.fill();
+      drawBoat(ctx, 440, 335, .86, "#e47859");
+      drawBoat(ctx, 935, 305, 1.12, "#315d8a");
+      drawBoat(ctx, 1450, 372, .7, "#f2c96f");
+      for (const postX of [120, 330, 550, 770, 990, 1210, 1430, 1570]) {
+        ctx.fillStyle = "#684a3d";
+        ctx.fillRect(postX - 7, 430, 14, 300);
       }
-      for (let y = 296; y < 720; y += 86) {
-        ctx.fillStyle = "#cb805a";
-        ctx.fillRect(0, y, WORLD.width, 5);
+      drawStiltHut(ctx, 245, 455, .9);
+      drawStiltHut(ctx, 1135, 420, 1.08);
+      drawStiltHut(ctx, 690, 360, .68);
+      ctx.fillStyle = "#a96849";
+      ctx.fillRect(0, 475, WORLD.width, 195);
+      ctx.fillStyle = "#d38d5f";
+      for (let x = 0; x < WORLD.width; x += 73) {
+        ctx.fillRect(x, 475, 6, 195);
       }
-      ctx.fillStyle = "#f5deaa";
-      ctx.fillRect(0, 265, WORLD.width, 20);
-      for (let index = 0; index < 7; index++) {
-        drawPalm(ctx, 110 + index * 235, 755, .58 + (index % 2) * .13);
+      ctx.fillStyle = "#f2bd78";
+      for (let y = 485; y < 670; y += 39) ctx.fillRect(0, y, WORLD.width, 4);
+      ctx.fillStyle = "#dfc47f";
+      ctx.fillRect(0, 760, WORLD.width, 240);
+      for (const palmX of [65, 380, 745, 1115, 1510]) {
+        drawPalm(ctx, palmX, 895, .54, "#398b68");
       }
+      ctx.save();
+      ctx.setLineDash([17, 15]);
+      ctx.lineDashOffset = -time * 22;
+      ctx.strokeStyle = `rgb(120 251 255 / ${42 + Math.sin(time * 2) * 10}%)`;
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.ellipse(800, 510, 760, 455, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
     } else if (zone === "palm_grove") {
-      ctx.fillStyle = "#76c98e";
+      ctx.fillStyle = "#74ba72";
       ctx.fillRect(0, 0, WORLD.width, WORLD.height);
-      ctx.fillStyle = "#90d796";
-      for (let index = 0; index < 7; index++) {
+      ctx.fillStyle = "#8dc778";
+      for (let index = 0; index < 8; index++) {
         ctx.beginPath();
-        ctx.ellipse(index * 280 + 80, 165 + (index % 2) * 45, 205, 126, 0, 0, Math.PI * 2);
+        ctx.ellipse(index * 230 + 30, 205 + (index % 2) * 38, 190, 115, 0, 0, Math.PI * 2);
         ctx.fill();
       }
-      ctx.fillStyle = "#d0b879";
+      ctx.fillStyle = "#d1bb86";
       ctx.beginPath();
-      ctx.moveTo(0, 600);
-      ctx.bezierCurveTo(280, 430, 460, 750, 760, 565);
-      ctx.bezierCurveTo(1020, 390, 1320, 690, WORLD.width, 485);
-      ctx.lineTo(WORLD.width, 790);
-      ctx.bezierCurveTo(1260, 910, 1020, 680, 760, 815);
-      ctx.bezierCurveTo(440, 980, 250, 720, 0, 900);
+      ctx.moveTo(0, 690);
+      ctx.bezierCurveTo(330, 560, 470, 840, 760, 635);
+      ctx.bezierCurveTo(1010, 470, 1270, 730, WORLD.width, 520);
+      ctx.lineTo(WORLD.width, 815);
+      ctx.bezierCurveTo(1260, 930, 1010, 730, 760, 870);
+      ctx.bezierCurveTo(440, 1010, 250, 785, 0, 940);
       ctx.closePath();
       ctx.fill();
-      for (let index = 0; index < 9; index++) {
-        drawPalm(ctx, 70 + index * 185, 850 - (index % 3) * 70, .48 + (index % 2) * .14, "#3d936d");
+      ctx.fillStyle = "#8c7458";
+      ctx.fillRect(450, 235, 700, 15);
+      ctx.fillStyle = "#ceb990";
+      ctx.fillRect(485, 250, 630, 198);
+      ctx.fillStyle = "#b39a73";
+      ctx.fillRect(505, 260, 590, 18);
+      ctx.fillRect(500, 425, 600, 22);
+      ctx.fillStyle = "#6b7760";
+      ctx.fillRect(530, 278, 540, 142);
+      for (const columnX of [540, 624, 716, 810, 904, 990, 1065]) {
+        ctx.fillStyle = "#d6c29a";
+        ctx.fillRect(columnX, 278, 17, 144);
+        ctx.fillStyle = "#a88d69";
+        ctx.fillRect(columnX - 5, 278, 27, 10);
+        ctx.fillRect(columnX - 5, 412, 27, 10);
       }
-      ctx.fillStyle = "rgb(255 246 204 / 16%)";
-      for (let index = 0; index < 18; index++) {
+      ctx.strokeStyle = "#d7c49b";
+      ctx.lineWidth = 20;
+      for (const archX of [670, 855, 1018]) {
         ctx.beginPath();
-        ctx.arc(40 + (index * 97) % WORLD.width, 150 + (index * 83) % 700, 4 + index % 5, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.moveTo(archX - 36, 421);
+        ctx.lineTo(archX - 36, 334);
+        ctx.arc(archX, 334, 36, Math.PI, 0);
+        ctx.lineTo(archX + 36, 421);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#987b58";
+      for (const block of [
+        [457, 250, 66, 25], [540, 216, 118, 20], [735, 230, 56, 22],
+        [944, 218, 68, 23], [1058, 246, 94, 24], [478, 438, 160, 20],
+        [705, 438, 136, 20], [897, 438, 216, 20],
+      ]) ctx.fillRect(...block);
+      drawWatchtower(ctx, 1330, 390);
+      for (const crateX of [320, 1260]) {
+        drawRoundRect(ctx, crateX - 31, 625, 62, 54, 7, "#a97845", "#62573e");
+        ctx.strokeStyle = "#e3c484";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(crateX - 22, 634, 44, 36);
+        ctx.beginPath();
+        ctx.moveTo(crateX - 22, 634);
+        ctx.lineTo(crateX + 22, 670);
+        ctx.moveTo(crateX + 22, 634);
+        ctx.lineTo(crateX - 22, 670);
+        ctx.stroke();
+      }
+      for (let index = 0; index < 6; index++) {
+        drawPalm(ctx, 105 + index * 265, 910 - (index % 3) * 45, .43 + (index % 2) * .09, "#478656");
       }
     } else if (zone === "loot_canyon") {
-      ctx.fillStyle = "#eda56e";
+      ctx.fillStyle = "#8a9b91";
       ctx.fillRect(0, 0, WORLD.width, WORLD.height);
-      ctx.fillStyle = "#d8795b";
-      ctx.beginPath();
-      ctx.moveTo(0, 445);
-      ctx.lineTo(160, 170);
-      ctx.lineTo(390, 360);
-      ctx.lineTo(640, 115);
-      ctx.lineTo(820, 400);
-      ctx.lineTo(1030, 135);
-      ctx.lineTo(1245, 395);
-      ctx.lineTo(1440, 185);
-      ctx.lineTo(1600, 360);
-      ctx.lineTo(1600, 730);
-      ctx.lineTo(0, 730);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = "#c96b58";
-      ctx.beginPath();
-      ctx.moveTo(0, 490);
-      ctx.lineTo(170, 315);
-      ctx.lineTo(315, 490);
-      ctx.lineTo(510, 270);
-      ctx.lineTo(700, 510);
-      ctx.lineTo(920, 300);
-      ctx.lineTo(1100, 510);
-      ctx.lineTo(1300, 310);
-      ctx.lineTo(1490, 510);
-      ctx.lineTo(1600, 430);
-      ctx.lineTo(1600, 1000);
-      ctx.lineTo(0, 1000);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = "#e8bd7d";
-      ctx.beginPath();
-      ctx.moveTo(0, 695);
-      ctx.quadraticCurveTo(390, 630, 640, 765);
-      ctx.quadraticCurveTo(940, 875, 1260, 690);
-      ctx.quadraticCurveTo(1460, 590, 1600, 690);
-      ctx.lineTo(1600, 875);
-      ctx.quadraticCurveTo(1240, 1000, 900, 875);
-      ctx.quadraticCurveTo(430, 735, 0, 930);
-      ctx.closePath();
-      ctx.fill();
-      for (let index = 0; index < 14; index++) {
-        drawRoundRect(ctx, 100 + (index * 127) % 1440, 630 + (index * 71) % 250, 24, 16, 5, "#a85d52");
+      ctx.fillStyle = "#b8aa87";
+      ctx.fillRect(0, 715, WORLD.width, 285);
+      ctx.fillStyle = "#d0bd91";
+      ctx.fillRect(0, 755, WORLD.width, 7);
+      ctx.fillRect(0, 940, WORLD.width, 7);
+      for (let x = 70; x < WORLD.width; x += 200) {
+        ctx.fillStyle = "rgb(65 79 75 / 23%)";
+        ctx.fillRect(x, 770, 95, 4);
       }
+      ctx.fillStyle = "#586a68";
+      ctx.fillRect(255, 170, 1090, 290);
+      ctx.fillStyle = "#71827a";
+      ctx.fillRect(282, 200, 1035, 232);
+      ctx.fillStyle = "#3e5052";
+      ctx.fillRect(320, 248, 170, 150);
+      ctx.fillRect(548, 248, 170, 150);
+      ctx.fillRect(776, 248, 170, 150);
+      ctx.fillRect(1004, 248, 270, 150);
+      ctx.fillStyle = "#31484d";
+      ctx.fillRect(282, 423, 1035, 18);
+      ctx.strokeStyle = "#d2b37b";
+      ctx.lineWidth = 12;
+      ctx.beginPath();
+      ctx.moveTo(230, 200);
+      ctx.lineTo(1370, 200);
+      ctx.moveTo(310, 168);
+      ctx.lineTo(310, 445);
+      ctx.moveTo(1290, 168);
+      ctx.lineTo(1290, 445);
+      for (let x = 310; x < 1280; x += 160) {
+        ctx.moveTo(x, 200);
+        ctx.lineTo(x + 80, 265);
+        ctx.lineTo(x + 160, 200);
+      }
+      ctx.stroke();
+      ctx.fillStyle = "#edf0d0";
+      ctx.font = "900 23px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("SKYCRATE WORKS", 800, 235);
+      drawCargoContainer(ctx, 74, 536, 262, 158, "#d46f55");
+      drawCargoContainer(ctx, 368, 592, 265, 117, "#4f8e98");
+      drawCargoContainer(ctx, 1025, 535, 260, 155, "#d7aa55");
+      drawCargoContainer(ctx, 1320, 590, 205, 121, "#637bb0");
+      drawHazardBarrel(ctx, 220, 720);
+      drawHazardBarrel(ctx, 670, 695, "#cc6550");
+      drawHazardBarrel(ctx, 930, 735);
+      drawHazardBarrel(ctx, 1450, 750, "#cc6550");
+      drawCrystalCover(ctx, 730, 585);
+      drawCrystalCover(ctx, 935, 620);
+      ctx.fillStyle = "#a26b4c";
+      for (const crateX of [415, 812, 1180]) {
+        drawRoundRect(ctx, crateX - 23, 725, 46, 38, 5, "#a26b4c", "#5e554a");
+        ctx.strokeStyle = "#e2bc78";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(crateX - 15, 732, 30, 23);
+      }
+      ctx.fillStyle = "rgb(255 255 255 / 22%)";
+      ctx.beginPath();
+      ctx.ellipse(800, 860, 680, 44, 0, 0, Math.PI * 2);
+      ctx.fill();
     } else {
-      ctx.fillStyle = "#f2bd77";
+      ctx.fillStyle = "#eeae77";
       ctx.fillRect(0, 0, WORLD.width, WORLD.height);
-      ctx.fillStyle = "#df8d6f";
+      ctx.fillStyle = "#bd7b74";
       ctx.beginPath();
-      ctx.moveTo(0, 590);
-      ctx.lineTo(230, 240);
-      ctx.lineTo(510, 545);
-      ctx.lineTo(780, 155);
-      ctx.lineTo(1070, 525);
-      ctx.lineTo(1330, 215);
-      ctx.lineTo(1600, 530);
+      ctx.moveTo(0, 580);
+      ctx.lineTo(220, 255);
+      ctx.lineTo(470, 535);
+      ctx.lineTo(700, 190);
+      ctx.lineTo(975, 545);
+      ctx.lineTo(1240, 235);
+      ctx.lineTo(1600, 515);
+      ctx.lineTo(1600, 760);
+      ctx.lineTo(0, 760);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#8d6772";
+      ctx.beginPath();
+      ctx.moveTo(0, 665);
+      ctx.lineTo(285, 470);
+      ctx.lineTo(500, 688);
+      ctx.lineTo(735, 450);
+      ctx.lineTo(1000, 690);
+      ctx.lineTo(1240, 465);
+      ctx.lineTo(1510, 680);
+      ctx.lineTo(1600, 640);
       ctx.lineTo(1600, 1000);
       ctx.lineTo(0, 1000);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = "#ba7469";
+      ctx.fillStyle = "#d7b979";
       ctx.beginPath();
-      ctx.moveTo(0, 675);
-      ctx.lineTo(260, 440);
-      ctx.lineTo(470, 685);
-      ctx.lineTo(730, 390);
-      ctx.lineTo(990, 690);
-      ctx.lineTo(1250, 425);
-      ctx.lineTo(1500, 675);
-      ctx.lineTo(1600, 620);
+      ctx.moveTo(0, 770);
+      ctx.quadraticCurveTo(360, 665, 700, 805);
+      ctx.quadraticCurveTo(1090, 950, 1600, 760);
       ctx.lineTo(1600, 1000);
       ctx.lineTo(0, 1000);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = "#eed49a";
-      ctx.beginPath();
-      ctx.moveTo(0, 775);
-      ctx.quadraticCurveTo(420, 655, 740, 815);
-      ctx.quadraticCurveTo(1100, 965, 1600, 765);
-      ctx.lineTo(1600, 1000);
-      ctx.lineTo(0, 1000);
-      ctx.closePath();
-      ctx.fill();
+      ctx.strokeStyle = "rgb(255 235 185 / 40%)";
+      ctx.lineWidth = 4;
+      for (let x = 80; x < WORLD.width; x += 95) {
+        ctx.beginPath();
+        ctx.moveTo(x, 815 + (x % 3) * 9);
+        ctx.lineTo(x + 55, 815 + (x % 3) * 9);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "rgb(255 244 189 / 20%)";
+      ctx.fillRect(0, 732, WORLD.width, 8);
       const sunX = 1295 + Math.sin(time * .1) * 6;
       const sun = ctx.createRadialGradient(sunX, 155, 15, sunX, 155, 115);
       sun.addColorStop(0, "rgb(255 245 170 / 95%)");
@@ -1045,39 +1296,86 @@
     ctx.fill();
   };
 
-  const drawLighthouse = (ctx, time) => {
-    const x = LIGHTHOUSE.x;
-    const y = LIGHTHOUSE.y;
-    ctx.fillStyle = "rgb(255 244 187 / 14%)";
+  const drawBellspire = (ctx, time) => {
+    const x = BELLSPIRE.x;
+    const y = BELLSPIRE.y;
+    const glow = ctx.createRadialGradient(x, y - 205, 18, x, y - 205, 195);
+    glow.addColorStop(0, "rgb(255 238 160 / 27%)");
+    glow.addColorStop(1, "rgb(255 238 160 / 0%)");
+    ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.moveTo(x, y - 125);
-    ctx.lineTo(x - 245, y - 250 + Math.sin(time) * 12);
-    ctx.lineTo(x - 200, y + 15);
-    ctx.closePath();
+    ctx.arc(x, y - 205, 195, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#fff4d0";
-    ctx.strokeStyle = "#ab6259";
-    ctx.lineWidth = 5;
+    drawRoundRect(ctx, x - 77, y - 223, 154, 233, 16, "#bd916b", "#745347");
+    ctx.fillStyle = "#d6b283";
+    ctx.fillRect(x - 60, y - 207, 16, 198);
+    ctx.fillRect(x + 44, y - 207, 16, 198);
+    ctx.fillStyle = "#80604e";
+    ctx.fillRect(x - 82, y - 224, 164, 16);
+    drawRoundRect(ctx, x - 69, y - 288, 138, 76, 13, "#c6a078", "#745347");
+    ctx.fillStyle = "#87654f";
+    ctx.fillRect(x - 77, y - 218, 154, 12);
+
+    ctx.fillStyle = "#f4e3b4";
+    ctx.strokeStyle = "#77513e";
+    ctx.lineWidth = 7;
     ctx.beginPath();
-    ctx.moveTo(x - 43, y + 7);
-    ctx.lineTo(x - 30, y - 118);
-    ctx.lineTo(x + 30, y - 118);
-    ctx.lineTo(x + 43, y + 7);
-    ctx.closePath();
+    ctx.arc(x, y - 250, 34, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    drawRoundRect(ctx, x - 38, y - 144, 76, 30, 7, "#db785b", "#9d5a50");
-    ctx.fillStyle = "#ffd96c";
+    ctx.strokeStyle = "#a67a53";
+    ctx.lineWidth = 2;
+    for (let tick = 0; tick < 12; tick++) {
+      const angle = tick * Math.PI / 6;
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(angle) * 25, y - 250 + Math.sin(angle) * 25);
+      ctx.lineTo(x + Math.cos(angle) * 29, y - 250 + Math.sin(angle) * 29);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = "#4e4850";
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.arc(x, y - 128, 12, 0, Math.PI * 2);
+    ctx.moveTo(x, y - 250);
+    ctx.lineTo(x + Math.sin(time * .16) * 15, y - 250 - Math.cos(time * .16) * 15);
+    ctx.moveTo(x, y - 250);
+    ctx.lineTo(x - 15, y - 250 + Math.cos(time * .08) * 15);
+    ctx.stroke();
+    ctx.fillStyle = "#e0bd78";
+    ctx.beginPath();
+    ctx.arc(x, y - 250, 5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#a65b51";
+
+    ctx.fillStyle = "#8b6653";
     ctx.beginPath();
-    ctx.moveTo(x - 44, y - 145);
-    ctx.lineTo(x, y - 174);
-    ctx.lineTo(x + 44, y - 145);
+    ctx.moveTo(x - 90, y - 286);
+    ctx.lineTo(x, y - 350);
+    ctx.lineTo(x + 90, y - 286);
     ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = "#63483f";
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.fillStyle = "#e4c47f";
+    ctx.beginPath();
+    ctx.moveTo(x - 11, y - 337);
+    ctx.lineTo(x, y - 366);
+    ctx.lineTo(x + 11, y - 337);
+    ctx.closePath();
+    ctx.fill();
+    drawRoundRect(ctx, x - 27, y - 77, 54, 87, 25, "#5c4a4b", "#735344");
+    drawRoundRect(ctx, x - 13, y - 63, 26, 73, 13, "#332f43");
+    ctx.fillStyle = "#d2ab72";
+    for (const windowX of [x - 51, x + 51]) {
+      ctx.beginPath();
+      ctx.arc(windowX, y - 131, 12, Math.PI, 0);
+      ctx.lineTo(windowX + 12, y - 106);
+      ctx.lineTo(windowX - 12, y - 106);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.fillStyle = "#5e554d";
+    ctx.fillRect(x - 83, y + 8, 166, 12);
   };
 
   const drawSupplyDrop = (ctx, time) => {
@@ -1086,6 +1384,26 @@
     const pulse = 1 + Math.sin(time * 5) * .05;
     ctx.save();
     ctx.translate(SUPPLY_DROP.x, SUPPLY_DROP.y);
+    ctx.globalAlpha = .2 + Math.sin(time * 3) * .04;
+    ctx.fillStyle = "#ffcf63";
+    ctx.beginPath();
+    ctx.moveTo(-15, -45);
+    ctx.lineTo(-73, -260);
+    ctx.lineTo(73, -260);
+    ctx.lineTo(15, -45);
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    for (let index = 0; index < 5; index++) {
+      const smokeX = Math.sin(time * 2.4 + index) * (12 + index * 6);
+      const smokeY = -95 - ((time * 28 + index * 34) % 130);
+      ctx.globalAlpha = .34 - index * .035;
+      ctx.fillStyle = index % 2 ? "#79e8ec" : "#ffd46e";
+      ctx.beginPath();
+      ctx.arc(smokeX, smokeY, 15 + index * 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
     ctx.scale(pulse, pulse);
     ctx.fillStyle = "rgb(255 230 117 / 28%)";
     ctx.beginPath();
@@ -1099,7 +1417,7 @@
     ctx.fillStyle = "#fff6c8";
     ctx.font = "800 12px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("SUPPLY DROP", 0, 31);
+    ctx.fillText("AIR DROP", 0, 31);
     ctx.restore();
   };
 
@@ -1157,11 +1475,42 @@
     }
   };
 
+  const drawWeaponCaches = (ctx, time) => {
+    const caches = [
+      { imageId: "neon_relic", x: 250, y: 610, tint: "#df9b53" },
+      { imageId: "drift_token", x: 1390, y: 645, tint: "#77c8db" },
+    ];
+    for (const cache of caches) {
+      ctx.save();
+      ctx.translate(cache.x, cache.y + Math.sin(time * 2 + cache.x) * 2);
+      ctx.fillStyle = "rgb(255 222 120 / 20%)";
+      ctx.beginPath();
+      ctx.ellipse(0, 16, 54, 25, 0, 0, Math.PI * 2);
+      ctx.fill();
+      drawRoundRect(ctx, -42, -7, 84, 36, 7, "#344b59", "#273d4c");
+      ctx.fillStyle = cache.tint;
+      ctx.fillRect(-32, -2, 64, 5);
+      const image = imageFor(cache.imageId);
+      if (image?.complete && image.naturalWidth) {
+        ctx.shadowColor = cache.tint;
+        ctx.shadowBlur = 12;
+        ctx.drawImage(image, -39, -59, 78, 60);
+        ctx.shadowBlur = 0;
+      }
+      ctx.fillStyle = "#fff4d0";
+      ctx.font = "800 10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("GEAR CACHE", 0, 44);
+      ctx.restore();
+    }
+  };
+
   const drawWorldObjects = (ctx, time) => {
     const zone = state.position.zone;
     if (zone === QUEST_BOARD.zone) drawBoard(ctx, time);
-    if (zone === LIGHTHOUSE.zone) drawLighthouse(ctx, time);
+    if (zone === BELLSPIRE.zone) drawBellspire(ctx, time);
     if (zone === SUPPLY_DROP.zone) drawSupplyDrop(ctx, time);
+    if (zone === "loot_canyon") drawWeaponCaches(ctx, time);
     for (const beacon of BEACONS) {
       if (beacon.zone === zone) drawBeacon(ctx, beacon, time);
     }
@@ -1196,12 +1545,31 @@
     ctx.scale(squashX, squashY);
     ctx.scale(state.facing.x < -.15 ? -1 : 1, 1);
     if (dashActive) {
-    ctx.globalAlpha = .18;
-    ctx.fillStyle = "#86f5ff";
-    ctx.beginPath();
-    ctx.ellipse(-38, -20, 38, 40, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
+      for (let echo = 3; echo > 0; echo--) {
+        ctx.globalAlpha = .08 + (4 - echo) * .035;
+        ctx.fillStyle = "#86f5ff";
+        ctx.beginPath();
+        ctx.ellipse(-echo * 18, -18, 19, 38, 0, 0, Math.PI * 2);
+        ctx.fill();
+        if (avatarImage?.complete && avatarImage.naturalWidth) {
+          const [sourceX, sourceY, sourceWidth, sourceHeight] = avatar.crop;
+          const scale = Math.min(78 / sourceWidth, 82 / sourceHeight);
+          const width = sourceWidth * scale;
+          const height = sourceHeight * scale;
+          ctx.drawImage(
+            avatarImage,
+            sourceX,
+            sourceY,
+            sourceWidth,
+            sourceHeight,
+            -width / 2 - echo * 18,
+            -98,
+            width,
+            height,
+          );
+        }
+      }
+      ctx.globalAlpha = 1;
     }
 
     drawRoundRect(ctx, -27, -18, 16, 30, 7, "#15264a", "#34547d");
