@@ -111,7 +111,7 @@
     if (jordanPaymentPanel.hidden) return;
 
     jordanPaymentAmount.textContent = formatPrice(item.price, item.currency_code);
-    let setupIncomplete = jordanWalletMethods.length === 0;
+    let hasReadyMethod = false;
     for (const method of jordanWalletMethods) {
       const row = document.createElement("div");
       const title = document.createElement("dt");
@@ -125,9 +125,9 @@
       const methodIsReady = method.setupRequired !== true && identifierIsSet && beneficiaryIsSet;
 
       if (methodIsReady) {
+        hasReadyMethod = true;
         details.textContent = `Recipient / المستلم: ${method.paymentIdentifier}\nBeneficiary / اسم المستفيد: ${method.beneficiaryName || "Not required"}`;
       } else {
-        setupIncomplete = true;
         details.textContent = "Recipient details are not configured yet. / لم يتم إعداد بيانات المستلم بعد.";
       }
 
@@ -141,9 +141,9 @@
       jordanPaymentMethods.append(row);
     }
 
-    if (setupIncomplete) {
+    if (!hasReadyMethod) {
       jordanPaymentSetupWarning.textContent =
-        "Do not transfer money while recipient details are missing. Before going live, set each paymentIdentifier and beneficiaryName in payment-config.js and set setupRequired to false. / لا تحوّل أي مبلغ قبل إضافة رقم المحفظة أو اسم كليك واسم المستفيد في payment-config.js.";
+        "No Jordan transfer method is ready. Do not send money until a recipient is configured in payment-config.js. / لا توجد طريقة تحويل أردنية جاهزة. لا تحوّل أي مبلغ قبل إعداد بيانات المستلم في payment-config.js.";
       jordanPaymentSetupWarning.hidden = false;
     }
   };
