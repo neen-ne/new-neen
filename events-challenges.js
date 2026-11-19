@@ -56,6 +56,43 @@
     }
   };
 
+  const loadSunnyIsland = async () => {
+    const node = card("sunny_island");
+    if (!node) return;
+    const attempts = node.querySelector("[data-challenge-attempts]");
+    const reward = node.querySelector("[data-challenge-reward]");
+    const level = node.querySelector("[data-challenge-level]");
+    const link = node.querySelector("a");
+    if (!(attempts instanceof HTMLElement) || !(reward instanceof HTMLElement)) return;
+    try {
+      const { state: island } = await request("/api/games/sunny-island/state");
+      const adventure = island.adventure;
+      reward.textContent = `${new Intl.NumberFormat().format(adventure.reward_amount_coins)} Earned Coins`;
+      if (level instanceof HTMLElement) {
+        level.textContent = `Island level: ${new Intl.NumberFormat().format(island.progress.level)}`;
+      }
+      if (adventure.status !== "active" && link instanceof HTMLAnchorElement) {
+        link.setAttribute("aria-disabled", "true");
+        link.textContent = "Temporarily unavailable";
+        link.removeAttribute("href");
+        attempts.textContent = "Adventure not currently active";
+        return;
+      }
+      attempts.textContent = `${adventure.attempts_remaining_today} of ${adventure.free_attempts_per_day} daily adventures left`;
+    } catch (error) {
+      if (error.code === "AUTH_REQUIRED") {
+        attempts.textContent = "Sign in to view daily adventures";
+        reward.textContent = "Sign in to see reward";
+        if (level instanceof HTMLElement) level.textContent = "Sign in to see island level";
+        return;
+      }
+      attempts.textContent = "Adventure status unavailable";
+      reward.textContent = "—";
+      if (level instanceof HTMLElement) level.textContent = "Island level unavailable";
+      status.textContent = error instanceof Error ? error.message : "Sunny Island data could not be loaded.";
+    }
+  };
+
   const load = async () => {
     const user = await request("/api/auth/me").catch(() => null);
     await Promise.all([
@@ -63,6 +100,7 @@
       loadGame("picture-jigsaw", "/api/games/picture-jigsaw", "/api/games/picture-jigsaw/sessions/current", "Picture Jigsaw"),
       loadGame("vault_cracker", "/api/games/vault-cracker", "/api/games/vault-cracker/sessions/current", "Vault Cracker"),
       loadGame("loot_sequence", "/api/games/loot-sequence", "/api/games/loot-sequence/sessions/current", "Loot Sequence"),
+      loadSunnyIsland(),
     ]);
 
     const attendance = card("attendance");

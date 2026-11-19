@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#e9fbff" />
+    <meta name="description" content="Explore NEEN Sunny Island, discover collectibles, and complete server-validated daily adventures." />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <title>NEEN Sunny Island — NEEN</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Exo+2:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Oxanium:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="sunny-island.css" />
+    <script src="script.js" defer></script>
+    <script src="sunny-island.js" defer></script>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <span class="wordmark wordmark-lockup"><a href="index.html" aria-label="NEEN home">NEE</a><a class="wordmark-admin-entry" href="events-admin.php" aria-label="Events admin console">E</a><span aria-hidden="true">.</span></span>
+        <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-navigation"><span></span><span></span></button>
+        <nav class="site-navigation" id="site-navigation" aria-label="Main navigation">
+          <a class="nav-link" href="index.html">Home</a><a class="nav-link" href="events.html">Events</a><a class="nav-link is-active" href="events-challenges.html" aria-current="page">Challenges</a><a class="nav-link" href="account.html">Account</a>
+        </nav>
+      </header>
+      <main class="sunny-page">
+        <section class="sunny-intro" aria-labelledby="sunny-title">
+          <nav class="sunny-crumbs" aria-label="Breadcrumb"><a href="events-challenges.html">Challenges</a><span aria-hidden="true">/</span><span>Sunny Island</span></nav>
+          <div class="sunny-intro-copy">
+            <p class="eyebrow">A LITTLE SUN. A LOT OF NEEN.</p>
+            <h1 id="sunny-title">SUNNY <span>ISLAND</span></h1>
+            <p>Explore four cartoon shores, collect island treasures, and take on a fresh server-validated adventure every day.</p>
+          </div>
+          <a class="sunny-account-link" href="account.html">Sign in to save your island ↗</a>
+        </section>
+
+        <section class="sunny-game-shell" aria-label="Sunny Island game">
+          <div class="sunny-topbar">
+            <div class="sunny-player-card">
+              <span class="sunny-level-badge" data-level>1</span>
+              <div class="sunny-player-progress">
+                <strong>Island Level <span data-level-label>1</span></strong>
+                <span class="sunny-xp-track"><span data-xp-fill></span></span>
+                <small data-xp-label>0 / 300 XP</small>
+              </div>
+            </div>
+            <div class="sunny-wallet">
+              <span aria-hidden="true">✦</span>
+              <div><small>Earned Coins</small><strong data-earned-balance>—</strong></div>
+            </div>
+            <div class="sunny-actions-top">
+              <button class="sunny-quiet-button" type="button" data-codex-open aria-haspopup="dialog">Island Codex <span data-codex-count>0/9</span></button>
+              <button class="sunny-main-button" type="button" data-adventure-start>Start Daily Adventure</button>
+            </div>
+          </div>
+
+          <div class="sunny-status-row">
+            <p class="sunny-status" data-status role="status" aria-live="polite">Loading your island…</p>
+            <span class="sunny-attempt-pill" data-attempts>Daily adventures: —</span>
+            <span class="sunny-dash-status" data-dash-status>Dash ready</span>
+          </div>
+
+          <div class="sunny-play-area">
+            <div class="sunny-stage-wrap">
+              <div class="sunny-canvas-frame">
+                <canvas data-island-canvas tabindex="0" role="application" aria-label="Sunny Island cartoon adventure. Use WASD or arrow keys to move; E or Space to interact; Shift to dash."></canvas>
+                <div class="sunny-zone-banner" data-zone-name aria-live="polite">Neon Pier</div>
+                <div class="sunny-minimap" aria-label="Island map">
+                  <div class="sunny-minimap-title"><span>ISLAND MAP</span><button type="button" data-map-toggle aria-expanded="false">Expand</button><span data-minimap-coords>NEON PIER</span></div>
+                  <svg viewBox="0 0 220 132" role="img" aria-label="Map of the four Sunny Island zones">
+                    <path class="sunny-map-path" d="M37 92 C63 70 76 41 108 38 S154 47 183 24 M108 38 C127 67 152 77 179 103" />
+                    <circle class="sunny-map-zone" data-map-zone="neon_pier" cx="37" cy="92" r="13" />
+                    <circle class="sunny-map-zone" data-map-zone="palm_grove" cx="108" cy="38" r="13" />
+                    <circle class="sunny-map-zone" data-map-zone="loot_canyon" cx="179" cy="103" r="13" />
+                    <circle class="sunny-map-zone" data-map-zone="sunset_ridge" cx="183" cy="24" r="13" />
+                    <circle class="sunny-map-player" data-map-player cx="37" cy="92" r="5" />
+                  </svg>
+                  <div class="sunny-map-labels"><span>PIER</span><span>PALMS</span><span>CANYON</span><span>RIDGE</span></div>
+                </div>
+                <div class="sunny-interaction" data-interaction hidden>
+                  <span data-interaction-label></span>
+                  <button type="button" data-action-button>Interact</button>
+                </div>
+                <div class="sunny-toast" data-toast aria-live="polite" hidden></div>
+              </div>
+              <div class="sunny-touch-controls" data-touch-controls>
+                <div class="sunny-joystick" data-joystick aria-label="Movement joystick">
+                  <span class="sunny-joystick-ring"></span><span class="sunny-joystick-knob" data-joystick-knob></span>
+                </div>
+                <div class="sunny-touch-buttons">
+                  <button type="button" data-jump-button aria-label="Jump">Jump</button>
+                  <button type="button" data-touch-action aria-label="Interact">Action</button>
+                  <button type="button" data-dash-button aria-label="Dash">Dash</button>
+                </div>
+              </div>
+              <p class="sunny-controls-hint">Move: WASD / arrows <span>·</span> Jump: Space <span>·</span> Action: E <span>·</span> Dash: Shift <span>·</span> Codex: C</p>
+            </div>
+
+            <aside class="sunny-quest-panel" aria-label="Daily adventure">
+              <div class="sunny-quest-heading">
+                <p class="eyebrow">ISLAND ADVENTURE</p>
+                <h2 data-quest-title>Free Roam</h2>
+                <p data-quest-subtitle>Pick up treasures and explore every zone.</p>
+              </div>
+              <div class="sunny-objectives" data-objectives aria-live="polite">
+                <p class="sunny-empty-objectives">Start a daily adventure to reveal your three island objectives.</p>
+              </div>
+              <div class="sunny-quest-footer">
+                <span>Reward</span><strong><span data-reward>—</span> Earned Coins</strong>
+                <button class="sunny-complete-button" type="button" data-adventure-complete hidden disabled>Complete Adventure</button>
+              </div>
+              <div class="sunny-travel-card">
+                <span class="sunny-travel-icon" aria-hidden="true">☀</span>
+                <div><strong>Free exploration</strong><small>Collectibles and discoveries are yours to keep.</small></div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="sunny-feature-strip" aria-label="Island zones">
+          <article><span>01</span><strong>Neon Pier</strong><small>Boardwalk, quest board &amp; welcome crate</small></article>
+          <article><span>02</span><strong>Palm Grove</strong><small>Ruins, palms &amp; sun drops</small></article>
+          <article><span>03</span><strong>Loot Canyon</strong><small>Supply caches &amp; hidden relics</small></article>
+          <article><span>04</span><strong>Sunset Ridge</strong><small>Golden-hour cliff &amp; lighthouse</small></article>
+        </section>
+      </main>
+
+      <dialog class="sunny-codex-dialog" data-codex-dialog aria-labelledby="codex-title">
+        <div class="sunny-codex-header">
+          <div><p class="eyebrow">YOUR ISLAND COLLECTION</p><h2 id="codex-title">Island <span>Codex</span></h2></div>
+          <button type="button" class="sunny-dialog-close" data-codex-close aria-label="Close Island Codex">×</button>
+        </div>
+        <p class="sunny-codex-summary" data-codex-summary>Discover keepsakes while you explore.</p>
+        <div class="sunny-codex-grid" data-codex-grid></div>
+      </dialog>
+
+      <footer class="site-footer"><a class="wordmark footer-wordmark" href="index.html">NEEN<span>.</span></a><p>FREE FIRE CONTENT <span>·</span> @NEEN_0O</p><a class="back-to-top" href="events-challenges.html">CHALLENGES <span aria-hidden="true">↗</span></a></footer>
+    </div>
+  </body>
+</html>

@@ -2129,8 +2129,18 @@ try {
         is_string($challengesPage)
         && str_contains($challengesPage, 'vault-cracker.html')
         && str_contains($challengesPage, 'loot-sequence.html')
+        && str_contains($challengesPage, 'sunny-island.html')
+        && str_contains($challengesPage, 'data-challenge="sunny_island"')
         && str_contains($challengesPage, 'data-challenge-status'),
-        'The Challenges Hub links the new games and renders live daily challenge state',
+        'The Challenges Hub links the new games and Sunny Island and renders live daily challenge state',
+    );
+    [$sunnyPageStatus, $sunnyPage] = requestPage($baseUrl, '/sunny-island.html', []);
+    assertTrue(
+        $sunnyPageStatus === 200
+        && str_contains($sunnyPage, 'data-island-canvas')
+        && str_contains($sunnyPage, 'data-codex-dialog')
+        && str_contains($sunnyPage, 'sunny-island.js'),
+        'Sunny Island serves its playable canvas, collectible Codex, and frontend engine',
     );
 
     [$status] = request($baseUrl, '/api/attendance/daily', $anonymousCookies);

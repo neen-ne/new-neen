@@ -1,0 +1,1480 @@
+(() => {
+  const canvas = document.querySelector("[data-island-canvas]");
+  const statusNode = document.querySelector("[data-status]");
+  const zoneNode = document.querySelector("[data-zone-name]");
+  const minimap = document.querySelector(".sunny-minimap");
+  const mapToggle = document.querySelector("[data-map-toggle]");
+  const codexDialog = document.querySelector("[data-codex-dialog]");
+  const codexGrid = document.querySelector("[data-codex-grid]");
+  const objectivesNode = document.querySelector("[data-objectives]");
+  const startButton = document.querySelector("[data-adventure-start]");
+  const completeButton = document.querySelector("[data-adventure-complete]");
+  const actionButton = document.querySelector("[data-action-button]");
+  const touchActionButton = document.querySelector("[data-touch-action]");
+  const jumpButton = document.querySelector("[data-jump-button]");
+  const dashButton = document.querySelector("[data-dash-button]");
+  const joystick = document.querySelector("[data-joystick]");
+  const joystickKnob = document.querySelector("[data-joystick-knob]");
+  if (
+    !(canvas instanceof HTMLCanvasElement)
+    || !(statusNode instanceof HTMLElement)
+    || !(zoneNode instanceof HTMLElement)
+    || !(minimap instanceof HTMLElement)
+    || !(mapToggle instanceof HTMLButtonElement)
+    || !(codexDialog instanceof HTMLDialogElement)
+    || !(codexGrid instanceof HTMLElement)
+    || !(objectivesNode instanceof HTMLElement)
+    || !(startButton instanceof HTMLButtonElement)
+    || !(completeButton instanceof HTMLButtonElement)
+  ) return;
+
+  const context = canvas.getContext("2d", { alpha: false });
+  if (!context) {
+    statusNode.textContent = "Your browser could not start the island canvas.";
+    statusNode.classList.add("is-error");
+    return;
+  }
+
+  const WORLD = { width: 1600, height: 1000, viewWidth: 1000, viewHeight: 620 };
+  const ZONES = {
+    neon_pier: "Neon Pier",
+    palm_grove: "Palm Grove",
+    loot_canyon: "Loot Canyon",
+    sunset_ridge: "Sunset Ridge",
+  };
+  const PORTALS = {
+    neon_pier: [{ x: 1490, y: 520, zone: "palm_grove", label: "Follow the boardwalk to Palm Grove" }],
+    palm_grove: [
+      { x: 85, y: 520, zone: "neon_pier", label: "Return to Neon Pier" },
+      { x: 1510, y: 510, zone: "loot_canyon", label: "Take the canyon trail" },
+    ],
+    loot_canyon: [
+      { x: 85, y: 510, zone: "palm_grove", label: "Return to Palm Grove" },
+      { x: 1510, y: 500, zone: "sunset_ridge", label: "Climb to Sunset Ridge" },
+    ],
+    sunset_ridge: [{ x: 85, y: 500, zone: "loot_canyon", label: "Descend to Loot Canyon" }],
+  };
+  const PICKUPS = [
+    { id: "snoop_badge", zone: "neon_pier", x: 390, y: 690, label: "Snoop Badge" },
+    { id: "golden_compass", zone: "loot_canyon", x: 945, y: 515, label: "Golden Compass" },
+    { id: "neon_relic", zone: "loot_canyon", x: 475, y: 715, label: "Neon Relic" },
+    { id: "drift_token", zone: "sunset_ridge", x: 560, y: 700, label: "Drift Token" },
+    { id: "sun_crate", zone: "palm_grove", x: 385, y: 690, label: "Sun Crate" },
+    { id: "palm_pack", zone: "palm_grove", x: 895, y: 430, label: "Palm Pack" },
+    { id: "reef_sticker", zone: "palm_grove", x: 1215, y: 700, label: "Reef Sticker" },
+    { id: "sunset_sticker", zone: "neon_pier", x: 755, y: 340, label: "Sunset Sticker" },
+    { id: "canyon_sticker", zone: "sunset_ridge", x: 1165, y: 720, label: "Canyon Sticker" },
+  ];
+  const AMBIENT_ART = Array.from({ length: 5 }, (_, index) => ({
+    zone: ["neon_pier", "palm_grove", "loot_canyon", "sunset_ridge", "palm_grove"][index],
+    x: [1140, 650, 1290, 930, 1350][index],
+    y: [715, 285, 340, 300, 290][index],
+    imageId: `snoop-sticker-${String(index + 5).padStart(2, "0")}`,
+  }));
+  const BEACONS = [
+    { id: "pier-beacon-a", zone: "neon_pier", x: 800, y: 440, label: "West Beacon" },
+    { id: "pier-beacon-b", zone: "neon_pier", x: 1110, y: 600, label: "East Beacon" },
+  ];
+  const QUEST_BOARD = { id: "quest-board", zone: "neon_pier", x: 290, y: 530, label: "Daily Adventure Board" };
+  const DROP_MARKER = { id: "drop-marker", zone: "palm_grove", x: 350, y: 495, label: "Palm Grove Sun Drops" };
+  const LIGHTHOUSE = { id: "summit-lighthouse", zone: "sunset_ridge", x: 1330, y: 390, label: "Summit Lighthouse" };
+  const SUPPLY_DROP = { id: "canyon-supply-drop", zone: "loot_canyon", x: 1260, y: 735, label: "Timed Canyon Supply Drop" };
+  const INTERACTION_RADIUS = 74;
+  const colors = {
+    ink: "#24495a",
+    white: "#fffdf1",
+    teal: "#52b7bb",
+    coral: "#ed8054",
+    gold: "#f2c65d",
+    green: "#73b87b",
+  };
+  const state = {
+    csrfToken: "",
+    busy: false,
+    authenticated: false,
+    session: null,
+    progress: {
+      xp: 0,
+      level: 1,
+      unlocked_collectibles: [],
+      discovered_zones: [],
+      total_adventures_completed: 0,
+      last_position: null,
+    },
+    codex: [],
+    adventure: { attempts_remaining_today: 0, free_attempts_per_day: 3, reward_amount_coins: 50 },
+    earnedCoins: null,
+    position: { zone: "neon_pier", x: 150, y: 520 },
+    facing: { x: 1, y: 0 },
+    keys: new Set(),
+    joystickVector: { x: 0, y: 0 },
+    joystickPointer: null,
+    images: new Map(),
+    particles: [],
+    beaconActivations: new Set(),
+    activeInteraction: null,
+    interactionKey: "",
+    dirty: false,
+    progressTimer: 0,
+    lastPeriodicSync: 0,
+    lastFrame: 0,
+    jumpUntil: 0,
+    dashUntil: 0,
+    dashCooldownUntil: 0,
+    toastUntil: 0,
+    toastMessage: "",
+    animationFrame: 0,
+    startedAt: performance.now(),
+    lastDashHudUpdate: 0,
+    floatingTexts: [],
+  };
+
+  const api = async (path, method = "GET", data = null) => {
+    const headers = { Accept: "application/json" };
+    const options = { method, credentials: "same-origin", cache: "no-store", headers };
+    if (data !== null) {
+      if (!state.csrfToken) {
+        const csrfResponse = await fetch("/api/auth/csrf", {
+          headers: { Accept: "application/json" },
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+        let csrfResult;
+        try { csrfResult = await csrfResponse.json(); } catch { throw new Error("The security token could not be read."); }
+        if (!csrfResponse.ok || csrfResult.success !== true) {
+          throw new Error(csrfResult.errors?.[0]?.message || "A security token is required.");
+        }
+        state.csrfToken = csrfResult.data.csrf_token;
+      }
+      headers["Content-Type"] = "application/json";
+      headers["X-CSRF-Token"] = state.csrfToken;
+      options.body = JSON.stringify(data);
+    }
+    const response = await fetch(path, options);
+    let result;
+    try { result = await response.json(); } catch { throw new Error("The island service returned an unreadable response."); }
+    if (!response.ok || result.success !== true) {
+      const error = new Error(result.errors?.[0]?.message || "The island request could not be completed.");
+      error.code = result.errors?.[0]?.code;
+      error.status = response.status;
+      throw error;
+    }
+    return result.data;
+  };
+
+  const setStatus = (message, isError = false) => {
+    statusNode.textContent = message;
+    statusNode.classList.toggle("is-error", isError);
+  };
+
+  const formatNumber = (value) => new Intl.NumberFormat().format(Number(value) || 0);
+
+  const imageFor = (id) => state.images.get(id);
+
+  const loadImages = (catalog) => {
+    for (const item of catalog) {
+      if (state.images.has(item.id)) continue;
+      const image = new Image();
+      image.decoding = "async";
+      image.src = item.image;
+      image.addEventListener("load", () => state.dirty = true, { once: true });
+      state.images.set(item.id, image);
+    }
+    for (const ambient of AMBIENT_ART) {
+      if (state.images.has(ambient.imageId)) continue;
+      const image = new Image();
+      image.decoding = "async";
+      image.src = `/assets/hero-loot/${ambient.imageId}.png`;
+      image.addEventListener("load", () => state.dirty = true, { once: true });
+      state.images.set(ambient.imageId, image);
+    }
+  };
+
+  const updateProgress = (progress) => {
+    if (!progress) return;
+    state.progress = {
+      xp: Number(progress.xp) || 0,
+      level: Number(progress.level) || 1,
+      unlocked_collectibles: Array.isArray(progress.unlocked_collectibles) ? progress.unlocked_collectibles : [],
+      discovered_zones: Array.isArray(progress.discovered_zones) ? progress.discovered_zones : [],
+      total_adventures_completed: Number(progress.total_adventures_completed) || 0,
+      last_position: progress.last_position || null,
+    };
+    renderProgress();
+  };
+
+  const updateSession = (session) => {
+    state.session = session || null;
+    renderObjectives();
+  };
+
+  const renderProgress = () => {
+    const level = Math.max(1, state.progress.level);
+    const currentLevelXp = state.progress.xp % 300;
+    const levelNode = document.querySelector("[data-level]");
+    const levelLabel = document.querySelector("[data-level-label]");
+    const xpFill = document.querySelector("[data-xp-fill]");
+    const xpLabel = document.querySelector("[data-xp-label]");
+    const codexCount = document.querySelector("[data-codex-count]");
+    if (levelNode) levelNode.textContent = String(level);
+    if (levelLabel) levelLabel.textContent = String(level);
+    if (xpFill) xpFill.style.width = `${(currentLevelXp / 300) * 100}%`;
+    if (xpLabel) xpLabel.textContent = `${formatNumber(currentLevelXp)} / 300 XP`;
+    if (codexCount) codexCount.textContent = `${state.progress.unlocked_collectibles.length}/${state.codex.length || 9}`;
+
+    const attempts = document.querySelector("[data-attempts]");
+    const rewardNode = document.querySelector("[data-reward]");
+    if (attempts) {
+      attempts.textContent = `Daily adventures: ${state.adventure.attempts_remaining_today} / ${state.adventure.free_attempts_per_day} left`;
+    }
+    if (rewardNode) {
+      rewardNode.textContent = state.authenticated
+        ? formatNumber(state.adventure.reward_amount_coins)
+        : "—";
+    }
+    const balance = document.querySelector("[data-earned-balance]");
+    if (balance) balance.textContent = state.earnedCoins === null ? "—" : formatNumber(state.earnedCoins);
+    startButton.disabled = !state.authenticated || state.busy
+      || state.adventure.attempts_remaining_today < 1
+      || Boolean(state.session && ["started", "in_progress"].includes(state.session.status));
+    startButton.textContent = state.session && ["started", "in_progress"].includes(state.session.status)
+      ? "Adventure in Progress"
+      : state.adventure.attempts_remaining_today > 0
+        ? "Start Daily Adventure"
+        : "Daily Runs Used";
+    renderCodex();
+    renderObjectives();
+  };
+
+  const renderObjectives = () => {
+    objectivesNode.replaceChildren();
+    const title = document.querySelector("[data-quest-title]");
+    const subtitle = document.querySelector("[data-quest-subtitle]");
+    if (!state.session || !["started", "in_progress"].includes(state.session.status)) {
+      if (title) title.textContent = "Free Roam";
+      if (subtitle) subtitle.textContent = "Pick up treasures and explore every zone.";
+      const empty = document.createElement("p");
+      empty.className = "sunny-empty-objectives";
+      empty.textContent = state.authenticated
+        ? "Start a daily adventure to reveal your three island objectives."
+        : "Sign in to save discoveries and start a daily adventure.";
+      objectivesNode.append(empty);
+      completeButton.hidden = true;
+      return;
+    }
+    if (title) title.textContent = "Today's Adventure";
+    if (subtitle) subtitle.textContent = "Explore the island and finish each server-assigned objective.";
+    const objectives = Array.isArray(state.session.objectives) ? state.session.objectives : [];
+    for (const objective of objectives) {
+      const row = document.createElement("div");
+      row.className = `sunny-objective${objective.completed ? " is-complete" : ""}`;
+      const check = document.createElement("span");
+      check.className = "sunny-objective-check";
+      check.textContent = objective.completed ? "✓" : "•";
+      const copy = document.createElement("span");
+      const titleText = document.createElement("strong");
+      titleText.textContent = objective.description || objective.id.replaceAll("_", " ");
+      const zoneText = document.createElement("small");
+      zoneText.textContent = ZONES[objective.zone] || objective.zone;
+      copy.append(titleText, zoneText);
+      row.append(check, copy);
+      objectivesNode.append(row);
+    }
+    const complete = objectives.length > 0 && objectives.every((objective) => objective.completed);
+    completeButton.hidden = !complete;
+    completeButton.disabled = state.busy || !complete;
+  };
+
+  const renderCodex = () => {
+    codexGrid.replaceChildren();
+    const found = new Set(state.progress.unlocked_collectibles);
+    for (const collectible of state.codex) {
+      const item = document.createElement("article");
+      const isFound = found.has(collectible.id);
+      item.className = `sunny-codex-item ${isFound ? "is-found" : "is-locked"}`;
+      const art = document.createElement("div");
+      art.className = "sunny-codex-art";
+      const image = document.createElement("img");
+      image.src = collectible.image;
+      image.alt = isFound ? collectible.name : "Undiscovered island collectible";
+      image.loading = "lazy";
+      art.append(image);
+      const title = document.createElement("strong");
+      title.textContent = collectible.name;
+      const label = document.createElement("small");
+      label.textContent = isFound ? "Discovered" : "Not found yet";
+      item.append(art, title, label);
+      codexGrid.append(item);
+    }
+    const summary = document.querySelector("[data-codex-summary]");
+    if (summary) {
+      summary.textContent = `${found.size} of ${state.codex.length} keepsakes discovered. Your finds are saved to your account.`;
+    }
+  };
+
+  const renderMap = () => {
+    document.querySelectorAll("[data-map-zone]").forEach((node) => {
+      const zone = node.getAttribute("data-map-zone");
+      node.classList.toggle("is-current", zone === state.position.zone);
+      node.classList.toggle("is-discovered", state.progress.discovered_zones.includes(zone));
+    });
+    const current = ZONES[state.position.zone] || "Sunny Island";
+    const miniLabel = document.querySelector("[data-minimap-coords]");
+    if (miniLabel) miniLabel.textContent = current.toUpperCase();
+    zoneNode.textContent = current;
+    const point = {
+      neon_pier: [37, 92],
+      palm_grove: [108, 38],
+      loot_canyon: [179, 103],
+      sunset_ridge: [183, 24],
+    }[state.position.zone] || [37, 92];
+    const marker = document.querySelector("[data-map-player]");
+    if (marker) {
+      marker.setAttribute("cx", String(point[0]));
+      marker.setAttribute("cy", String(point[1]));
+    }
+  };
+
+  const toast = (message, duration = 2400) => {
+    const node = document.querySelector("[data-toast]");
+    if (!(node instanceof HTMLElement)) return;
+    state.toastMessage = message;
+    state.toastUntil = performance.now() + duration;
+    node.textContent = message;
+    node.hidden = false;
+  };
+
+  const progressPayload = (extra = {}) => ({
+    collectibles: [...new Set(state.progress.unlocked_collectibles)],
+    discovered_zones: [...new Set(state.progress.discovered_zones)],
+    last_position: { ...state.position },
+    ...extra,
+  });
+
+  let progressQueue = Promise.resolve();
+  const syncProgress = (extra = {}) => {
+    if (!state.authenticated) {
+      setStatus("Sign in to save your island discoveries.", true);
+      return Promise.reject(new Error("Sign in to save progress."));
+    }
+    const payload = progressPayload(extra);
+    const request = progressQueue.catch(() => {}).then(() => api("/api/games/sunny-island/progress", "POST", payload));
+    progressQueue = request.catch(() => {});
+    return request.then((result) => {
+      updateProgress(result.progress);
+      if (result.session) updateSession(result.session);
+      state.dirty = false;
+      renderMap();
+      return result;
+    });
+  };
+
+  const scheduleProgressSync = (immediate = false) => {
+    if (!state.authenticated) return;
+    state.dirty = true;
+    window.clearTimeout(state.progressTimer);
+    const delay = immediate ? 0 : 650;
+    state.progressTimer = window.setTimeout(() => {
+      syncProgress().catch((error) => setStatus(error.message, true));
+    }, delay);
+  };
+
+  const refreshWallet = async () => {
+    if (!state.authenticated) return;
+    const wallet = await api("/api/wallet");
+    state.earnedCoins = Number(wallet.earned_coin_balance) || 0;
+    renderProgress();
+  };
+
+  const loadState = async () => {
+    try {
+      const result = await api("/api/games/sunny-island/state");
+      state.authenticated = true;
+      updateProgress(result.state.progress);
+      state.codex = result.state.codex;
+      state.adventure = result.state.adventure;
+      loadImages(state.codex);
+      if (result.state.progress.last_position) {
+        state.position = { ...result.state.progress.last_position };
+      }
+      updateSession(result.state.adventure.active_session);
+      renderProgress();
+      renderMap();
+      await refreshWallet().catch(() => {
+        state.earnedCoins = null;
+        renderProgress();
+      });
+      setStatus(state.session ? "Your daily adventure is ready to continue." : "Welcome to Sunny Island. Explore freely or start today's adventure.");
+      scheduleProgressSync(true);
+    } catch (error) {
+      state.authenticated = false;
+      const fallbackCatalog = [
+        { id: "golden_compass", name: "Golden Compass", image: "/assets/hero-loot/gold-coin.png" },
+        { id: "neon_relic", name: "Neon Relic", image: "/assets/hero-loot/weapon-ak47.png" },
+        { id: "drift_token", name: "Drift Token", image: "/assets/hero-loot/weapon-mp40.png" },
+        { id: "sun_crate", name: "Sun Crate", image: "/assets/hero-loot/loot-crate.webp" },
+        { id: "palm_pack", name: "Palm Pack", image: "/assets/hero-loot/backpack.webp" },
+        { id: "snoop_badge", name: "Snoop Badge", image: "/assets/hero-loot/snoop-sticker-01.png" },
+        { id: "reef_sticker", name: "Reef Sticker", image: "/assets/hero-loot/snoop-sticker-02.png" },
+        { id: "sunset_sticker", name: "Sunset Sticker", image: "/assets/hero-loot/snoop-sticker-03.png" },
+        { id: "canyon_sticker", name: "Canyon Sticker", image: "/assets/hero-loot/snoop-sticker-04.png" },
+      ];
+      state.codex = fallbackCatalog;
+      loadImages(state.codex);
+      updateSession(null);
+      renderProgress();
+      renderMap();
+      const statusText = error.code === "AUTH_REQUIRED"
+        ? "Sign in to save progress and earn rewards. You can still explore the island."
+        : (error instanceof Error ? error.message : "The island could not be loaded.");
+      setStatus(statusText, error.code !== "AUTH_REQUIRED");
+    }
+  };
+
+  const nearest = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const objectsForZone = (zone) => {
+    const objects = [];
+    for (const pickup of PICKUPS) {
+      if (pickup.zone === zone && !state.progress.unlocked_collectibles.includes(pickup.id)) {
+        objects.push({ ...pickup, type: "collectible" });
+      }
+    }
+    for (const beacon of BEACONS) {
+      if (beacon.zone === zone && !state.beaconActivations.has(beacon.id)) {
+        objects.push({ ...beacon, type: "beacon" });
+      }
+    }
+    if (QUEST_BOARD.zone === zone) objects.push({ ...QUEST_BOARD, type: "board" });
+    if (DROP_MARKER.zone === zone) objects.push({ ...DROP_MARKER, type: "drops" });
+    if (LIGHTHOUSE.zone === zone) objects.push({ ...LIGHTHOUSE, type: "lighthouse" });
+    for (const portal of PORTALS[zone] || []) {
+      objects.push({ ...portal, type: "portal" });
+    }
+    return objects;
+  };
+
+  const updateInteraction = () => {
+    const objects = objectsForZone(state.position.zone);
+    if (state.position.zone === SUPPLY_DROP.zone && isSupplyDropActive(performance.now())) {
+      objects.push({ ...SUPPLY_DROP, type: "supply" });
+    }
+    const object = objects
+      .map((item) => ({ ...item, distance: nearest(state.position, item) }))
+      .filter((item) => item.distance <= INTERACTION_RADIUS)
+      .sort((a, b) => a.distance - b.distance)[0] || null;
+    state.activeInteraction = object;
+    const panel = document.querySelector("[data-interaction]");
+    const label = document.querySelector("[data-interaction-label]");
+    if (!(panel instanceof HTMLElement) || !(label instanceof HTMLElement)) return;
+    const key = object ? `${object.type}:${object.id}` : "";
+    if (key !== state.interactionKey) {
+      state.interactionKey = key;
+      if (object) {
+        const prefix = window.matchMedia("(pointer: coarse)").matches ? "Tap action" : "E / Space";
+        label.textContent = `${prefix} · ${object.label}`;
+      }
+    }
+    panel.hidden = !object;
+  };
+
+  const objectiveFor = (id) => state.session?.objectives?.find((objective) => objective.id === id && !objective.completed) || null;
+
+  const markObjective = async (id) => {
+    const objective = objectiveFor(id);
+    if (!objective || state.busy) return false;
+    if (state.position.zone !== objective.zone) {
+      toast(`Travel to ${ZONES[objective.zone]} to finish this objective.`);
+      return false;
+    }
+    if (id === "collect_drops" && state.progress.unlocked_collectibles.length < Number(objective.target_count || 3)) {
+      toast(`Discover ${Math.max(0, Number(objective.target_count || 3) - state.progress.unlocked_collectibles.length)} more keepsake(s) first.`);
+      return false;
+    }
+    if (id === "find_relic" && !state.progress.unlocked_collectibles.includes("golden_compass")) {
+      toast("Find the Golden Compass in Loot Canyon first.");
+      return false;
+    }
+    state.busy = true;
+    renderProgress();
+    try {
+      const result = await syncProgress({
+        session_id: state.session.id,
+        completed_objectives: [id],
+      });
+      if (result.session) updateSession(result.session);
+      toast(`Objective complete · ${objective.description}`, 3000);
+      setStatus(`${objective.description} Complete!`);
+      return true;
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Objective progress could not be saved.", true);
+      return false;
+    } finally {
+      state.busy = false;
+      renderProgress();
+    }
+  };
+
+  const pickUp = async (item) => {
+    if (state.progress.unlocked_collectibles.includes(item.id)) return;
+    if (!state.authenticated) {
+      toast("Sign in to add this treasure to your Codex.");
+      return;
+    }
+    state.busy = true;
+    renderProgress();
+    try {
+      const result = await syncProgress({
+        collectibles: [...state.progress.unlocked_collectibles, item.id],
+      });
+      if (result.progress) updateProgress(result.progress);
+      spawnBurst(state.position.x, state.position.y, "#ffe078", 18);
+      addFloatingText(state.position.x, state.position.y - 42, `+ ${item.label}`, "#fff9ce");
+      toast(`${item.label} added to your Island Codex!`, 2800);
+      setStatus(`${item.label} discovered.`);
+      state.busy = false;
+      renderProgress();
+      if (item.id === "golden_compass" && state.position.zone === "loot_canyon") {
+        await markObjective("find_relic");
+      }
+      if (state.position.zone === "palm_grove"
+        && state.progress.unlocked_collectibles.length >= 3
+        && objectiveFor("collect_drops")) {
+        await markObjective("collect_drops");
+      }
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "This treasure could not be saved.", true);
+    } finally {
+      state.busy = false;
+      renderProgress();
+      updateInteraction();
+    }
+  };
+
+  const enterZone = async (zone) => {
+    const entrance = { x: 790, y: 510 };
+    state.position = { zone, ...entrance };
+    state.facing = zone === "neon_pier" ? { x: -1, y: 0 } : { x: 1, y: 0 };
+    state.progress.discovered_zones = [...new Set([...state.progress.discovered_zones, zone])];
+    renderMap();
+    spawnBurst(state.position.x, state.position.y, "#fff5c3", 12);
+    toast(`Welcome to ${ZONES[zone]}!`, 2200);
+    setStatus(`Entered ${ZONES[zone]}. Your location is being saved.`);
+    await syncProgress({ discovered_zones: state.progress.discovered_zones });
+    if (zone === "palm_grove" && state.progress.unlocked_collectibles.length >= 3) {
+      await markObjective("collect_drops");
+    }
+    if (zone === "sunset_ridge") {
+      await markObjective("reach_sunset_ridge");
+    }
+    updateInteraction();
+  };
+
+  const activateBeacon = async (beacon) => {
+    state.beaconActivations.add(beacon.id);
+    spawnBurst(beacon.x, beacon.y - 20, "#b4f7dc", 14);
+    if (state.beaconActivations.size < 2) {
+      toast(`Beacon lit · ${2 - state.beaconActivations.size} more to go!`);
+      setStatus("A pier beacon is humming. Find and activate the other beacon.");
+      updateInteraction();
+      return;
+    }
+    if (objectiveFor("activate_beacons")) await markObjective("activate_beacons");
+    else toast("Both ancient beacons are glowing!");
+    updateInteraction();
+  };
+
+  const interact = async () => {
+    const item = state.activeInteraction;
+    if (!item || state.busy) return;
+    if (item.type === "collectible") {
+      await pickUp(item);
+    } else if (item.type === "beacon") {
+      await activateBeacon(item);
+    } else if (item.type === "board") {
+      if (state.session && ["started", "in_progress"].includes(state.session.status)) {
+        toast("Your daily adventure is already in progress.");
+      } else if (state.adventure.attempts_remaining_today > 0) {
+        await startAdventure();
+      } else {
+        toast("Today's free adventures are used. You can still explore and collect treasures.");
+      }
+    } else if (item.type === "drops") {
+      if (!objectiveFor("collect_drops")) {
+        toast("Sunny drops sparkle here when you have an active daily adventure.");
+      } else {
+        await markObjective("collect_drops");
+      }
+    } else if (item.type === "lighthouse") {
+      if (objectiveFor("reach_sunset_ridge")) await markObjective("reach_sunset_ridge");
+      else toast("The whole island glows beneath the lighthouse.");
+    } else if (item.type === "supply") {
+      const drop = PICKUPS.find((pickup) => pickup.zone === "loot_canyon"
+        && !state.progress.unlocked_collectibles.includes(pickup.id));
+      if (drop) {
+        await pickUp(drop);
+      } else {
+        toast("This supply drop is empty. Check back when the next drop arrives.");
+      }
+    } else if (item.type === "portal") {
+      await enterZone(item.zone);
+    }
+  };
+
+  const startAdventure = async () => {
+    if (!state.authenticated) {
+      setStatus("Sign in to start a daily adventure and earn rewards.", true);
+      return;
+    }
+    if (state.busy || state.adventure.attempts_remaining_today < 1) return;
+    state.busy = true;
+    renderProgress();
+    try {
+      const key = globalThis.crypto?.randomUUID
+        ? globalThis.crypto.randomUUID()
+        : `sunny-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+      const result = await api("/api/games/sunny-island/start", "POST", { idempotency_key: key });
+      updateSession(result.session);
+      state.adventure.attempts_remaining_today = result.attempts_remaining_today;
+      state.adventure.reward_amount_coins = result.reward_amount_coins;
+      state.beaconActivations.clear();
+      renderProgress();
+      setStatus("Your three daily objectives are ready. Adventure on!");
+      toast("Daily Adventure started!", 2500);
+      if (result.session.objectives.some((objective) => objective.zone === state.position.zone)) {
+        scheduleProgressSync(true);
+      }
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "A daily adventure could not be started.", true);
+    } finally {
+      state.busy = false;
+      renderProgress();
+    }
+  };
+
+  const completeAdventure = async () => {
+    if (!state.session || state.busy) return;
+    const previousLevel = state.progress.level;
+    state.busy = true;
+    renderProgress();
+    try {
+      const result = await api("/api/games/sunny-island/complete", "POST", {
+        session_id: state.session.id,
+        collectibles: state.progress.unlocked_collectibles,
+        discovered_zones: state.progress.discovered_zones,
+        last_position: { ...state.position },
+      });
+      updateProgress(result.progress);
+      updateSession(result.session);
+      await refreshWallet();
+      const levelText = result.progress.level > previousLevel
+        ? ` Level up! You are now level ${result.progress.level}.`
+        : "";
+      toast(`Adventure complete! +${result.xp_awarded} XP · +${formatNumber(result.reward.amount)} Earned Coins.${levelText}`, 5200);
+      setStatus(`Adventure complete! ${formatNumber(result.reward.amount)} Earned Coins added to your wallet.`);
+      if (result.reward.amount > 0) spawnBurst(state.position.x, state.position.y, "#ffda62", 36);
+      await loadStateAfterComplete(result);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "The adventure could not be completed.", true);
+    } finally {
+      state.busy = false;
+      renderProgress();
+    }
+  };
+
+  const loadStateAfterComplete = async (result) => {
+    state.progress = result.progress;
+    const refreshed = await api("/api/games/sunny-island/state");
+    state.adventure = refreshed.state.adventure;
+    state.session = null;
+    renderProgress();
+    renderMap();
+  };
+
+  const spawnBurst = (x, y, color, count = 10) => {
+    for (let index = 0; index < count; index++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 25 + Math.random() * 110;
+      state.particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 35,
+        size: 2 + Math.random() * 5,
+        life: .55 + Math.random() * .45,
+        color,
+      });
+    }
+  };
+
+  const addFloatingText = (x, y, text, color = "#fff") => {
+    state.floatingTexts.push({ x, y, text, color, life: 1.15 });
+  };
+
+  const isSupplyDropActive = (now) => {
+    const cycle = 52000;
+    const activeWindow = 17000;
+    return (now - state.startedAt) % cycle < activeWindow;
+  };
+
+  const drawRoundRect = (ctx, x, y, width, height, radius, fill, stroke = null) => {
+    ctx.beginPath();
+    ctx.roundRect(x, y, width, height, radius);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    if (stroke) {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+  };
+
+  const drawPalm = (ctx, x, y, scale = 1, color = "#438c67") => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+    ctx.strokeStyle = "#986b4a";
+    ctx.lineWidth = 16;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(-16, -85, 10, -175);
+    ctx.stroke();
+    ctx.lineWidth = 11;
+    ctx.strokeStyle = "#79583f";
+    ctx.beginPath();
+    ctx.moveTo(-2, -18);
+    ctx.lineTo(-7, -31);
+    ctx.stroke();
+    const crownY = -176;
+    for (let index = 0; index < 7; index++) {
+      const angle = -Math.PI * .92 + (Math.PI * .84 / 6) * index;
+      ctx.save();
+      ctx.translate(8, crownY);
+      ctx.rotate(angle);
+      ctx.fillStyle = index % 2 ? color : "#69b77b";
+      ctx.strokeStyle = "#327853";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(32, -40, 86, -15);
+      ctx.quadraticCurveTo(48, 4, 0, 0);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.fillStyle = "#f3bc61";
+    ctx.beginPath();
+    ctx.arc(8, crownY + 6, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  };
+
+  const drawBackground = (ctx, zone, time) => {
+    const sky = {
+      neon_pier: ["#78d8ea", "#d9f8f2"],
+      palm_grove: ["#89d8ac", "#d4efa6"],
+      loot_canyon: ["#f5a46f", "#ffe4a3"],
+      sunset_ridge: ["#f79d79", "#f7d387"],
+    }[zone] || ["#78d8ea", "#d9f8f2"];
+    const gradient = ctx.createLinearGradient(0, 0, 0, WORLD.height);
+    gradient.addColorStop(0, sky[0]);
+    gradient.addColorStop(1, sky[1]);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+    if (zone === "neon_pier") {
+      ctx.fillStyle = "#55c7d8";
+      ctx.fillRect(0, 0, WORLD.width, 290);
+      ctx.fillStyle = "#61d5dc";
+      for (let index = 0; index < 16; index++) {
+        const y = 33 + index * 15;
+        ctx.globalAlpha = .25 + Math.sin(time * 2 + index) * .07;
+        ctx.strokeStyle = "#eafffc";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let x = 0; x <= WORLD.width; x += 35) {
+          const waveY = y + Math.sin((x * .009) + time * 1.7 + index) * 5;
+          if (x === 0) ctx.moveTo(x, waveY);
+          else ctx.lineTo(x, waveY);
+        }
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#f6d893";
+      ctx.fillRect(0, 705, WORLD.width, 295);
+      ctx.fillStyle = "#edc979";
+      ctx.fillRect(0, 830, WORLD.width, 170);
+      ctx.fillStyle = "#a96f52";
+      ctx.fillRect(0, 285, WORLD.width, 440);
+      ctx.fillStyle = "#d99462";
+      for (let x = 0; x < WORLD.width; x += 92) {
+        ctx.fillRect(x, 285, 7, 440);
+      }
+      for (let y = 296; y < 720; y += 86) {
+        ctx.fillStyle = "#cb805a";
+        ctx.fillRect(0, y, WORLD.width, 5);
+      }
+      ctx.fillStyle = "#f5deaa";
+      ctx.fillRect(0, 265, WORLD.width, 20);
+      for (let index = 0; index < 7; index++) {
+        drawPalm(ctx, 110 + index * 235, 755, .58 + (index % 2) * .13);
+      }
+    } else if (zone === "palm_grove") {
+      ctx.fillStyle = "#76c98e";
+      ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+      ctx.fillStyle = "#90d796";
+      for (let index = 0; index < 7; index++) {
+        ctx.beginPath();
+        ctx.ellipse(index * 280 + 80, 165 + (index % 2) * 45, 205, 126, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = "#d0b879";
+      ctx.beginPath();
+      ctx.moveTo(0, 600);
+      ctx.bezierCurveTo(280, 430, 460, 750, 760, 565);
+      ctx.bezierCurveTo(1020, 390, 1320, 690, WORLD.width, 485);
+      ctx.lineTo(WORLD.width, 790);
+      ctx.bezierCurveTo(1260, 910, 1020, 680, 760, 815);
+      ctx.bezierCurveTo(440, 980, 250, 720, 0, 900);
+      ctx.closePath();
+      ctx.fill();
+      for (let index = 0; index < 9; index++) {
+        drawPalm(ctx, 70 + index * 185, 850 - (index % 3) * 70, .48 + (index % 2) * .14, "#3d936d");
+      }
+      ctx.fillStyle = "rgb(255 246 204 / 16%)";
+      for (let index = 0; index < 18; index++) {
+        ctx.beginPath();
+        ctx.arc(40 + (index * 97) % WORLD.width, 150 + (index * 83) % 700, 4 + index % 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (zone === "loot_canyon") {
+      ctx.fillStyle = "#eda56e";
+      ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+      ctx.fillStyle = "#d8795b";
+      ctx.beginPath();
+      ctx.moveTo(0, 445);
+      ctx.lineTo(160, 170);
+      ctx.lineTo(390, 360);
+      ctx.lineTo(640, 115);
+      ctx.lineTo(820, 400);
+      ctx.lineTo(1030, 135);
+      ctx.lineTo(1245, 395);
+      ctx.lineTo(1440, 185);
+      ctx.lineTo(1600, 360);
+      ctx.lineTo(1600, 730);
+      ctx.lineTo(0, 730);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#c96b58";
+      ctx.beginPath();
+      ctx.moveTo(0, 490);
+      ctx.lineTo(170, 315);
+      ctx.lineTo(315, 490);
+      ctx.lineTo(510, 270);
+      ctx.lineTo(700, 510);
+      ctx.lineTo(920, 300);
+      ctx.lineTo(1100, 510);
+      ctx.lineTo(1300, 310);
+      ctx.lineTo(1490, 510);
+      ctx.lineTo(1600, 430);
+      ctx.lineTo(1600, 1000);
+      ctx.lineTo(0, 1000);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#e8bd7d";
+      ctx.beginPath();
+      ctx.moveTo(0, 695);
+      ctx.quadraticCurveTo(390, 630, 640, 765);
+      ctx.quadraticCurveTo(940, 875, 1260, 690);
+      ctx.quadraticCurveTo(1460, 590, 1600, 690);
+      ctx.lineTo(1600, 875);
+      ctx.quadraticCurveTo(1240, 1000, 900, 875);
+      ctx.quadraticCurveTo(430, 735, 0, 930);
+      ctx.closePath();
+      ctx.fill();
+      for (let index = 0; index < 14; index++) {
+        drawRoundRect(ctx, 100 + (index * 127) % 1440, 630 + (index * 71) % 250, 24, 16, 5, "#a85d52");
+      }
+    } else {
+      ctx.fillStyle = "#f2bd77";
+      ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+      ctx.fillStyle = "#df8d6f";
+      ctx.beginPath();
+      ctx.moveTo(0, 590);
+      ctx.lineTo(230, 240);
+      ctx.lineTo(510, 545);
+      ctx.lineTo(780, 155);
+      ctx.lineTo(1070, 525);
+      ctx.lineTo(1330, 215);
+      ctx.lineTo(1600, 530);
+      ctx.lineTo(1600, 1000);
+      ctx.lineTo(0, 1000);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#ba7469";
+      ctx.beginPath();
+      ctx.moveTo(0, 675);
+      ctx.lineTo(260, 440);
+      ctx.lineTo(470, 685);
+      ctx.lineTo(730, 390);
+      ctx.lineTo(990, 690);
+      ctx.lineTo(1250, 425);
+      ctx.lineTo(1500, 675);
+      ctx.lineTo(1600, 620);
+      ctx.lineTo(1600, 1000);
+      ctx.lineTo(0, 1000);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#eed49a";
+      ctx.beginPath();
+      ctx.moveTo(0, 775);
+      ctx.quadraticCurveTo(420, 655, 740, 815);
+      ctx.quadraticCurveTo(1100, 965, 1600, 765);
+      ctx.lineTo(1600, 1000);
+      ctx.lineTo(0, 1000);
+      ctx.closePath();
+      ctx.fill();
+      const sunX = 1295 + Math.sin(time * .1) * 6;
+      const sun = ctx.createRadialGradient(sunX, 155, 15, sunX, 155, 115);
+      sun.addColorStop(0, "rgb(255 245 170 / 95%)");
+      sun.addColorStop(1, "rgb(255 210 111 / 0%)");
+      ctx.fillStyle = sun;
+      ctx.beginPath();
+      ctx.arc(sunX, 155, 115, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = "rgb(255 255 255 / 13%)";
+    for (let index = 0; index < 18; index++) {
+      const x = (index * 113 + time * (8 + index % 5)) % WORLD.width;
+      const y = 90 + (index * 71) % 740;
+      ctx.beginPath();
+      ctx.arc(x, y, 2 + index % 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  };
+
+  const drawBeacon = (ctx, beacon, time) => {
+    const pulse = 1 + Math.sin(time * 3 + beacon.x) * .06;
+    ctx.save();
+    ctx.translate(beacon.x, beacon.y);
+    ctx.scale(pulse, pulse);
+    ctx.fillStyle = "#856d60";
+    ctx.strokeStyle = "#5f554f";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-31, 4);
+    ctx.lineTo(-24, -45);
+    ctx.lineTo(23, -45);
+    ctx.lineTo(31, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#f4cf67";
+    ctx.strokeStyle = "#fff2ac";
+    ctx.beginPath();
+    ctx.arc(0, -50, 18 + Math.sin(time * 4) * 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawBoard = (ctx, time) => {
+    const x = QUEST_BOARD.x;
+    const y = QUEST_BOARD.y;
+    ctx.fillStyle = "#80563c";
+    ctx.fillRect(x - 9, y - 52, 18, 87);
+    drawRoundRect(ctx, x - 48, y - 100, 96, 59, 9, "#efbb58", "#885736");
+    ctx.fillStyle = "#fff5d5";
+    ctx.font = "800 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("QUEST", x, y - 68);
+    ctx.fillText("BOARD", x, y - 50);
+    ctx.fillStyle = "#ed7954";
+    ctx.beginPath();
+    ctx.arc(x + 33, y - 89 + Math.sin(time * 3) * 3, 7, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  const drawLighthouse = (ctx, time) => {
+    const x = LIGHTHOUSE.x;
+    const y = LIGHTHOUSE.y;
+    ctx.fillStyle = "rgb(255 244 187 / 14%)";
+    ctx.beginPath();
+    ctx.moveTo(x, y - 125);
+    ctx.lineTo(x - 245, y - 250 + Math.sin(time) * 12);
+    ctx.lineTo(x - 200, y + 15);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#fff4d0";
+    ctx.strokeStyle = "#ab6259";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(x - 43, y + 7);
+    ctx.lineTo(x - 30, y - 118);
+    ctx.lineTo(x + 30, y - 118);
+    ctx.lineTo(x + 43, y + 7);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    drawRoundRect(ctx, x - 38, y - 144, 76, 30, 7, "#db785b", "#9d5a50");
+    ctx.fillStyle = "#ffd96c";
+    ctx.beginPath();
+    ctx.arc(x, y - 128, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#a65b51";
+    ctx.beginPath();
+    ctx.moveTo(x - 44, y - 145);
+    ctx.lineTo(x, y - 174);
+    ctx.lineTo(x + 44, y - 145);
+    ctx.closePath();
+    ctx.fill();
+  };
+
+  const drawSupplyDrop = (ctx, time) => {
+    if (!isSupplyDropActive(time * 1000)) return;
+    const image = imageFor("sun_crate");
+    const pulse = 1 + Math.sin(time * 5) * .05;
+    ctx.save();
+    ctx.translate(SUPPLY_DROP.x, SUPPLY_DROP.y);
+    ctx.scale(pulse, pulse);
+    ctx.fillStyle = "rgb(255 230 117 / 28%)";
+    ctx.beginPath();
+    ctx.ellipse(0, 5, 65, 38, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (image?.complete && image.naturalWidth) {
+      ctx.drawImage(image, -34, -60, 68, 68);
+    } else {
+      drawRoundRect(ctx, -30, -54, 60, 55, 9, "#e29c48", "#815938");
+    }
+    ctx.fillStyle = "#fff6c8";
+    ctx.font = "800 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("SUPPLY DROP", 0, 31);
+    ctx.restore();
+  };
+
+  const drawPortal = (ctx, portal, time) => {
+    ctx.save();
+    ctx.translate(portal.x, portal.y);
+    ctx.strokeStyle = "#fff1bd";
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.ellipse(0, -23, 36 + Math.sin(time * 2) * 2, 48, 0, Math.PI, Math.PI * 2);
+    ctx.lineTo(36, 0);
+    ctx.stroke();
+    ctx.fillStyle = "rgb(116 221 221 / 42%)";
+    ctx.beginPath();
+    ctx.ellipse(0, -27, 24, 33, 0, Math.PI, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  };
+
+  const drawPickup = (ctx, item, time) => {
+    const image = imageFor(item.id);
+    const float = Math.sin(time * 3 + item.x * .02) * 5;
+    ctx.save();
+    ctx.translate(item.x, item.y - 20 + float);
+    ctx.fillStyle = "rgb(255 238 139 / 24%)";
+    ctx.beginPath();
+    ctx.ellipse(0, 8, 35, 29, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (image?.complete && image.naturalWidth) {
+      ctx.shadowColor = "rgb(47 91 103 / 28%)";
+      ctx.shadowBlur = 9;
+      ctx.drawImage(image, -25, -25, 50, 50);
+      ctx.shadowBlur = 0;
+    } else {
+      ctx.fillStyle = colors.gold;
+      ctx.beginPath();
+      ctx.arc(0, 0, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#fff7cd";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    }
+    ctx.restore();
+  };
+
+  const drawAmbientArt = (ctx, zone, time) => {
+    for (const art of AMBIENT_ART) {
+      if (art.zone !== zone) continue;
+      const image = imageFor(art.imageId);
+      if (!image?.complete || !image.naturalWidth) continue;
+      const bob = Math.sin(time * 1.7 + art.x) * 4;
+      ctx.globalAlpha = .78;
+      ctx.drawImage(image, art.x - 26, art.y - 26 + bob, 52, 52);
+      ctx.globalAlpha = 1;
+    }
+  };
+
+  const drawWorldObjects = (ctx, time) => {
+    const zone = state.position.zone;
+    if (zone === QUEST_BOARD.zone) drawBoard(ctx, time);
+    if (zone === LIGHTHOUSE.zone) drawLighthouse(ctx, time);
+    if (zone === SUPPLY_DROP.zone) drawSupplyDrop(ctx, time);
+    for (const beacon of BEACONS) {
+      if (beacon.zone === zone) drawBeacon(ctx, beacon, time);
+    }
+    for (const portal of PORTALS[zone] || []) drawPortal(ctx, portal, time);
+    for (const item of PICKUPS) {
+      if (item.zone === zone && !state.progress.unlocked_collectibles.includes(item.id)) {
+        drawPickup(ctx, item, time);
+      }
+    }
+    drawAmbientArt(ctx, zone, time);
+  };
+
+  const drawCharacter = (ctx, time, now) => {
+    const moving = state.keys.size > 0 || Math.hypot(state.joystickVector.x, state.joystickVector.y) > .08;
+    const jumpProgress = state.jumpUntil > now ? 1 - (state.jumpUntil - now) / 560 : 0;
+    const jumpHeight = state.jumpUntil > now ? Math.sin(jumpProgress * Math.PI) * 47 : 0;
+    const dashActive = state.dashUntil > now;
+    const bob = moving ? Math.sin(time * .025) * 5 : Math.sin(time * .004) * 2;
+    const squashX = state.jumpUntil > now && jumpProgress < .12 ? 1.13 : 1;
+    const squashY = state.jumpUntil > now && jumpProgress < .12 ? .82 : 1;
+    const x = state.position.x;
+    const y = state.position.y - jumpHeight + bob;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = "rgb(37 69 77 / 22%)";
+    ctx.beginPath();
+    ctx.ellipse(0, 26 + jumpHeight * .42, 29 - jumpHeight * .15, 11 - jumpHeight * .04, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (dashActive) {
+      ctx.globalAlpha = .38;
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.ellipse(-state.facing.x * 36, 0, 35, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    ctx.scale(squashX, squashY);
+    ctx.fillStyle = "#8a5948";
+    ctx.beginPath();
+    ctx.ellipse(-16, 4, 13, 21, -.18, 0, Math.PI * 2);
+    ctx.fill();
+    drawRoundRect(ctx, -28, -5, 17, 26, 7, "#e78052", "#24495a");
+    ctx.fillStyle = "#24495a";
+    ctx.beginPath();
+    ctx.ellipse(-10, 20 + (moving ? Math.sin(time * .03) * 3 : 0), 9, 6, 0, 0, Math.PI * 2);
+    ctx.ellipse(10, 20 + (moving ? -Math.sin(time * .03) * 3 : 0), 9, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#f39a5d";
+    ctx.strokeStyle = "#24495a";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(0, 1, 24, 26, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#f3bf60";
+    ctx.beginPath();
+    ctx.arc(0, -29, 23, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#f7d0a1";
+    ctx.beginPath();
+    ctx.ellipse(1, -24, 16, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#304e5a";
+    ctx.beginPath();
+    ctx.arc(-6, -27, 2.2, 0, Math.PI * 2);
+    ctx.arc(7, -27, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#b8664c";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(1, -21, 5, .15, Math.PI - .15);
+    ctx.stroke();
+    ctx.fillStyle = "#42d5dc";
+    ctx.strokeStyle = "#28546a";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.roundRect(-20, -38, 40, 9, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#ffcf57";
+    ctx.beginPath();
+    ctx.moveTo(-8, -49);
+    ctx.lineTo(-6, -62);
+    ctx.lineTo(0, -54);
+    ctx.lineTo(7, -63);
+    ctx.lineTo(10, -49);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawParticles = (ctx, delta) => {
+    state.particles = state.particles.filter((particle) => particle.life > 0);
+    for (const particle of state.particles) {
+      particle.x += particle.vx * delta;
+      particle.y += particle.vy * delta;
+      particle.vy += 48 * delta;
+      particle.life -= delta;
+      ctx.globalAlpha = Math.max(0, particle.life);
+      ctx.fillStyle = particle.color;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size * Math.max(.25, particle.life), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    state.floatingTexts = state.floatingTexts.filter((entry) => entry.life > 0);
+    for (const entry of state.floatingTexts) {
+      entry.y -= 30 * delta;
+      entry.life -= delta;
+      ctx.globalAlpha = Math.min(1, entry.life * 1.5);
+      ctx.fillStyle = "rgb(40 73 83 / 75%)";
+      ctx.font = "800 16px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(entry.text, entry.x + 2, entry.y + 2);
+      ctx.fillStyle = entry.color;
+      ctx.fillText(entry.text, entry.x, entry.y);
+    }
+    ctx.globalAlpha = 1;
+  };
+
+  const renderFrame = (now) => {
+    const delta = Math.min(.04, Math.max(0, (now - (state.lastFrame || now)) / 1000));
+    state.lastFrame = now;
+    const time = now / 1000;
+    const bounds = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / WORLD.viewWidth;
+    const scaleY = canvas.height / WORLD.viewHeight;
+    context.setTransform(scaleX, 0, 0, scaleY, 0, 0);
+    const cameraX = Math.max(0, Math.min(WORLD.width - WORLD.viewWidth, state.position.x - WORLD.viewWidth / 2));
+    const cameraY = Math.max(0, Math.min(WORLD.height - WORLD.viewHeight, state.position.y - WORLD.viewHeight / 2));
+    context.save();
+    context.clearRect(0, 0, WORLD.viewWidth, WORLD.viewHeight);
+    context.translate(-cameraX, -cameraY);
+    drawBackground(context, state.position.zone, time);
+    drawWorldObjects(context, time);
+    drawCharacter(context, time, now);
+    drawParticles(context, delta);
+    context.restore();
+
+    if (state.toastUntil && now > state.toastUntil) {
+      const toastNode = document.querySelector("[data-toast]");
+      if (toastNode) toastNode.hidden = true;
+      state.toastUntil = 0;
+    }
+
+    updateInteraction();
+    updateMovement(delta, now);
+    updateDashStatus(now);
+    if (state.dirty && now - state.lastPeriodicSync > 1800 && state.authenticated && !state.busy) {
+      state.lastPeriodicSync = now;
+      scheduleProgressSync();
+    }
+    state.animationFrame = requestAnimationFrame(renderFrame);
+  };
+
+  const currentInput = () => {
+    let x = state.joystickVector.x;
+    let y = state.joystickVector.y;
+    if (state.keys.has("ArrowLeft") || state.keys.has("a")) x -= 1;
+    if (state.keys.has("ArrowRight") || state.keys.has("d")) x += 1;
+    if (state.keys.has("ArrowUp") || state.keys.has("w")) y -= 1;
+    if (state.keys.has("ArrowDown") || state.keys.has("s")) y += 1;
+    const magnitude = Math.hypot(x, y);
+    if (magnitude > 1) {
+      x /= magnitude;
+      y /= magnitude;
+    }
+    return { x, y };
+  };
+
+  const updateMovement = (delta, now) => {
+    const input = currentInput();
+    const magnitude = Math.hypot(input.x, input.y);
+    if (magnitude > .05) {
+      state.facing = { x: input.x / magnitude, y: input.y / magnitude };
+      const dashing = now < state.dashUntil;
+      const speed = dashing ? 585 : 245;
+      state.position.x = Math.min(WORLD.width - 35, Math.max(35, state.position.x + input.x * speed * delta));
+      state.position.y = Math.min(WORLD.height - 35, Math.max(35, state.position.y + input.y * speed * delta));
+      if (Math.random() < delta * 10) {
+        spawnBurst(
+          state.position.x - state.facing.x * 13,
+          state.position.y + 12,
+          state.position.zone === "loot_canyon" ? "#f5c084" : "#f7e5a1",
+          1,
+        );
+      }
+      state.dirty = true;
+    }
+  };
+
+  const jump = () => {
+    const now = performance.now();
+    if (state.jumpUntil > now) return;
+    state.jumpUntil = now + 560;
+    spawnBurst(state.position.x, state.position.y + 14, "#fff1bd", 7);
+  };
+
+  const dash = () => {
+    const now = performance.now();
+    if (now < state.dashCooldownUntil) {
+      const remain = Math.ceil((state.dashCooldownUntil - now) / 1000);
+      toast(`Dash recharging · ${remain}s`);
+      return;
+    }
+    state.dashUntil = now + 260;
+    state.dashCooldownUntil = now + 2100;
+    spawnBurst(state.position.x, state.position.y, "#b5f7f3", 10);
+  };
+
+  const updateDashStatus = (now) => {
+    if (now - state.lastDashHudUpdate < 180) return;
+    state.lastDashHudUpdate = now;
+    const node = document.querySelector("[data-dash-status]");
+    if (!(node instanceof HTMLElement)) return;
+    const remaining = Math.max(0, state.dashCooldownUntil - now);
+    node.classList.toggle("is-cooling", remaining > 0);
+    node.textContent = remaining > 0 ? `Dash ${Math.ceil(remaining / 1000)}s` : "Dash ready";
+  };
+
+  const openCodex = () => {
+    renderCodex();
+    if (!codexDialog.open) codexDialog.showModal();
+  };
+
+  canvas.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "touch") event.preventDefault();
+    canvas.focus({ preventScroll: true });
+  });
+  window.addEventListener("keydown", (event) => {
+    if (codexDialog.open && event.key !== "Escape") return;
+    const key = event.key.toLowerCase();
+    if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) event.preventDefault();
+    if (key === " " && !event.repeat) {
+      if (state.activeInteraction) void interact();
+      else jump();
+      return;
+    }
+    if (key === "e" && !event.repeat) {
+      void interact();
+      return;
+    }
+    if (key === "shift" && !event.repeat) {
+      dash();
+      return;
+    }
+    if (key === "c" && !event.repeat) {
+      openCodex();
+      return;
+    }
+    if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
+      state.keys.add(key.startsWith("arrow") ? key.replace("arrow", "Arrow") : key);
+    }
+  });
+  window.addEventListener("keyup", (event) => {
+    const key = event.key.toLowerCase();
+    state.keys.delete(key.startsWith("arrow") ? key.replace("arrow", "Arrow") : key);
+  });
+  window.addEventListener("blur", () => state.keys.clear());
+
+  const bindPress = (button, action) => {
+    if (!(button instanceof HTMLButtonElement)) return;
+    button.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      action();
+    });
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (event.detail === 0) action();
+    });
+  };
+  bindPress(actionButton, () => void interact());
+  bindPress(touchActionButton, () => void interact());
+  bindPress(jumpButton, jump);
+  bindPress(dashButton, dash);
+  startButton.addEventListener("click", () => void startAdventure());
+  completeButton.addEventListener("click", () => void completeAdventure());
+
+  const codexOpenButton = document.querySelector("[data-codex-open]");
+  const codexCloseButton = document.querySelector("[data-codex-close]");
+  codexOpenButton?.addEventListener("click", openCodex);
+  codexCloseButton?.addEventListener("click", () => codexDialog.close());
+  codexDialog.addEventListener("click", (event) => {
+    if (event.target === codexDialog) codexDialog.close();
+  });
+  mapToggle.addEventListener("click", () => {
+    const expanded = minimap.classList.toggle("is-expanded");
+    mapToggle.setAttribute("aria-expanded", String(expanded));
+    mapToggle.textContent = expanded ? "Close" : "Expand";
+  });
+
+  if (joystick instanceof HTMLElement && joystickKnob instanceof HTMLElement) {
+    const moveJoystick = (event) => {
+      const rect = joystick.getBoundingClientRect();
+      const radius = rect.width * .39;
+      const dx = event.clientX - (rect.left + rect.width / 2);
+      const dy = event.clientY - (rect.top + rect.height / 2);
+      const distance = Math.min(radius, Math.hypot(dx, dy));
+      const angle = Math.atan2(dy, dx);
+      const x = (Math.cos(angle) * distance) / radius;
+      const y = (Math.sin(angle) * distance) / radius;
+      state.joystickVector = { x, y };
+      joystickKnob.style.left = `calc(50% + ${x * radius}px)`;
+      joystickKnob.style.top = `calc(50% + ${y * radius}px)`;
+    };
+    joystick.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      state.joystickPointer = event.pointerId;
+      joystick.setPointerCapture(event.pointerId);
+      moveJoystick(event);
+    });
+    joystick.addEventListener("pointermove", (event) => {
+      if (state.joystickPointer === event.pointerId) {
+        event.preventDefault();
+        moveJoystick(event);
+      }
+    });
+    const releaseJoystick = (event) => {
+      if (state.joystickPointer !== event.pointerId) return;
+      state.joystickPointer = null;
+      state.joystickVector = { x: 0, y: 0 };
+      joystickKnob.style.left = "50%";
+      joystickKnob.style.top = "50%";
+    };
+    joystick.addEventListener("pointerup", releaseJoystick);
+    joystick.addEventListener("pointercancel", releaseJoystick);
+    joystick.addEventListener("lostpointercapture", releaseJoystick);
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      cancelAnimationFrame(state.animationFrame);
+      state.keys.clear();
+      if (state.dirty) scheduleProgressSync(true);
+    } else {
+      state.lastFrame = 0;
+      state.animationFrame = requestAnimationFrame(renderFrame);
+    }
+  });
+  const resizeObserver = new ResizeObserver(() => {
+    const rect = canvas.getBoundingClientRect();
+    const ratio = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.max(1, Math.round(rect.width * ratio));
+    canvas.height = Math.max(1, Math.round(rect.height * ratio));
+  });
+  resizeObserver.observe(canvas);
+
+  const initialCatalog = [
+    { id: "golden_compass", name: "Golden Compass", image: "/assets/hero-loot/gold-coin.png" },
+    { id: "neon_relic", name: "Neon Relic", image: "/assets/hero-loot/weapon-ak47.png" },
+    { id: "drift_token", name: "Drift Token", image: "/assets/hero-loot/weapon-mp40.png" },
+    { id: "sun_crate", name: "Sun Crate", image: "/assets/hero-loot/loot-crate.webp" },
+    { id: "palm_pack", name: "Palm Pack", image: "/assets/hero-loot/backpack.webp" },
+    { id: "snoop_badge", name: "Snoop Badge", image: "/assets/hero-loot/snoop-sticker-01.png" },
+    { id: "reef_sticker", name: "Reef Sticker", image: "/assets/hero-loot/snoop-sticker-02.png" },
+    { id: "sunset_sticker", name: "Sunset Sticker", image: "/assets/hero-loot/snoop-sticker-03.png" },
+    { id: "canyon_sticker", name: "Canyon Sticker", image: "/assets/hero-loot/snoop-sticker-04.png" },
+  ];
+  state.codex = initialCatalog;
+  loadImages(initialCatalog);
+  renderProgress();
+  renderMap();
+  state.animationFrame = requestAnimationFrame(renderFrame);
+  void loadState();
+})();
