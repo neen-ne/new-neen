@@ -228,7 +228,7 @@
       if (state.images.has(ambient.imageId)) continue;
       const image = new Image();
       image.decoding = "async";
-      image.src = `/assets/hero-loot/${ambient.imageId}.png`;
+      image.src = `/assets/hero-loot/${ambient.imageId}.webp`;
       image.addEventListener("load", () => state.dirty = true, { once: true });
       state.images.set(ambient.imageId, image);
     }
@@ -467,15 +467,15 @@
     } catch (error) {
       state.authenticated = false;
       const fallbackCatalog = [
-        { id: "golden_compass", name: "Golden Compass", image: "/assets/hero-loot/gold-coin.png" },
-        { id: "neon_relic", name: "Neon Relic", image: "/assets/hero-loot/weapon-ak47.png" },
-        { id: "drift_token", name: "Drift Token", image: "/assets/hero-loot/weapon-mp40.png" },
+        { id: "golden_compass", name: "Golden Compass", image: "/assets/hero-loot/gold-coin.webp" },
+        { id: "neon_relic", name: "Neon Relic", image: "/assets/hero-loot/weapon-ak47.webp" },
+        { id: "drift_token", name: "Drift Token", image: "/assets/hero-loot/weapon-mp40.webp" },
         { id: "sun_crate", name: "Sun Crate", image: "/assets/hero-loot/loot-crate.webp" },
         { id: "palm_pack", name: "Palm Pack", image: "/assets/hero-loot/backpack.webp" },
-        { id: "snoop_badge", name: "Snoop Badge", image: "/assets/hero-loot/snoop-sticker-01.png" },
-        { id: "reef_sticker", name: "Reef Sticker", image: "/assets/hero-loot/snoop-sticker-02.png" },
-        { id: "sunset_sticker", name: "Sunset Sticker", image: "/assets/hero-loot/snoop-sticker-03.png" },
-        { id: "canyon_sticker", name: "Canyon Sticker", image: "/assets/hero-loot/snoop-sticker-04.png" },
+        { id: "snoop_badge", name: "Snoop Badge", image: "/assets/hero-loot/snoop-sticker-01.webp" },
+        { id: "reef_sticker", name: "Reef Sticker", image: "/assets/hero-loot/snoop-sticker-02.webp" },
+        { id: "sunset_sticker", name: "Sunset Sticker", image: "/assets/hero-loot/snoop-sticker-03.webp" },
+        { id: "canyon_sticker", name: "Canyon Sticker", image: "/assets/hero-loot/snoop-sticker-04.webp" },
       ];
       state.codex = fallbackCatalog;
       loadImages(state.codex);
@@ -2023,15 +2023,15 @@
   resizeObserver.observe(canvas);
 
   const initialCatalog = [
-    { id: "golden_compass", name: "Golden Compass", image: "/assets/hero-loot/gold-coin.png" },
-    { id: "neon_relic", name: "Neon Relic", image: "/assets/hero-loot/weapon-ak47.png" },
-    { id: "drift_token", name: "Drift Token", image: "/assets/hero-loot/weapon-mp40.png" },
+    { id: "golden_compass", name: "Golden Compass", image: "/assets/hero-loot/gold-coin.webp" },
+    { id: "neon_relic", name: "Neon Relic", image: "/assets/hero-loot/weapon-ak47.webp" },
+    { id: "drift_token", name: "Drift Token", image: "/assets/hero-loot/weapon-mp40.webp" },
     { id: "sun_crate", name: "Sun Crate", image: "/assets/hero-loot/loot-crate.webp" },
     { id: "palm_pack", name: "Palm Pack", image: "/assets/hero-loot/backpack.webp" },
-    { id: "snoop_badge", name: "Snoop Badge", image: "/assets/hero-loot/snoop-sticker-01.png" },
-    { id: "reef_sticker", name: "Reef Sticker", image: "/assets/hero-loot/snoop-sticker-02.png" },
-    { id: "sunset_sticker", name: "Sunset Sticker", image: "/assets/hero-loot/snoop-sticker-03.png" },
-    { id: "canyon_sticker", name: "Canyon Sticker", image: "/assets/hero-loot/snoop-sticker-04.png" },
+    { id: "snoop_badge", name: "Snoop Badge", image: "/assets/hero-loot/snoop-sticker-01.webp" },
+    { id: "reef_sticker", name: "Reef Sticker", image: "/assets/hero-loot/snoop-sticker-02.webp" },
+    { id: "sunset_sticker", name: "Sunset Sticker", image: "/assets/hero-loot/snoop-sticker-03.webp" },
+    { id: "canyon_sticker", name: "Canyon Sticker", image: "/assets/hero-loot/snoop-sticker-04.webp" },
   ];
   state.codex = initialCatalog;
   setAvatar(state.avatarId);

@@ -384,8 +384,11 @@ try {
     foreach ($imageManifest as $image) {
         $imageInfo = getimagesize($root . '/' . $image['src']);
         assertTrue(
-            $imageInfo !== false && $imageInfo[0] === 1600 && $imageInfo[1] === 738,
-            'Original game image remains valid at its source dimensions',
+            $imageInfo !== false
+            && ($imageInfo['mime'] ?? '') === 'image/webp'
+            && $imageInfo[0] === 1600
+            && $imageInfo[1] === 738,
+            'Memory Match images are valid WebP files at their original dimensions',
         );
     }
 
@@ -503,21 +506,21 @@ try {
         $baseUrl,
         '/api/users/me',
         $cookies,
-        ['free_fire_id' => '12345678901', 'avatar_url' => 'assets/hero-loot/snoop-sticker-01.png'],
+        ['free_fire_id' => '12345678901', 'avatar_url' => 'assets/hero-loot/snoop-sticker-01.webp'],
         $csrf,
         'POST',
     );
     assertTrue($status === 200, 'Profile accepts a Free Fire ID and allowlisted preset avatar through POST');
     assertTrue(
         $response['data']['profile']['free_fire_id'] === '12345678901'
-        && $response['data']['profile']['avatar_url'] === 'assets/hero-loot/snoop-sticker-01.png',
+        && $response['data']['profile']['avatar_url'] === 'assets/hero-loot/snoop-sticker-01.webp',
         'Free Fire ID and preset avatar are returned after saving',
     );
     [$status, $response] = request($baseUrl, '/api/users/me', $cookies);
     assertTrue(
         $status === 200
         && $response['data']['profile']['free_fire_id'] === '12345678901'
-        && $response['data']['profile']['avatar_url'] === 'assets/hero-loot/snoop-sticker-01.png',
+        && $response['data']['profile']['avatar_url'] === 'assets/hero-loot/snoop-sticker-01.webp',
         'Free Fire ID and preset avatar persist across profile reads',
     );
     [$status] = request(
@@ -533,7 +536,7 @@ try {
         $baseUrl,
         '/api/users/me',
         $cookies,
-        ['avatar_url' => '../icone/unsafe.jpeg'],
+        ['avatar_url' => '../icone/unsafe.webp'],
         $csrf,
         'PATCH',
     );
@@ -1376,7 +1379,7 @@ try {
         && $jigsawCatalog['piece_count'] === 9
         && count($jigsawCatalog['images']) === 3
         && $jigsawCatalog['free_attempts_per_day'] === 3,
-        'Jigsaw exposes the approved 3-by-3 board and all three source images',
+        'Jigsaw exposes the approved 3-by-3 board and all three images',
     );
     $jigsawManifest = json_decode(
         (string) file_get_contents($root . '/assets/hero-loot/picture-jigsaw-images.json'),
@@ -1389,8 +1392,11 @@ try {
         $bytes = file_get_contents($baseUrl . $image['src']);
         $info = $bytes === false ? false : getimagesizefromstring($bytes);
         assertTrue(
-            $info !== false && $info[0] === $image['width'] && $info[1] === $image['height'],
-            'The selected Jigsaw source is served without resizing or changing its proportions',
+            $info !== false
+            && ($info['mime'] ?? '') === 'image/webp'
+            && $info[0] === $image['width']
+            && $info[1] === $image['height'],
+            'Jigsaw images are served as WebP without resizing or changing their proportions',
         );
     }
     $jigsawPage = file_get_contents($baseUrl . '/picture-jigsaw.html');

@@ -5,12 +5,12 @@ final class LootSequence extends ChallengeGame
 {
     private const GAME_SLUG = 'loot_sequence';
     private const STICKERS = [
-        ['id' => 'snoop-sticker-01', 'src' => '/assets/hero-loot/snoop-sticker-01.png'],
-        ['id' => 'snoop-sticker-02', 'src' => '/assets/hero-loot/snoop-sticker-02.png'],
-        ['id' => 'snoop-sticker-03', 'src' => '/assets/hero-loot/snoop-sticker-03.png'],
-        ['id' => 'snoop-sticker-04', 'src' => '/assets/hero-loot/snoop-sticker-04.png'],
-        ['id' => 'snoop-sticker-05', 'src' => '/assets/hero-loot/snoop-sticker-05.png'],
-        ['id' => 'snoop-sticker-06', 'src' => '/assets/hero-loot/snoop-sticker-06.png'],
+        ['id' => 'snoop-sticker-01', 'src' => '/assets/hero-loot/snoop-sticker-01.webp'],
+        ['id' => 'snoop-sticker-02', 'src' => '/assets/hero-loot/snoop-sticker-02.webp'],
+        ['id' => 'snoop-sticker-03', 'src' => '/assets/hero-loot/snoop-sticker-03.webp'],
+        ['id' => 'snoop-sticker-04', 'src' => '/assets/hero-loot/snoop-sticker-04.webp'],
+        ['id' => 'snoop-sticker-05', 'src' => '/assets/hero-loot/snoop-sticker-05.webp'],
+        ['id' => 'snoop-sticker-06', 'src' => '/assets/hero-loot/snoop-sticker-06.webp'],
     ];
     private const ROUND_LENGTHS = [3, 4, 5, 6];
 

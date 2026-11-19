@@ -5,12 +5,12 @@ final class VaultCracker extends ChallengeGame
 {
     private const GAME_SLUG = 'vault_cracker';
     private const ICONS = [
-        ['id' => 'weapon-ak47', 'src' => '/assets/hero-loot/weapon-ak47.png'],
-        ['id' => 'weapon-mp40', 'src' => '/assets/hero-loot/weapon-mp40.png'],
+        ['id' => 'weapon-ak47', 'src' => '/assets/hero-loot/weapon-ak47.webp'],
+        ['id' => 'weapon-mp40', 'src' => '/assets/hero-loot/weapon-mp40.webp'],
         ['id' => 'loot-crate', 'src' => '/assets/hero-loot/loot-crate.webp'],
         ['id' => 'backpack', 'src' => '/assets/hero-loot/backpack.webp'],
-        ['id' => 'gold-coin', 'src' => '/assets/hero-loot/gold-coin.png'],
-        ['id' => 'snoop-sticker-01', 'src' => '/assets/hero-loot/snoop-sticker-01.png'],
+        ['id' => 'gold-coin', 'src' => '/assets/hero-loot/gold-coin.webp'],
+        ['id' => 'snoop-sticker-01', 'src' => '/assets/hero-loot/snoop-sticker-01.webp'],
     ];
     private const MAX_ATTEMPTS = 6;
 

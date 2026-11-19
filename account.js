@@ -22,10 +22,10 @@
   const gameAttemptsState = profilePanel.querySelector("[data-game-attempts-state]");
   const codexGrid = profilePanel.querySelector("[data-island-codex]");
   const codexProgress = profilePanel.querySelector("[data-codex-progress]");
-  const DEFAULT_AVATAR = "icone/snoop.jpeg";
+  const DEFAULT_AVATAR = "icone/snoop.webp";
   const AVATAR_PRESETS = [
     DEFAULT_AVATAR,
-    ...Array.from({ length: 9 }, (_, index) => `assets/hero-loot/snoop-sticker-${String(index + 1).padStart(2, "0")}.png`),
+    ...Array.from({ length: 9 }, (_, index) => `assets/hero-loot/snoop-sticker-${String(index + 1).padStart(2, "0")}.webp`),
   ];
   const GAME_CARDS = [
     { title: "Memory Match", catalog: "games/memory-match", current: "games/memory-match/sessions/current", href: "memory-match.html" },

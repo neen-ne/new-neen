@@ -4,15 +4,15 @@ Picture Jigsaw is implemented as a separate account-backed game using the existi
 
 ## Approved images
 
-The source directory is [`assets/Picture Jigsaw pic/`](../assets/Picture%20Jigsaw%20pic/). It contains three JPEGs, all used as originals without editing:
+The source directory is [`assets/Picture Jigsaw pic/`](../assets/Picture%20Jigsaw%20pic/). It contains optimized WebP versions of the three original images. Conversion preserved each image's dimensions and framing:
 
 | Image | Dimensions |
 | --- | --- |
-| `WhatsApp Image 2026-11-07 at 8.29.09 PM.jpeg` | 1600 × 738 |
-| `WhatsApp Image 2026-11-07 at 8.32.06 PM.jpeg` | 314 × 627 |
-| `WhatsApp Image 2026-11-07 at 8.32.37 PM.jpeg` | 418 × 627 |
+| `WhatsApp Image 2026-11-07 at 8.29.09 PM.webp` | 1600 × 738 |
+| `WhatsApp Image 2026-11-07 at 8.32.06 PM.webp` | 314 × 627 |
+| `WhatsApp Image 2026-11-07 at 8.32.37 PM.webp` | 418 × 627 |
 
-[`assets/hero-loot/picture-jigsaw-images.json`](../assets/hero-loot/picture-jigsaw-images.json) lists stable IDs and original paths. The API validates each path stays inside the approved folder and checks the actual image type/dimensions before including it. Missing or unsupported images fail closed with a service error rather than accepting a replacement or outside URL.
+[`assets/hero-loot/picture-jigsaw-images.json`](../assets/hero-loot/picture-jigsaw-images.json) lists stable IDs and approved WebP paths. The API validates each path stays inside the approved folder and checks the actual image type/dimensions before including it. Missing or unsupported images fail closed with a service error rather than accepting a replacement or outside URL.
 
 Image choice previews use `object-fit: contain`. The puzzle board retains the chosen image's aspect ratio and divides the full image into a 3 × 3 tile grid; each tile uses the original image as a position-mapped background. This keeps both the wide and portrait character art proportional, without stretching or cropping.
 

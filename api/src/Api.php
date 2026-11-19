@@ -1566,9 +1566,9 @@ final class Api
                 throw new ApiException('VALIDATION_ERROR', 'Display name cannot be empty.', 422);
             }
             if ($field === 'avatar_url' && $value !== null) {
-                $presetAvatars = ['icone/snoop.jpeg'];
+                $presetAvatars = ['icone/snoop.webp'];
                 for ($index = 1; $index <= 9; $index++) {
-                    $presetAvatars[] = sprintf('assets/hero-loot/snoop-sticker-%02d.png', $index);
+                    $presetAvatars[] = sprintf('assets/hero-loot/snoop-sticker-%02d.webp', $index);
                 }
                 $isPreset = in_array($value, $presetAvatars, true);
                 $url = $isPreset ? false : filter_var($value, FILTER_VALIDATE_URL);

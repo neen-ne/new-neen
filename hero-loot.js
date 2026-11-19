@@ -59,14 +59,14 @@
   const scriptElement = document.currentScript || document.querySelector('script[src*="hero-loot.js"]');
   const assetBaseUrl = scriptElement?.src || window.location.href;
   const spriteSources = {
-    coin: new URL("./assets/hero-loot/gold-coin.png", assetBaseUrl).href,
+    coin: new URL("./assets/hero-loot/gold-coin.webp", assetBaseUrl).href,
     crate: new URL("./assets/hero-loot/loot-crate.webp", assetBaseUrl).href,
     backpack: new URL("./assets/hero-loot/backpack.webp", assetBaseUrl).href,
-    ak47: new URL("./assets/hero-loot/weapon-ak47.png", assetBaseUrl).href,
-    mp40: new URL("./assets/hero-loot/weapon-mp40.png", assetBaseUrl).href,
-    stickerSheet: new URL("./icone/WhatsApp Image 2026-10-29 at 6.55.30 PM.jpeg", assetBaseUrl).href,
+    ak47: new URL("./assets/hero-loot/weapon-ak47.webp", assetBaseUrl).href,
+    mp40: new URL("./assets/hero-loot/weapon-mp40.webp", assetBaseUrl).href,
+    stickerSheet: new URL("./icone/WhatsApp Image 2026-10-29 at 6.55.30 PM.webp", assetBaseUrl).href,
     snoopStickers: Array.from({ length: 9 }, (_, index) => new URL(
-      `./assets/hero-loot/snoop-sticker-${String(index + 1).padStart(2, "0")}.png`,
+      `./assets/hero-loot/snoop-sticker-${String(index + 1).padStart(2, "0")}.webp`,
       assetBaseUrl,
     ).href),
   };

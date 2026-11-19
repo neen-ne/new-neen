@@ -41,19 +41,19 @@ For SMTP-backed verification and password recovery, configure `SMTP_HOST`, `SMTP
 
 | Section | Image | Why it fits |
 | --- | --- | --- |
-| Home hero | `neno/WhatsApp Image 2026-10-29 at 3.08.15 PM (1).jpeg` — 1374 × 1145 | The character is framed on the left with open sky and city on the right, leaving room for the NEEN headline. The original image is preserved; CSS positions and layers it without redrawing the character. |
-| About Me | `neno/WhatsApp Image 2026-10-29 at 11.23.14 PM.jpeg` — 313 × 627 | The moonlit rooftop portrait gives the creator page a distinct character frame. |
-| Gallery 01 and Home preview | `neno/WhatsApp Image 2026-10-29 at 3.08.14 PM.jpeg` — 1600 × 738 | Wide rose-garden composition; used as the gallery's landscape opening frame. |
-| Gallery 02 | `neno/WhatsApp Image 2026-10-29 at 3.08.14 PM (1).jpeg` — 1145 × 1374 | Portrait framing and full seated pose suit a taller gallery card. |
-| Gallery 03 and Home preview | `neno/WhatsApp Image 2026-10-29 at 3.08.15 PM.jpeg` — 1145 × 1374 | A distinct moonlit close composition provides color and pose variety. |
-| Gallery 04 | `neno/WhatsApp Image 2026-10-29 at 3.08.15 PM (1).jpeg` — 1374 × 1145 | The car and sunset form a second landscape composition with useful negative space. |
+| Home hero | `neno/WhatsApp Image 2026-10-29 at 3.08.15 PM (1).webp` — 1374 × 1145 | The character is framed on the left with open sky and city on the right, leaving room for the NEEN headline. The optimized WebP preserves the original framing; CSS positions and layers it without redrawing the character. |
+| About Me | `neno/WhatsApp Image 2026-10-29 at 11.23.14 PM.webp` — 313 × 627 | The moonlit rooftop portrait gives the creator page a distinct character frame. |
+| Gallery 01 and Home preview | `neno/WhatsApp Image 2026-10-29 at 3.08.14 PM.webp` — 1600 × 738 | Wide rose-garden composition; used as the gallery's landscape opening frame. |
+| Gallery 02 | `neno/WhatsApp Image 2026-10-29 at 3.08.14 PM (1).webp` — 1145 × 1374 | Portrait framing and full seated pose suit a taller gallery card. |
+| Gallery 03 and Home preview | `neno/WhatsApp Image 2026-10-29 at 3.08.15 PM.webp` — 1145 × 1374 | A distinct moonlit close composition provides color and pose variety. |
+| Gallery 04 | `neno/WhatsApp Image 2026-10-29 at 3.08.15 PM (1).webp` — 1374 × 1145 | The car and sunset form a second landscape composition with useful negative space. |
 | Diamonds | No character image | The page focuses on accurate package/payment setup and request safety rather than decorative imagery. |
 | Homepage feature cards | New 11.23 PM character portraits | The Feed, Gallery, About, and Events cards each use a distinct image rather than repeating the same portraits. |
 | Homepage character preview | Four new 11.23.15 PM portraits | Sakura, garden, sunset, and neon scenes form a varied strip linking to the full gallery. |
 | Events Hub | Neon-crown and sunset portraits | Two decorative community images add character art to the status card without implying live events or participants. |
 | Videos page | No character thumbnails | Only real TikTok embeds and their direct links are shown. |
 
-The new portrait JPEGs were visually inspected and dimension-checked. Referenced image originals remain in the project; confirmed unreferenced legacy assets were removed during the pre-deployment audit.
+Referenced JPEG and PNG assets were converted to WebP where the validated result was smaller, with dimensions and transparency preserved. All 44 converted originals were removed; existing WebP assets were retained.
 
 ## Diamonds recharge and provider requirements
 
