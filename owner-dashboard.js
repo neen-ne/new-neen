@@ -264,6 +264,9 @@
       } else if (type === "orders") {
         main.append(make("strong", "", `${item.order_number} · ${item.username}`));
         main.append(make("small", "", `${t("playerId")} ${item.player_id} · ${item.diamond_amount} · ${formatDate(item.created_at)}`));
+        if (item.payment_reference) {
+          main.append(make("small", "", `Payment reference: ${item.payment_reference}`));
+        }
         row.append(main, make("span", "", item.order_status));
       } else {
         main.append(make("strong", "", `${item.action_type} · ${item.actor_username ?? "System"}`));

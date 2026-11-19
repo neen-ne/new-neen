@@ -15,6 +15,7 @@
   let csrfToken = "";
   let csrfPromise = null;
   let resetToken = new URLSearchParams(window.location.hash.slice(1)).get("reset_token") || "";
+  let verificationToken = new URLSearchParams(window.location.hash.slice(1)).get("verify_token") || "";
 
   const showMessage = (text, isError = false) => {
     message.textContent = text;
@@ -322,9 +323,22 @@
     try {
       await ensureCsrf();
       if (resetToken) return;
+      if (verificationToken) {
+        await api("auth/email/verify", "POST", { token: verificationToken });
+        verificationToken = "";
+        window.history.replaceState(null, "", window.location.pathname);
+        showMessage("Your email address is verified. You can now sign in.");
+        return;
+      }
       const response = await api("auth/me");
       await updateProfileView(response.user);
     } catch (error) {
+      if (verificationToken) {
+        verificationToken = "";
+        window.history.replaceState(null, "", window.location.pathname);
+        showMessage(error.message, true);
+        return;
+      }
       if (error.code === "AUTH_REQUIRED") {
         authPanel.hidden = false;
         profilePanel.hidden = true;
@@ -361,11 +375,15 @@
     const data = Object.fromEntries(new FormData(forms.register));
     if (!data.display_name) delete data.display_name;
     try {
-      await api("auth/register", "POST", data);
+      const result = await api("auth/register", "POST", data);
       forms.login.elements.email.value = data.email;
       forms.register.reset();
       setMode("login");
-      showMessage("Your account is ready. Sign in to continue.");
+      showMessage(result.email_verification_required
+        ? (result.verification_email_sent
+          ? "Your account is ready. Check your email to verify your address."
+          : "Your account is ready, but the verification email could not be sent. Contact the site administrator.")
+        : "Your account is ready. Sign in to continue.", !result.verification_email_sent && result.email_verification_required);
     } catch (error) {
       showMessage(error.message, true);
     }

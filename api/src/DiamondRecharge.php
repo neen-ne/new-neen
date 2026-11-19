@@ -95,8 +95,15 @@ final class DiamondRecharge
         return $this->packageById($packageId);
     }
 
-    public function createOrder(int $userId, int $packageId, string $playerId, string $idempotencyKey): array
+    public function createOrder(
+        int $userId,
+        int $packageId,
+        string $playerId,
+        string $idempotencyKey,
+        ?string $paymentReference = null,
+    ): array
     {
+        $paymentReference = $this->cleanPaymentReference($paymentReference);
         if (
             $userId < 1
             || $packageId < 1
@@ -106,16 +113,26 @@ final class DiamondRecharge
             throw new ApiException('VALIDATION_ERROR', 'Diamond order details are invalid.', 422);
         }
 
-        return $this->transaction(function () use ($userId, $packageId, $playerId, $idempotencyKey): array {
+        return $this->transaction(function () use (
+            $userId,
+            $packageId,
+            $playerId,
+            $idempotencyKey,
+            $paymentReference,
+        ): array {
             $this->lockActiveUser($userId);
             $statement = $this->db->prepare(
-                'SELECT id, order_number, package_id, player_id
+                'SELECT id, order_number, package_id, player_id, payment_reference
                  FROM diamond_recharge_orders WHERE user_id = :user_id AND idempotency_key = :idempotency_key',
             );
             $statement->execute(['user_id' => $userId, 'idempotency_key' => $idempotencyKey]);
             $existing = $statement->fetch();
             if ($existing !== false) {
-                if ((int) $existing['package_id'] !== $packageId || $existing['player_id'] !== $playerId) {
+                if (
+                    (int) $existing['package_id'] !== $packageId
+                    || $existing['player_id'] !== $playerId
+                    || $existing['payment_reference'] !== $paymentReference
+                ) {
                     throw new ApiException('DUPLICATE_REQUEST', 'Idempotency key was already used for a different order.', 409);
                 }
                 return ['created' => false, 'order' => $this->orderById((int) $existing['id'], $userId)];
@@ -146,11 +163,12 @@ final class DiamondRecharge
             $statement = $this->db->prepare(
                 'INSERT INTO diamond_recharge_orders
                     (order_number, user_id, package_id, package_name, diamond_amount, price, currency_code,
-                     player_id, idempotency_key, order_status, payment_status, delivery_status,
+                     player_id, idempotency_key, order_status, payment_status, delivery_status, payment_reference,
                      created_at, updated_at)
                  VALUES
                     (:order_number, :user_id, :package_id, :package_name, :diamond_amount, :price, :currency_code,
-                     :player_id, :idempotency_key, \'pending\', \'pending\', \'not_started\', :created_at, :updated_at)',
+                     :player_id, :idempotency_key, \'pending\', \'pending\', \'not_started\', :payment_reference,
+                     :created_at, :updated_at)',
             );
             $statement->execute([
                 'order_number' => $orderNumber,
@@ -162,6 +180,7 @@ final class DiamondRecharge
                 'currency_code' => $package['currency_code'],
                 'player_id' => $playerId,
                 'idempotency_key' => $idempotencyKey,
+                'payment_reference' => $paymentReference,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
@@ -372,6 +391,24 @@ final class DiamondRecharge
             }
         }
         return $order;
+    }
+
+    private function cleanPaymentReference(?string $reference): ?string
+    {
+        if ($reference === null) {
+            return null;
+        }
+        $reference = trim($reference);
+        if ($reference === '') {
+            return null;
+        }
+        if (strlen($reference) > 600 || preg_match('/[\p{C}]/u', $reference) !== 0) {
+            throw new ApiException('VALIDATION_ERROR', 'Payment reference may contain up to 150 printable characters.', 422);
+        }
+        if (preg_match('/\A.{1,150}\z/us', $reference) !== 1) {
+            throw new ApiException('VALIDATION_ERROR', 'Payment reference may contain up to 150 printable characters.', 422);
+        }
+        return $reference;
     }
 
     private function activity(

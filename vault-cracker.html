@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#FFF2F7" />
+    <meta name="description" content="Crack the NEEN icon vault in six server-validated guesses." />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <title>NEEN Vault Cracker — NEEN</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Exo+2:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Oxanium:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="vault-cracker.css" />
+    <script src="script.js" defer></script>
+    <script src="vault-cracker.js" defer></script>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <span class="wordmark wordmark-lockup"><a href="index.html" aria-label="NEEN home">NEE</a><a class="wordmark-admin-entry" href="events-admin.php" aria-label="Events admin console">E</a><span aria-hidden="true">.</span></span>
+        <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-navigation"><span></span><span></span></button>
+        <nav class="site-navigation" id="site-navigation" aria-label="Main navigation">
+          <a class="nav-link" href="index.html">Home</a><a class="nav-link" href="events.html">Events</a><a class="nav-link" href="events-challenges.html">Challenges</a><a class="nav-link" href="account.html">Account</a>
+        </nav>
+      </header>
+      <main class="page-main vault-page">
+        <section class="vault-shell section-wrap" aria-labelledby="vault-title">
+          <nav class="vault-crumbs" aria-label="Breadcrumb"><a href="events-challenges.html">Challenges</a><span aria-hidden="true">/</span><span>Vault Cracker</span></nav>
+          <p class="eyebrow section-eyebrow">SERVER-VALIDATED GAME <span>/ DAILY CHALLENGE</span></p>
+          <h1 id="vault-title">NEEN <span>VAULT CRACKER.</span></h1>
+          <p class="page-lede">Find the four distinct icons. Exact matches are in the right slot; misplaced matches are in the code but in another slot. Six guesses. No Coin entry fee.</p>
+          <p class="vault-status" data-vault-status role="status" aria-live="polite">Loading game…</p>
+          <div class="vault-toolbar"><span>Attempts left: <strong data-vault-attempts>—</strong></span><span>Reward: <strong data-vault-reward>50</strong> Earned Coins</span></div>
+          <div class="vault-board" data-vault-guesses aria-label="Previous guesses"></div>
+          <section class="vault-pick" aria-labelledby="vault-pick-title">
+            <h2 id="vault-pick-title">Choose four icons</h2>
+            <div class="vault-icon-picker" data-vault-icons></div>
+            <div class="vault-selected" data-vault-selected aria-live="polite">Select four different icons to make a guess.</div>
+            <div class="vault-actions">
+              <button class="button button-primary" type="button" data-vault-submit disabled>Submit guess</button>
+              <button class="outline-link" type="button" data-vault-start hidden>Start a new vault</button>
+            </div>
+          </section>
+          <a class="vault-back" href="events-challenges.html">← Back to Challenges Hub</a>
+        </section>
+      </main>
+      <footer class="site-footer"><a class="wordmark footer-wordmark" href="index.html">NEEN<span>.</span></a><p>FREE FIRE CONTENT <span>·</span> @NEEN_0O</p><a class="back-to-top" href="events-challenges.html">CHALLENGES <span aria-hidden="true">↗</span></a></footer>
+    </div>
+  </body>
+</html>

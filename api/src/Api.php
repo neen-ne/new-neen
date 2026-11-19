@@ -297,6 +297,96 @@ final class Api
                 $this->send(true, ['session' => $result['session']]);
             }
 
+            if ($path === '/api/games/vault-cracker') {
+                $this->expectMethod($method, 'GET');
+                $this->send(true, ['game' => $this->vaultCracker()->catalog()]);
+            }
+
+            if ($path === '/api/games/vault-cracker/sessions/current') {
+                $this->expectMethod($method, 'GET');
+                $auth = $this->requireAuth();
+                $game = $this->vaultCracker();
+                $this->send(true, [
+                    'session' => $game->current($auth['user_id']),
+                    'attempts_remaining_today' => $game->attemptsRemainingToday($auth['user_id']),
+                ]);
+            }
+
+            if ($path === '/api/games/vault-cracker/sessions') {
+                $this->expectMethod($method, 'POST');
+                $auth = $this->requireAuth();
+                $this->requireCsrf($auth);
+                $this->requireAllowedFields(['idempotency_key']);
+                $result = $this->vaultCracker()->start(
+                    $auth['user_id'],
+                    $this->idempotencyKey($this->body['idempotency_key'] ?? null),
+                );
+                $this->send(true, $result, [], $result['created'] ? 201 : 200);
+            }
+
+            if (preg_match('#\A/api/games/vault-cracker/sessions/([1-9][0-9]*)\z#', $path, $match) === 1) {
+                $this->expectMethod($method, 'GET');
+                $auth = $this->requireAuth();
+                $this->send(true, ['session' => $this->vaultCracker()->getState($auth['user_id'], (int) $match[1])]);
+            }
+
+            if (preg_match('#\A/api/games/vault-cracker/sessions/([1-9][0-9]*)/guess\z#', $path, $match) === 1) {
+                $this->expectMethod($method, 'POST');
+                $auth = $this->requireAuth();
+                $this->requireCsrf($auth);
+                $this->requireAllowedFields(['guess']);
+                $this->send(true, $this->vaultCracker()->submitGuess(
+                    $auth['user_id'],
+                    (int) $match[1],
+                    $this->body['guess'] ?? null,
+                ));
+            }
+
+            if ($path === '/api/games/loot-sequence') {
+                $this->expectMethod($method, 'GET');
+                $this->send(true, ['game' => $this->lootSequence()->catalog()]);
+            }
+
+            if ($path === '/api/games/loot-sequence/sessions/current') {
+                $this->expectMethod($method, 'GET');
+                $auth = $this->requireAuth();
+                $game = $this->lootSequence();
+                $this->send(true, [
+                    'session' => $game->current($auth['user_id']),
+                    'attempts_remaining_today' => $game->attemptsRemainingToday($auth['user_id']),
+                ]);
+            }
+
+            if ($path === '/api/games/loot-sequence/sessions') {
+                $this->expectMethod($method, 'POST');
+                $auth = $this->requireAuth();
+                $this->requireCsrf($auth);
+                $this->requireAllowedFields(['idempotency_key']);
+                $result = $this->lootSequence()->start(
+                    $auth['user_id'],
+                    $this->idempotencyKey($this->body['idempotency_key'] ?? null),
+                );
+                $this->send(true, $result, [], $result['created'] ? 201 : 200);
+            }
+
+            if (preg_match('#\A/api/games/loot-sequence/sessions/([1-9][0-9]*)\z#', $path, $match) === 1) {
+                $this->expectMethod($method, 'GET');
+                $auth = $this->requireAuth();
+                $this->send(true, ['session' => $this->lootSequence()->getState($auth['user_id'], (int) $match[1])]);
+            }
+
+            if (preg_match('#\A/api/games/loot-sequence/sessions/([1-9][0-9]*)/submit\z#', $path, $match) === 1) {
+                $this->expectMethod($method, 'POST');
+                $auth = $this->requireAuth();
+                $this->requireCsrf($auth);
+                $this->requireAllowedFields(['pattern']);
+                $this->send(true, $this->lootSequence()->submitPattern(
+                    $auth['user_id'],
+                    (int) $match[1],
+                    $this->body['pattern'] ?? null,
+                ));
+            }
+
             if ($path === '/api/wallet/transactions') {
                 $this->expectMethod($method, 'GET');
                 $this->walletTransactions($this->requireAuth());
@@ -318,6 +408,11 @@ final class Api
                 $this->expectMethod($method, 'GET');
                 $auth = $this->findAuth();
                 $this->send(true, ['events' => $this->communityEvents()->publicEvents($auth['user_id'] ?? null)]);
+            }
+
+            if ($path === '/api/events/leaderboard') {
+                $this->expectMethod($method, 'GET');
+                $this->send(true, ['leaderboards' => $this->communityEvents()->publicLeaderboards()]);
             }
 
             if ($path === '/api/events/suggestions') {
@@ -586,12 +681,13 @@ final class Api
                 }
                 $this->expectMethod($method, 'POST');
                 $this->requireCsrf($auth);
-                $this->requireAllowedFields(['package_id', 'player_id', 'idempotency_key']);
+                $this->requireAllowedFields(['package_id', 'player_id', 'idempotency_key', 'payment_reference']);
                 $result = $this->diamondRecharge()->createOrder(
                     $auth['user_id'],
                     $this->positiveInteger($this->body['package_id'] ?? null, 'package_id'),
                     $this->requiredString('player_id', 6, 20),
                     $this->idempotencyKey($this->body['idempotency_key'] ?? null),
+                    $this->optionalString($this->body['payment_reference'] ?? null, 1, 150, 'payment_reference'),
                 );
                 $this->send(true, $result, [], $result['created'] ? 201 : 200);
             }
@@ -837,6 +933,11 @@ final class Api
                 $this->register();
             }
 
+            if ($path === '/api/auth/email/verify') {
+                $this->expectMethod($method, 'POST');
+                $this->verifyEmail();
+            }
+
             if ($path === '/api/auth/login') {
                 $this->expectMethod($method, 'POST');
                 $this->login();
@@ -963,8 +1064,16 @@ final class Api
         $password = $this->validatedPassword($this->body['password'] ?? null);
         $displayName = $this->optionalString($this->body['display_name'] ?? $username, 1, 80, 'display_name');
         $now = $this->now();
+        $verificationToken = EmailDelivery::configured() ? self::randomToken() : null;
 
-        [$userId, $walletId] = $this->transaction(function () use ($username, $email, $password, $displayName, $now): array {
+        [$userId, $walletId] = $this->transaction(function () use (
+            $username,
+            $email,
+            $password,
+            $displayName,
+            $now,
+            $verificationToken,
+        ): array {
             try {
                 $statement = $this->db->prepare(
                     "INSERT INTO users (username, email, password_hash, status, email_verified, created_at, updated_at)
@@ -989,6 +1098,19 @@ final class Api
             }
 
             $userId = (int) $this->db->lastInsertId();
+            if ($verificationToken !== null) {
+                $statement = $this->db->prepare(
+                    'INSERT INTO email_verification_tokens (user_id, token_hash, expires_at, created_at)
+                     VALUES (:user_id, :token_hash, :expires_at, :created_at)',
+                );
+                $statement->execute([
+                    'user_id' => $userId,
+                    'token_hash' => hash('sha256', $verificationToken),
+                    'expires_at' => (new DateTimeImmutable($now, new DateTimeZone('UTC')))
+                        ->modify('+24 hours')->format('Y-m-d H:i:s'),
+                    'created_at' => $now,
+                ]);
+            }
             $statement = $this->db->prepare(
                 'INSERT INTO user_profiles (user_id, display_name, created_at, updated_at)
                  VALUES (:user_id, :display_name, :created_at, :updated_at)',
@@ -1024,11 +1146,70 @@ final class Api
             return [$userId, $walletId];
         });
 
+        $verificationEmailSent = false;
+        if ($verificationToken !== null) {
+            try {
+                $this->sendEmailVerification($email, $verificationToken);
+                $verificationEmailSent = true;
+            } catch (Throwable $exception) {
+                error_log(sprintf(
+                    'NEEN verification email failed [request_id=%s] %s',
+                    $this->requestId,
+                    get_class($exception),
+                ));
+            }
+        }
+
         $this->send(true, [
             'user_id' => $userId,
             'wallet_created' => true,
             'wallet_id' => $walletId,
+            'email_verification_required' => $verificationToken !== null,
+            'verification_email_sent' => $verificationEmailSent,
         ], [], 201);
+    }
+
+    private function verifyEmail(): never
+    {
+        $this->requireCsrf();
+        $this->requireAllowedFields(['token']);
+        $token = $this->body['token'] ?? null;
+        if (!is_string($token) || !preg_match('/\A[A-Za-z0-9_-]{43}\z/', $token)) {
+            throw new ApiException('VALIDATION_ERROR', 'A valid email verification token is required.', 422);
+        }
+
+        $now = $this->now();
+        $this->transaction(function () use ($token, $now): void {
+            $lock = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
+            $statement = $this->db->prepare(
+                'SELECT id, user_id FROM email_verification_tokens
+                 WHERE token_hash = :token_hash AND used_at IS NULL AND expires_at > :now' . $lock,
+            );
+            $statement->execute(['token_hash' => hash('sha256', $token), 'now' => $now]);
+            $verification = $statement->fetch();
+            if ($verification === false) {
+                throw new ApiException('VALIDATION_ERROR', 'The verification link is invalid or expired.', 422);
+            }
+
+            $statement = $this->db->prepare(
+                "UPDATE users SET email_verified = 1, updated_at = :updated_at
+                 WHERE id = :user_id AND status = 'active'",
+            );
+            $statement->execute(['updated_at' => $now, 'user_id' => $verification['user_id']]);
+            if ($statement->rowCount() !== 1) {
+                throw new ApiException('VALIDATION_ERROR', 'The verification link is invalid or expired.', 422);
+            }
+            $statement = $this->db->prepare(
+                'UPDATE email_verification_tokens SET used_at = :used_at WHERE id = :id AND used_at IS NULL',
+            );
+            $statement->execute(['used_at' => $now, 'id' => $verification['id']]);
+            if ($statement->rowCount() !== 1) {
+                throw new ApiException('VALIDATION_ERROR', 'The verification link is invalid or expired.', 422);
+            }
+            $this->audit((int) $verification['user_id'], 'email_verified', 'users', (int) $verification['user_id']);
+        });
+
+        $this->send(true, ['email_verified' => true]);
     }
 
     private function login(): never
@@ -1517,6 +1698,26 @@ final class Api
 
     private function sendPasswordResetEmail(string $email, string $token): void
     {
+        $link = $this->accountLink('reset_token', $token);
+        $message = "A password reset was requested for your NEEN account.\n\n"
+            . "Use this link within 60 minutes to choose a new password:\n"
+            . $link . "\n\n"
+            . "If you did not request this, you can ignore this email.";
+        EmailDelivery::send($email, 'NEEN password reset', $message);
+    }
+
+    private function sendEmailVerification(string $email, string $token): void
+    {
+        $link = $this->accountLink('verify_token', $token);
+        $message = "Welcome to NEEN.\n\n"
+            . "Verify your email address within 24 hours:\n"
+            . $link . "\n\n"
+            . "If you did not create this account, you can ignore this email.";
+        EmailDelivery::send($email, 'Verify your NEEN email address', $message);
+    }
+
+    private function accountLink(string $fragmentKey, string $token): string
+    {
         if ($this->appUrl === null || filter_var($this->appUrl, FILTER_VALIDATE_URL) === false) {
             throw new RuntimeException('Application URL is not configured.');
         }
@@ -1524,49 +1725,8 @@ final class Api
         if ($this->appEnvironment !== 'test' && $scheme !== 'https') {
             throw new RuntimeException('Application URL must use HTTPS.');
         }
-        $link = rtrim($this->appUrl, '/') . '/account.html#reset_token=' . rawurlencode($token);
-        $message = "A password reset was requested for your NEEN account.\n\n"
-            . "Use this link within 60 minutes to choose a new password:\n"
-            . $link . "\n\n"
-            . "If you did not request this, you can ignore this email.";
-
-        if ($this->appEnvironment === 'test') {
-            $sink = getenv('NEEN_TEST_MAIL_FILE');
-            if ($sink === false || $sink === '') {
-                throw new RuntimeException('Test email sink is not configured.');
-            }
-            $handle = fopen($sink, 'ab');
-            if ($handle === false) {
-                throw new RuntimeException('Test email sink is unavailable.');
-            }
-            chmod($sink, 0600);
-            try {
-                if (fwrite($handle, json_encode([
-                    'to' => $email,
-                    'subject' => 'NEEN password reset',
-                    'message' => $message,
-                ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES) . PHP_EOL) === false) {
-                    throw new RuntimeException('Test email could not be recorded.');
-                }
-            } finally {
-                fclose($handle);
-            }
-            return;
-        }
-
-        $from = getenv('NEEN_MAIL_FROM');
-        if ($from === false || filter_var($from, FILTER_VALIDATE_EMAIL) === false) {
-            throw new RuntimeException('Email sender is not configured.');
-        }
-        $sent = mail(
-            $email,
-            'NEEN password reset',
-            $message,
-            "From: {$from}\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8",
-        );
-        if (!$sent) {
-            throw new RuntimeException('Password reset email delivery failed.');
-        }
+        return rtrim($this->appUrl, '/') . '/account.html#'
+            . rawurlencode($fragmentKey) . '=' . rawurlencode($token);
     }
 
     private function walletTransactions(array $auth): never
@@ -2376,6 +2536,16 @@ final class Api
             dirname(__DIR__, 2) . '/assets/hero-loot/picture-jigsaw-images.json',
             new GameRewards($this->db),
         );
+    }
+
+    private function vaultCracker(): VaultCracker
+    {
+        return new VaultCracker($this->db, new GameRewards($this->db));
+    }
+
+    private function lootSequence(): LootSequence
+    {
+        return new LootSequence($this->db, new GameRewards($this->db));
     }
 
     private function attendance(): Attendance

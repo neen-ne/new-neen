@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/src/EnvLoader.php';
+EnvLoader::load(dirname(__DIR__) . '/.env');
+
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $documentRoot = realpath(dirname(__DIR__));
 $decodedPath = is_string($path) ? rawurldecode($path) : '';
@@ -11,6 +14,13 @@ if (
 ) {
     http_response_code(404);
     exit;
+}
+$segments = explode('/', trim($decodedPath, '/'));
+foreach ($segments as $segment) {
+    if (str_starts_with($segment, '.') && $segment !== '.well-known') {
+        http_response_code(404);
+        exit;
+    }
 }
 $decodedPath = $decodedPath === '/' ? '/index.html' : $decodedPath;
 

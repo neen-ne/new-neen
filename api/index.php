@@ -1,8 +1,12 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/src/EnvLoader.php';
+EnvLoader::load(dirname(__DIR__) . '/.env');
+
 require_once __DIR__ . '/src/ApiException.php';
 require_once __DIR__ . '/src/Database.php';
+require_once __DIR__ . '/src/EmailDelivery.php';
 require_once __DIR__ . '/src/RateLimiter.php';
 require_once __DIR__ . '/src/CoinsLedger.php';
 require_once __DIR__ . '/src/Attendance.php';
@@ -11,8 +15,11 @@ require_once __DIR__ . '/src/CommunityEvents.php';
 require_once __DIR__ . '/src/DiamondRecharge.php';
 require_once __DIR__ . '/src/DiamondProviders.php';
 require_once __DIR__ . '/src/GameRewards.php';
+require_once __DIR__ . '/src/ChallengeGame.php';
 require_once __DIR__ . '/src/MemoryMatch.php';
 require_once __DIR__ . '/src/PictureJigsaw.php';
+require_once __DIR__ . '/src/VaultCracker.php';
+require_once __DIR__ . '/src/LootSequence.php';
 require_once __DIR__ . '/src/OwnerDashboard.php';
 require_once __DIR__ . '/src/Api.php';
 

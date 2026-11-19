@@ -262,8 +262,22 @@ try {
     assertTrue($status === 201, 'Valid open registration succeeds');
     checkResponse($response, true, 'Valid open registration');
     assertTrue($response['data']['wallet_created'] === true, 'Registration creates a wallet');
+    assertTrue(
+        $response['data']['email_verification_required'] === false
+        && $response['data']['verification_email_sent'] === false,
+        'Local/test registration remains available without SMTP verification',
+    );
     $userId = (int) $response['data']['user_id'];
     $walletId = (int) $response['data']['wallet_id'];
+    [$verificationStatus] = request(
+        $baseUrl,
+        '/api/auth/email/verify',
+        $cookies,
+        ['token' => str_repeat('a', 43)],
+        $csrf,
+        'POST',
+    );
+    assertTrue($verificationStatus === 422, 'Invalid email verification tokens cannot change account state');
 
     [$status] = request(
         $baseUrl,
@@ -1579,6 +1593,287 @@ try {
         'The combined game rewards remain in Earned Coins and preserve the Purchased Coins balance',
     );
 
+    [$status, $vaultCatalogResponse] = request($baseUrl, '/api/games/vault-cracker', $cookies);
+    $vaultCatalog = $vaultCatalogResponse['data']['game'] ?? [];
+    assertTrue(
+        $status === 200
+        && $vaultCatalog['slug'] === 'vault_cracker'
+        && count($vaultCatalog['icons']) === 6
+        && $vaultCatalog['free_attempts_per_day'] === 3
+        && $vaultCatalog['reward_amount_coins'] === 50,
+        'Vault Cracker exposes its six approved icons and server-configured reward limits',
+    );
+    [$status] = request($baseUrl, '/api/games/vault-cracker/sessions/current', $anonymousCookies);
+    assertTrue($status === 401, 'Anonymous visitors cannot load a user-linked Vault Cracker session');
+    $vaultPage = file_get_contents($baseUrl . '/vault-cracker.html');
+    assertTrue(
+        is_string($vaultPage) && str_contains($vaultPage, 'data-vault-submit'),
+        'The Vault Cracker page is served with playable controls',
+    );
+    [$status, $vaultStarted] = request(
+        $baseUrl,
+        '/api/games/vault-cracker/sessions',
+        $cookies,
+        ['idempotency_key' => 'vault-cracker-start-001'],
+        $csrf,
+        'POST',
+    );
+    $vaultSession = $vaultStarted['data']['session'] ?? [];
+    assertTrue(
+        $status === 201
+        && $vaultStarted['data']['attempts_remaining_today'] === 2
+        && !array_key_exists('secret', $vaultSession)
+        && !array_key_exists('secret_code', $vaultSession),
+        'Vault Cracker starts privately on the server and consumes one Cairo-day attempt',
+    );
+    $vaultSessionId = $vaultSession['id'];
+    $vaultDb = new PDO('sqlite:' . $databasePath);
+    $vaultSecretStatement = $vaultDb->prepare(
+        'SELECT secret_json FROM vault_cracker_states WHERE session_id = :session_id',
+    );
+    $vaultSecretStatement->execute(['session_id' => $vaultSessionId]);
+    $vaultSecret = json_decode((string) $vaultSecretStatement->fetchColumn(), true, 16, JSON_THROW_ON_ERROR);
+    unset($vaultSecretStatement, $vaultDb);
+    [$invalidVaultGuessStatus] = request(
+        $baseUrl,
+        '/api/games/vault-cracker/sessions/' . $vaultSessionId . '/guess',
+        $cookies,
+        ['guess' => ['weapon-ak47', 'weapon-ak47', 'loot-crate', 'backpack']],
+        $csrf,
+        'POST',
+    );
+    assertTrue($invalidVaultGuessStatus === 422, 'Vault Cracker rejects repeated icons in a guess');
+    [$status, $vaultWin] = request(
+        $baseUrl,
+        '/api/games/vault-cracker/sessions/' . $vaultSessionId . '/guess',
+        $cookies,
+        ['guess' => $vaultSecret],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $status === 200
+        && $vaultWin['data']['session']['status'] === 'completed'
+        && $vaultWin['data']['reward']['amount'] === 50,
+        'A correct Vault Cracker code completes the session and credits its server-verified reward',
+    );
+    $vaultLedgerDb = new PDO('sqlite:' . $databasePath);
+    $vaultLedgerCount = $vaultLedgerDb->prepare(
+        "SELECT COUNT(*) FROM coin_ledger
+         WHERE user_id = :user_id AND source = 'game_reward' AND reference_type = 'game_session'
+           AND reference_id = :session_id",
+    );
+    $vaultLedgerCount->execute(['user_id' => $userId, 'session_id' => $vaultSessionId]);
+    assertTrue((int) $vaultLedgerCount->fetchColumn() === 1, 'Vault Cracker writes one immutable reward ledger entry');
+    unset($vaultLedgerCount, $vaultLedgerDb);
+
+    $failVaultSession = static function (string $key) use ($baseUrl, $databasePath, &$cookies, &$csrf): void {
+        [$startStatus, $started] = request(
+            $baseUrl,
+            '/api/games/vault-cracker/sessions',
+            $cookies,
+            ['idempotency_key' => $key],
+            $csrf,
+            'POST',
+        );
+        assertTrue($startStatus === 201, 'A remaining Vault Cracker daily attempt starts');
+        $sessionId = $started['data']['session']['id'];
+        $secretDb = new PDO('sqlite:' . $databasePath);
+        $secretQuery = $secretDb->prepare('SELECT secret_json FROM vault_cracker_states WHERE session_id = :session_id');
+        $secretQuery->execute(['session_id' => $sessionId]);
+        $secret = json_decode((string) $secretQuery->fetchColumn(), true, 16, JSON_THROW_ON_ERROR);
+        unset($secretQuery, $secretDb);
+        $wrongGuess = array_merge(array_slice($secret, 1), [$secret[0]]);
+        for ($guessNumber = 1; $guessNumber <= 6; $guessNumber++) {
+            [$status, $response] = request(
+                $baseUrl,
+                '/api/games/vault-cracker/sessions/' . $sessionId . '/guess',
+                $cookies,
+                ['guess' => $wrongGuess],
+                $csrf,
+                'POST',
+            );
+            assertTrue(
+                $status === 200
+                && $response['data']['session']['status'] === ($guessNumber === 6 ? 'failed' : 'in_progress'),
+                'Vault Cracker enforces its six-guess limit and records an unsolved attempt',
+            );
+        }
+    };
+    $failVaultSession('vault-cracker-start-002');
+    $failVaultSession('vault-cracker-start-003');
+    [$vaultLimitStatus] = request(
+        $baseUrl,
+        '/api/games/vault-cracker/sessions',
+        $cookies,
+        ['idempotency_key' => 'vault-cracker-start-004'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($vaultLimitStatus === 429, 'Vault Cracker enforces the three-start Cairo-day limit');
+
+    [$status, $sequenceCatalogResponse] = request($baseUrl, '/api/games/loot-sequence', $cookies);
+    $sequenceCatalog = $sequenceCatalogResponse['data']['game'] ?? [];
+    assertTrue(
+        $status === 200
+        && $sequenceCatalog['slug'] === 'loot_sequence'
+        && count($sequenceCatalog['stickers']) === 6
+        && $sequenceCatalog['free_attempts_per_day'] === 3
+        && $sequenceCatalog['reward_amount_coins'] === 50,
+        'Loot Sequence exposes its six stickers and server-configured reward limits',
+    );
+    [$status] = request($baseUrl, '/api/games/loot-sequence/sessions/current', $anonymousCookies);
+    assertTrue($status === 401, 'Anonymous visitors cannot load a user-linked Loot Sequence session');
+    $sequencePage = file_get_contents($baseUrl . '/loot-sequence.html');
+    assertTrue(
+        is_string($sequencePage) && str_contains($sequencePage, 'data-sequence-submit'),
+        'The Loot Sequence page is served with playable controls',
+    );
+    [$status, $sequenceStarted] = request(
+        $baseUrl,
+        '/api/games/loot-sequence/sessions',
+        $cookies,
+        ['idempotency_key' => 'loot-sequence-start-001'],
+        $csrf,
+        'POST',
+    );
+    $sequenceSession = $sequenceStarted['data']['session'] ?? [];
+    assertTrue(
+        $status === 201
+        && $sequenceStarted['data']['attempts_remaining_today'] === 2
+        && $sequenceSession['round_number'] === 1
+        && count($sequenceSession['sequence']) === 3,
+        'Loot Sequence stores its server pattern and begins with a three-step round',
+    );
+    $sequenceSessionId = $sequenceSession['id'];
+    $sequenceReward = null;
+    for ($round = 1; $round <= 4; $round++) {
+        [$status, $roundResult] = request(
+            $baseUrl,
+            '/api/games/loot-sequence/sessions/' . $sequenceSessionId . '/submit',
+            $cookies,
+            ['pattern' => $sequenceSession['sequence']],
+            $csrf,
+            'POST',
+        );
+        assertTrue($status === 200 && $roundResult['data']['correct'] === true, 'Loot Sequence accepts a completed server-matching round');
+        if ($round < 4) {
+            $sequenceSession = $roundResult['data']['session'];
+            assertTrue(
+                $sequenceSession['round_number'] === $round + 1
+                && count($sequenceSession['sequence']) === $round + 3,
+                'Loot Sequence advances through progressively longer server-controlled rounds',
+            );
+        } else {
+            $sequenceReward = $roundResult['data']['reward'] ?? null;
+            assertTrue(
+                $roundResult['data']['session']['status'] === 'completed'
+                && is_array($sequenceReward)
+                && $sequenceReward['amount'] === 50,
+                'Completing all four Loot Sequence rounds credits Earned Coins',
+            );
+        }
+    }
+
+    $failSequenceSession = static function (string $key) use (
+        $baseUrl,
+        $sequenceCatalog,
+        &$cookies,
+        &$csrf,
+    ): void {
+        [$startStatus, $started] = request(
+            $baseUrl,
+            '/api/games/loot-sequence/sessions',
+            $cookies,
+            ['idempotency_key' => $key],
+            $csrf,
+            'POST',
+        );
+        assertTrue($startStatus === 201, 'A remaining Loot Sequence daily attempt starts');
+        $session = $started['data']['session'];
+        $wrongPattern = $session['sequence'];
+        $replacement = $sequenceCatalog['stickers'][0]['id'];
+        if ($wrongPattern[0] === $replacement) {
+            $replacement = $sequenceCatalog['stickers'][1]['id'];
+        }
+        $wrongPattern[0] = $replacement;
+        [$status, $response] = request(
+            $baseUrl,
+            '/api/games/loot-sequence/sessions/' . $session['id'] . '/submit',
+            $cookies,
+            ['pattern' => $wrongPattern],
+            $csrf,
+            'POST',
+        );
+        assertTrue(
+            $status === 200
+            && $response['data']['correct'] === false
+            && $response['data']['session']['status'] === 'failed',
+            'Loot Sequence rejects an incorrect pattern without awarding Coins',
+        );
+    };
+    $failSequenceSession('loot-sequence-start-002');
+    $failSequenceSession('loot-sequence-start-003');
+    [$sequenceLimitStatus] = request(
+        $baseUrl,
+        '/api/games/loot-sequence/sessions',
+        $cookies,
+        ['idempotency_key' => 'loot-sequence-start-004'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($sequenceLimitStatus === 429, 'Loot Sequence enforces the three-start Cairo-day limit');
+
+    [$status, $publicLeaderboard] = request($baseUrl, '/api/events/leaderboard', $anonymousCookies);
+    $leaderboards = $publicLeaderboard['data']['leaderboards'] ?? [];
+    $earnedLeader = array_values(array_filter(
+        $leaderboards['earned_coins'] ?? [],
+        static fn (array $row): bool => $row['username'] === 'neenplayer',
+    ))[0] ?? null;
+    $gameWinner = array_values(array_filter(
+        $leaderboards['game_wins'] ?? [],
+        static fn (array $row): bool => $row['username'] === 'neenplayer',
+    ))[0] ?? null;
+    assertTrue(
+        $status === 200
+        && is_array($earnedLeader)
+        && $earnedLeader['score'] >= 350
+        && is_array($gameWinner)
+        && $gameWinner['score'] >= 2
+        && array_key_exists('attendance_streaks', $leaderboards)
+        && !array_key_exists('email', $earnedLeader)
+        && !array_key_exists('email', $gameWinner),
+        'The public leaderboard returns current Coins, verified wins, attendance data, and no email fields',
+    );
+    [$vaultClaimStatus] = request(
+        $baseUrl,
+        '/api/games/vault-cracker/sessions/' . $vaultSessionId . '/reward',
+        $cookies,
+        [],
+        $csrf,
+        'POST',
+    );
+    [$sequenceClaimStatus] = request(
+        $baseUrl,
+        '/api/games/loot-sequence/sessions/' . $sequenceSessionId . '/reward',
+        $cookies,
+        [],
+        $csrf,
+        'POST',
+    );
+    assertTrue(
+        $vaultClaimStatus === 404 && $sequenceClaimStatus === 404,
+        'Completed game rewards are credited only by server-verified game completion, never a client claim request',
+    );
+    $challengesPage = file_get_contents($baseUrl . '/events-challenges.html');
+    assertTrue(
+        is_string($challengesPage)
+        && str_contains($challengesPage, 'vault-cracker.html')
+        && str_contains($challengesPage, 'loot-sequence.html')
+        && str_contains($challengesPage, 'data-challenge-status'),
+        'The Challenges Hub links the new games and renders live daily challenge state',
+    );
+
     [$status] = request($baseUrl, '/api/attendance/daily', $anonymousCookies);
     assertTrue($status === 401, 'Anonymous visitors cannot inspect account attendance');
     [$status] = request(
@@ -1632,8 +1927,8 @@ try {
     $attendanceFailureWallet = request($baseUrl, '/api/wallet', $cookies);
     assertTrue(
         $attendanceCount === 0
-        && $attendanceFailureWallet[1]['data']['coin_balance'] === 350
-        && $attendanceFailureWallet[1]['data']['earned_coin_balance'] === 250,
+        && $attendanceFailureWallet[1]['data']['coin_balance'] === 450
+        && $attendanceFailureWallet[1]['data']['earned_coin_balance'] === 350,
         'A failed check-in ledger write rolls back attendance and leaves the wallet unchanged',
     );
     $concurrentCheckins = concurrentRequests(
@@ -1697,8 +1992,8 @@ try {
     [$status, $attendanceWallet] = request($baseUrl, '/api/wallet', $cookies);
     assertTrue(
         $status === 200
-        && $attendanceWallet['data']['coin_balance'] === 450
-        && $attendanceWallet['data']['earned_coin_balance'] === 350
+        && $attendanceWallet['data']['coin_balance'] === 550
+        && $attendanceWallet['data']['earned_coin_balance'] === 450
         && $attendanceWallet['data']['purchased_coin_balance'] === 100,
         'Daily attendance credits 100 Earned Coins without changing Purchased Coins or game rewards',
     );
@@ -1710,7 +2005,7 @@ try {
         $status === 200
         && $homepageRewardBefore['data']['reward']['configured'] === false
         && $homepageRewardBefore['data']['reward']['can_claim'] === false
-        && $homepageRewardBefore['data']['reward']['wallet']['coin_balance'] === 450,
+        && $homepageRewardBefore['data']['reward']['wallet']['coin_balance'] === 550,
         'Homepage rewards start unavailable until the server configuration is explicitly set',
     );
     $database->prepare(
@@ -1781,7 +2076,7 @@ try {
     assertTrue(
         $status === 500
         && $failedHomepageClaims === 0
-        && $failedHomepageWallet[1]['data']['coin_balance'] === 450,
+        && $failedHomepageWallet[1]['data']['coin_balance'] === 550,
         'A failed homepage reward ledger write rolls back its claim and wallet credit',
     );
     $database->exec('DROP TRIGGER test_fail_homepage_reward');
@@ -1803,7 +2098,7 @@ try {
         $homepageClaimStatuses === [200, 201]
         && count($createdHomepageClaims) === 1
         && $createdHomepageClaims[0][1]['data']['amount'] === 7
-        && $createdHomepageClaims[0][1]['data']['wallet']['coin_balance'] === 457,
+        && $createdHomepageClaims[0][1]['data']['wallet']['coin_balance'] === 557,
         'Concurrent homepage claims create one earned-credit ledger entry and return the actual wallet balance',
     );
     [$status, $homepageReplay] = request(
@@ -1820,7 +2115,7 @@ try {
     assertTrue(
         $status === 200
         && $homepageReplay['data']['created'] === false
-        && $homepageReplay['data']['wallet']['coin_balance'] === 457
+        && $homepageReplay['data']['wallet']['coin_balance'] === 557
         && $homepageLedgerCount === 1,
         'Repeated homepage reward claims do not credit the wallet twice',
     );
@@ -2001,7 +2296,7 @@ try {
         && $statusRewards === 200
         && $myEventRewards['data']['rewards'][0]['reward_amount'] === 5
         && $statusWallet === 200
-        && $eventWallet['data']['coin_balance'] === 462,
+        && $eventWallet['data']['coin_balance'] === 562,
         'Event rewards are visible to participants, credited through the wallet, and not paid twice',
     );
 
@@ -2078,6 +2373,20 @@ try {
         'POST',
     );
     assertTrue($status === 422, 'Diamond order requests cannot override server package quantities or prices');
+    [$status] = request(
+        $baseUrl,
+        '/api/diamonds/orders',
+        $cookies,
+        [
+            'package_id' => $diamondPackageId,
+            'player_id' => '123456791',
+            'payment_reference' => "Transfer\nInjected",
+            'idempotency_key' => 'diamond-reference-invalid-01',
+        ],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 422, 'Payment references reject control characters before storage');
 
     [$status, $diamondOrderResponse] = request(
         $baseUrl,
@@ -2086,6 +2395,7 @@ try {
         [
             'package_id' => $diamondPackageId,
             'player_id' => '123456789',
+            'payment_reference' => '  InstaPay transfer 987654321  ',
             'idempotency_key' => 'diamond-order-test-001',
         ],
         $csrf,
@@ -2097,8 +2407,9 @@ try {
         && preg_match('/\AND-[A-F0-9]{16}\z/', $diamondOrderResponse['data']['order']['order_number']) === 1
         && $diamondOrderResponse['data']['order']['order_status'] === 'pending'
         && $diamondOrderResponse['data']['order']['payment_status'] === 'pending'
-        && $diamondOrderResponse['data']['order']['delivery_status'] === 'not_started',
-        'Submitting a valid recharge creates a unique pending order with separate payment and delivery states',
+        && $diamondOrderResponse['data']['order']['delivery_status'] === 'not_started'
+        && $diamondOrderResponse['data']['order']['payment_reference'] === 'InstaPay transfer 987654321',
+        'Submitting a valid recharge records a sanitized payment reference with separate payment and delivery states',
     );
     $diamondOrder = $diamondOrderResponse['data']['order'];
     [$status, $diamondOrderReplay] = request(
@@ -2108,6 +2419,7 @@ try {
         [
             'package_id' => $diamondPackageId,
             'player_id' => '123456789',
+            'payment_reference' => 'InstaPay transfer 987654321',
             'idempotency_key' => 'diamond-order-test-001',
         ],
         $csrf,
@@ -2155,7 +2467,6 @@ try {
         [
             'action' => 'mark_paid',
             'note' => 'Payment verified in the approved manual workflow.',
-            'payment_reference' => 'test-payment-reference',
         ],
         $csrf,
         'POST',
@@ -2180,7 +2491,8 @@ try {
         && $statusHistory === 200
         && count($diamondHistory['data']['order']['activity']) === 5
         && $statusUserOrders === 200
-        && $userDiamondOrders['data']['orders'][0]['order_status'] === 'delivered',
+        && $userDiamondOrders['data']['orders'][0]['order_status'] === 'delivered'
+        && $userDiamondOrders['data']['orders'][0]['payment_reference'] === 'InstaPay transfer 987654321',
         'Admin and user views track the full payment verification through delivered lifecycle and its actor history',
     );
     [$statusDeliveredRefund] = $diamondTransition((string) $diamondOrder['id'], 'refund', 'Delivered orders cannot be refunded.');
@@ -2193,8 +2505,9 @@ try {
     assertTrue(
         $statusSearch === 200
         && count($diamondSearch['data']['orders']) === 1
-        && $diamondSearch['data']['orders'][0]['player_id'] === '123456789',
-        'Administrators can search recharge requests by Player ID',
+        && $diamondSearch['data']['orders'][0]['player_id'] === '123456789'
+        && $diamondSearch['data']['orders'][0]['payment_reference'] === 'InstaPay transfer 987654321',
+        'Administrators can search recharge requests and review payment references',
     );
 
     [$statusRejectedOrder, $rejectedDiamondOrder] = request(
@@ -2951,7 +3264,7 @@ try {
     $attendanceDb->exec('DROP TRIGGER test_fail_attendance');
 
     echo "PASS: account security and Coins ledger; Rewards, Community Events, Diamond Recharge; admin permissions and CSRF; "
-        . "Memory Match, Picture Jigsaw, daily rewards, and attendance cycles.\n";
+        . "Memory Match, Picture Jigsaw, Vault Cracker, Loot Sequence, leaderboards, daily rewards, and attendance cycles.\n";
 } finally {
     proc_terminate($process);
     proc_close($process);

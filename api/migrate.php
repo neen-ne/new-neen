@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/src/EnvLoader.php';
+EnvLoader::load(dirname(__DIR__) . '/.env');
 require_once __DIR__ . '/src/Database.php';
 
 try {
@@ -48,6 +50,13 @@ try {
     }
     if (!in_array('earned_coin_balance', $columns, true)) {
         $db->exec('ALTER TABLE wallets ADD COLUMN earned_coin_balance BIGINT NOT NULL DEFAULT 0 AFTER purchased_coin_balance');
+    }
+    $diamondColumns = $db->query(
+        "SELECT COLUMN_NAME FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'diamond_recharge_orders'",
+    )->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('payment_reference', $diamondColumns, true)) {
+        $db->exec('ALTER TABLE diamond_recharge_orders ADD COLUMN payment_reference VARCHAR(150) NULL AFTER delivery_status');
     }
 
     $db->beginTransaction();

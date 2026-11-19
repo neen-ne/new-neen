@@ -5,11 +5,48 @@
     <meta name="description" content="Puzzles and community challenges in the NEEN Events Hub." /><title>Challenges — NEEN Events Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Exo+2:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Oxanium:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" /><link rel="stylesheet" href="events.css" /><script src="script.js" defer></script>
+    <link rel="stylesheet" href="styles.css" /><link rel="stylesheet" href="events.css" /><script src="script.js" defer></script><script src="events-challenges.js" defer></script>
   </head>
   <body><div class="site-shell">
     <header class="site-header"><span class="wordmark wordmark-lockup"><a href="index.html" aria-label="NEEN home">NEE</a><a class="wordmark-admin-entry" href="events-admin.php" aria-label="Events admin console">E</a><span aria-hidden="true">.</span></span><button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-navigation"><span></span><span></span></button><nav class="site-navigation" id="site-navigation" aria-label="Main navigation"><a class="nav-link" href="index.html">Home</a><a class="nav-link" href="videos.html">Videos</a><a class="nav-link" href="about.html">About Me</a><a class="nav-link" href="gallery.html">Gallery</a><a class="nav-link is-active" href="events.html" aria-current="page">Events</a><a class="nav-link" href="diamonds.html">Diamonds</a><a class="nav-cta" href="https://www.tiktok.com/@neen_0o" target="_blank" rel="noreferrer"><span>TikTok</span><span class="arrow" aria-hidden="true">↗</span></a></nav></header>
-    <main class="page-main events-page"><nav class="events-crumbs section-wrap" aria-label="Breadcrumb"><a href="events.html">Events Hub</a><span aria-hidden="true">/</span><span>Puzzles &amp; challenges</span></nav><section class="events-module section-wrap" aria-labelledby="page-title"><p class="eyebrow section-eyebrow">THINK. CREATE. PLAY. <span> / CHALLENGES</span></p><h1 id="page-title">READY FOR A <span>CHALLENGE?</span></h1><p class="page-lede">Community puzzles and creative challenges will be published with clear rules, difficulty, and closing times.</p><div class="events-empty-state"><span class="events-empty-symbol" aria-hidden="true">⌁</span><h2>No community challenges available.</h2><p>This page is for future community-hosted puzzles and challenges; it is separate from the playable NEEN games.</p><p class="events-guard-note">No answers, attempts, or scores are stored by this page.</p><p>Want to play now?</p><div class="events-playable-games"><a class="button button-primary" href="memory-match.html"><span>Play Memory Match</span><span class="button-arrow" aria-hidden="true">↗</span></a><a class="button button-primary" href="picture-jigsaw.html"><span>Play Picture Jigsaw</span><span class="button-arrow" aria-hidden="true">↗</span></a></div><a class="button button-primary" href="events.html"><span>Back to Events Hub</span><span class="button-arrow" aria-hidden="true">↗</span></a></div></section></main>
+    <main class="page-main events-page">
+      <nav class="events-crumbs section-wrap" aria-label="Breadcrumb"><a href="events.html">Events Hub</a><span aria-hidden="true">/</span><span>Challenges Hub</span></nav>
+      <section class="events-module section-wrap" aria-labelledby="page-title">
+        <p class="eyebrow section-eyebrow">THINK. CREATE. PLAY. <span> / DAILY CHALLENGES</span></p>
+        <h1 id="page-title">READY FOR A <span>CHALLENGE?</span></h1>
+        <p class="page-lede">Play daily account-backed challenges. Every attempt limit and Earned Coins reward is controlled by the server.</p>
+        <p class="challenge-hub-status" data-challenge-status role="status" aria-live="polite">Loading daily challenges…</p>
+        <div class="challenge-hub-grid" data-challenge-grid>
+          <article class="challenge-hub-card" data-challenge="attendance">
+            <p class="eyebrow">01 / DAILY ATTENDANCE</p><h2>Daily Attendance Challenge</h2>
+            <p>Check in once each day in Africa/Cairo to continue your seven-day cycle.</p>
+            <div class="challenge-hub-meta"><span data-challenge-attempts>Sign in to see status</span><strong data-challenge-reward>100 Earned Coins</strong></div>
+            <a class="button button-primary" href="account.html">Open Account</a>
+          </article>
+          <article class="challenge-hub-card" data-challenge="memory-match">
+            <p class="eyebrow">02 / MEMORY</p><h2>Memory Match</h2><p>Match NEEN character pairs with a server-shuffled board.</p>
+            <div class="challenge-hub-meta"><span data-challenge-attempts>Loading daily starts…</span><strong data-challenge-reward>Loading reward…</strong></div>
+            <a class="button button-primary" href="memory-match.html">Launch Memory Match</a>
+          </article>
+          <article class="challenge-hub-card" data-challenge="picture-jigsaw">
+            <p class="eyebrow">03 / PUZZLE</p><h2>Picture Jigsaw</h2><p>Rebuild an original NEEN image; completion is checked on the server.</p>
+            <div class="challenge-hub-meta"><span data-challenge-attempts>Loading daily starts…</span><strong data-challenge-reward>Loading reward…</strong></div>
+            <a class="button button-primary" href="picture-jigsaw.html">Launch Picture Jigsaw</a>
+          </article>
+          <article class="challenge-hub-card" data-challenge="vault_cracker">
+            <p class="eyebrow">04 / CODE-BREAKING</p><h2>NEEN Vault Cracker</h2><p>Crack four distinct icons in six guesses and bank the reward.</p>
+            <div class="challenge-hub-meta"><span data-challenge-attempts>Loading daily starts…</span><strong data-challenge-reward>Loading reward…</strong></div>
+            <a class="button button-primary" href="vault-cracker.html">Launch Vault Cracker</a>
+          </article>
+          <article class="challenge-hub-card" data-challenge="loot_sequence">
+            <p class="eyebrow">05 / MEMORY &amp; REFLEX</p><h2>Loot Sequence Strike</h2><p>Repeat four sticker patterns that scale from three to six steps.</p>
+            <div class="challenge-hub-meta"><span data-challenge-attempts>Loading daily starts…</span><strong data-challenge-reward>Loading reward…</strong></div>
+            <a class="button button-primary" href="loot-sequence.html">Launch Loot Sequence</a>
+          </article>
+        </div>
+        <p class="events-guard-note">Each game starts with three free attempts per Cairo-local day and no Coin entry fee. Rewards are credited only after server-verified completion.</p>
+      </section>
+    </main>
     <footer class="site-footer"><a class="wordmark footer-wordmark" href="index.html">NEEN<span>.</span></a><p>FREE FIRE CONTENT <span>·</span> @NEEN_0O</p><div class="footer-links"><a href="videos.html">VIDEOS</a><a href="about.html">ABOUT</a><a href="gallery.html">GALLERY</a><a href="events.html">EVENTS</a><a href="diamonds.html">DIAMONDS</a></div><a class="back-to-top" href="events.html">EVENTS HUB <span aria-hidden="true">↑</span></a></footer>
   </div></body>
 </html>

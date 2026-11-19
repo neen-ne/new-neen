@@ -69,7 +69,7 @@ final class OwnerDashboard
             ),
             'recent_diamond_orders' => $this->rows(
                 'SELECT o.id, o.order_number, o.user_id, u.username, o.player_id,
-                        o.diamond_amount, o.price, o.currency_code, o.order_status, o.created_at
+                        o.diamond_amount, o.price, o.currency_code, o.order_status, o.payment_reference, o.created_at
                  FROM diamond_recharge_orders o
                  JOIN users u ON u.id = o.user_id
                  ORDER BY o.id DESC LIMIT 8',
@@ -172,7 +172,7 @@ final class OwnerDashboard
         );
         $user['recent_diamond_orders'] = $this->rows(
             'SELECT id, order_number, player_id, diamond_amount, price, currency_code,
-                    order_status, payment_status, delivery_status, created_at, updated_at
+                    order_status, payment_status, delivery_status, payment_reference, created_at, updated_at
              FROM diamond_recharge_orders WHERE user_id = :user_id ORDER BY id DESC LIMIT 10',
             ['user_id' => $userId],
         );

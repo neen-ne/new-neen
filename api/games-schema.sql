@@ -67,6 +67,24 @@ CREATE TABLE IF NOT EXISTS memory_match_states (
     CONSTRAINT fk_memory_match_state_session FOREIGN KEY (session_id) REFERENCES game_sessions (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS vault_cracker_states (
+    session_id BIGINT UNSIGNED NOT NULL,
+    secret_json JSON NOT NULL,
+    guesses_json JSON NOT NULL,
+    PRIMARY KEY (session_id),
+    CONSTRAINT fk_vault_cracker_state_session FOREIGN KEY (session_id) REFERENCES game_sessions (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS loot_sequence_states (
+    session_id BIGINT UNSIGNED NOT NULL,
+    sequences_json JSON NOT NULL,
+    inputs_json JSON NOT NULL,
+    round_number TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    PRIMARY KEY (session_id),
+    CONSTRAINT chk_loot_sequence_round CHECK (round_number BETWEEN 1 AND 4),
+    CONSTRAINT fk_loot_sequence_state_session FOREIGN KEY (session_id) REFERENCES game_sessions (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO game_catalog
     (slug, name, description, status, attempt_price_coins, free_attempt_limit,
      reward_amount_coins, reset_timezone, created_at, updated_at)
@@ -74,6 +92,10 @@ VALUES
     ('memory-match', 'Memory Match', 'Match pairs of NEEN character images.', 'active', 0, 3, 50, 'Africa/Cairo',
      UTC_TIMESTAMP(), UTC_TIMESTAMP()),
     ('picture-jigsaw', 'Picture Jigsaw', 'Reassemble an original NEEN picture.', 'active', 0, 3, 50, 'Africa/Cairo',
+     UTC_TIMESTAMP(), UTC_TIMESTAMP()),
+    ('vault_cracker', 'NEEN Vault Cracker', 'Crack the four-icon code in six guesses.', 'active', 0, 3, 50, 'Africa/Cairo',
+     UTC_TIMESTAMP(), UTC_TIMESTAMP()),
+    ('loot_sequence', 'Loot Sequence Strike', 'Remember and repeat four escalating sticker sequences.', 'active', 0, 3, 50, 'Africa/Cairo',
      UTC_TIMESTAMP(), UTC_TIMESTAMP())
 ON DUPLICATE KEY UPDATE
     name = VALUES(name),

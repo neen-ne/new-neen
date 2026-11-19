@@ -3,6 +3,7 @@
   const packageSelect = document.querySelector("[data-diamond-package]");
   const packageStatus = document.querySelector("[data-diamond-package-status]");
   const playerInput = document.querySelector("#player-id");
+  const paymentReferenceInput = document.querySelector("#payment-reference");
   const review = document.querySelector("[data-diamond-review]");
   const confirmation = document.querySelector("[data-diamond-confirmation]");
   const orders = document.querySelector("[data-diamond-orders]");
@@ -27,6 +28,7 @@
     amount: review.querySelector("[data-diamond-review-amount]"),
     price: review.querySelector("[data-diamond-review-price]"),
     player: review.querySelector("[data-diamond-review-player]"),
+    reference: review.querySelector("[data-diamond-review-reference]"),
   };
   if (
     !(errorMessage instanceof HTMLElement)
@@ -122,6 +124,11 @@
       const states = document.createElement("small");
       states.textContent = `Payment: ${order.payment_status.replaceAll("_", " ")} · Delivery: ${order.delivery_status.replaceAll("_", " ")}`;
       card.append(heading, detail, states);
+      if (order.payment_reference) {
+        const reference = document.createElement("small");
+        reference.textContent = `Payment reference: ${order.payment_reference}`;
+        card.append(reference);
+      }
       fragment.append(card);
     }
     orders.replaceChildren(fragment);
@@ -168,6 +175,7 @@
     selectedSummary.amount.textContent = String(item.diamond_amount);
     selectedSummary.price.textContent = `${item.price} ${item.currency_code}`;
     selectedSummary.player.textContent = playerInput.value;
+    selectedSummary.reference.textContent = paymentReferenceInput.value.trim() || "Not provided";
     form.hidden = true;
     review.hidden = false;
     review.focus?.();
@@ -193,6 +201,7 @@
         body: JSON.stringify({
           package_id: Number(packageSelect.value),
           player_id: playerInput.value,
+          payment_reference: paymentReferenceInput.value.trim() || null,
           idempotency_key: pendingIdempotencyKey,
         }),
       });

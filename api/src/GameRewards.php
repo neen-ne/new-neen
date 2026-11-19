@@ -12,7 +12,11 @@ final class GameRewards
         if (!$this->db->inTransaction()) {
             throw new LogicException('Game rewards must be issued inside the game completion transaction.');
         }
-        if ($userId < 1 || $sessionId < 1 || !in_array($gameSlug, ['memory-match', 'picture-jigsaw'], true)) {
+        if ($userId < 1 || $sessionId < 1 || !in_array(
+            $gameSlug,
+            ['memory-match', 'picture-jigsaw', 'vault_cracker', 'loot_sequence'],
+            true,
+        )) {
             throw new InvalidArgumentException('Invalid completed game reference.');
         }
 
@@ -43,8 +47,12 @@ final class GameRewards
 
         if ($gameSlug === 'memory-match') {
             $this->verifyMemoryMatch($sessionId, (int) $session['matched_pairs']);
-        } else {
+        } elseif ($gameSlug === 'picture-jigsaw') {
             $this->verifyPictureJigsaw($sessionId);
+        } elseif ($gameSlug === 'vault_cracker') {
+            $this->verifyVaultCracker($sessionId);
+        } else {
+            $this->verifyLootSequence($sessionId);
         }
 
         $ledgerEntryId = (new CoinsLedger($this->db))->credit(
@@ -156,6 +164,94 @@ final class GameRewards
             || array_values($permutation) !== range(0, $pieceCount - 1)
         ) {
             throw new ApiException('GAME_WIN_NOT_VERIFIED', 'Every Picture Jigsaw piece must be in its correct position.', 409);
+        }
+    }
+
+    private function verifyVaultCracker(int $sessionId): void
+    {
+        $statement = $this->db->prepare(
+            'SELECT secret_json, guesses_json FROM vault_cracker_states WHERE session_id = :session_id'
+            . ($this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : ''),
+        );
+        $statement->execute(['session_id' => $sessionId]);
+        $state = $statement->fetch();
+        if ($state === false) {
+            throw new ApiException('GAME_WIN_NOT_VERIFIED', 'The Vault Cracker state is unavailable.', 409);
+        }
+        try {
+            $secret = json_decode($state['secret_json'], true, 16, JSON_THROW_ON_ERROR);
+            $guesses = json_decode($state['guesses_json'], true, 16, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            throw new ApiException('GAME_WIN_NOT_VERIFIED', 'The Vault Cracker state is invalid.', 409);
+        }
+        if (
+            !is_array($secret)
+            || !array_is_list($secret)
+            || count($secret) !== 4
+            || count(array_filter($secret, 'is_string')) !== 4
+            || count(array_unique($secret)) !== 4
+            || !is_array($guesses)
+            || !array_is_list($guesses)
+            || count($guesses) > 6
+        ) {
+            throw new ApiException('GAME_WIN_NOT_VERIFIED', 'The Vault Cracker code or guesses are invalid.', 409);
+        }
+        $won = false;
+        foreach ($guesses as $guess) {
+            if (
+                !is_array($guess)
+                || !isset($guess['icons'], $guess['exact_matches'])
+                || !is_array($guess['icons'])
+                || !array_is_list($guess['icons'])
+                || count($guess['icons']) !== 4
+            ) {
+                throw new ApiException('GAME_WIN_NOT_VERIFIED', 'A Vault Cracker guess is invalid.', 409);
+            }
+            if ($guess['icons'] === $secret && $guess['exact_matches'] === 4) {
+                $won = true;
+            }
+        }
+        if (!$won) {
+            throw new ApiException('GAME_WIN_NOT_VERIFIED', 'The Vault Cracker code was not solved.', 409);
+        }
+    }
+
+    private function verifyLootSequence(int $sessionId): void
+    {
+        $statement = $this->db->prepare(
+            'SELECT sequences_json, inputs_json, round_number
+             FROM loot_sequence_states WHERE session_id = :session_id'
+            . ($this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : ''),
+        );
+        $statement->execute(['session_id' => $sessionId]);
+        $state = $statement->fetch();
+        if ($state === false) {
+            throw new ApiException('GAME_WIN_NOT_VERIFIED', 'The Loot Sequence state is unavailable.', 409);
+        }
+        try {
+            $sequences = json_decode($state['sequences_json'], true, 16, JSON_THROW_ON_ERROR);
+            $inputs = json_decode($state['inputs_json'], true, 16, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            throw new ApiException('GAME_WIN_NOT_VERIFIED', 'The Loot Sequence state is invalid.', 409);
+        }
+        $validSequences = is_array($sequences) && array_is_list($sequences) && count($sequences) === 4;
+        if ($validSequences) {
+            foreach ($sequences as $index => $sequence) {
+                if (!is_array($sequence) || !array_is_list($sequence) || count($sequence) !== $index + 3) {
+                    $validSequences = false;
+                    break;
+                }
+            }
+        }
+        if (
+            (int) $state['round_number'] !== 4
+            || !$validSequences
+            || !is_array($inputs)
+            || !array_is_list($inputs)
+            || count($inputs) !== 4
+            || $inputs !== $sequences
+        ) {
+            throw new ApiException('GAME_WIN_NOT_VERIFIED', 'Every Loot Sequence round must match the server pattern.', 409);
         }
     }
 

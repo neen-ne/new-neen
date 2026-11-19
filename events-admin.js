@@ -670,6 +670,7 @@
           const identity = make("td");
           identity.append(make("strong", "", order.order_number));
           identity.append(make("small", "", `${order.username} · Player ID ${order.player_id}`));
+          identity.append(make("small", "admin-order-proof", order.payment_reference || "No payment reference"));
           identity.append(make("small", "", `User ${order.user_id} · ${formatDate(order.created_at)}`));
           const packageInfo = make("td", "", `${order.package_name} · ${order.diamond_amount} diamonds · ${order.price} ${order.currency_code}`);
           const state = make("td");

@@ -78,6 +78,14 @@ CREATE TABLE password_reset_tokens (
     used_at TEXT,
     created_at TEXT NOT NULL
 );
+CREATE TABLE email_verification_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TEXT NOT NULL,
+    used_at TEXT,
+    created_at TEXT NOT NULL
+);
 CREATE TABLE auth_rate_limits (
     bucket_hash TEXT PRIMARY KEY,
     attempts INTEGER NOT NULL,
@@ -274,6 +282,18 @@ INSERT INTO game_catalog
 VALUES
     ('picture-jigsaw', 'Picture Jigsaw', 'Reassemble an original NEEN picture.', 'active', 0, 3, 50, 'Africa/Cairo',
      CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO game_catalog
+    (slug, name, description, status, attempt_price_coins, free_attempt_limit,
+     reward_amount_coins, reset_timezone, created_at, updated_at)
+VALUES
+    ('vault_cracker', 'NEEN Vault Cracker', 'Crack the four-icon code in six guesses.', 'active', 0, 3, 50, 'Africa/Cairo',
+     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO game_catalog
+    (slug, name, description, status, attempt_price_coins, free_attempt_limit,
+     reward_amount_coins, reset_timezone, created_at, updated_at)
+VALUES
+    ('loot_sequence', 'Loot Sequence Strike', 'Remember and repeat four escalating sticker sequences.', 'active', 0, 3, 50, 'Africa/Cairo',
+     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 CREATE TABLE user_game_daily_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
@@ -317,6 +337,17 @@ CREATE TABLE picture_jigsaw_states (
     image_id TEXT NOT NULL,
     permutation_json TEXT NOT NULL,
     board_size INTEGER NOT NULL CHECK (board_size >= 2)
+);
+CREATE TABLE vault_cracker_states (
+    session_id INTEGER PRIMARY KEY REFERENCES game_sessions(id) ON DELETE CASCADE,
+    secret_json TEXT NOT NULL,
+    guesses_json TEXT NOT NULL
+);
+CREATE TABLE loot_sequence_states (
+    session_id INTEGER PRIMARY KEY REFERENCES game_sessions(id) ON DELETE CASCADE,
+    sequences_json TEXT NOT NULL,
+    inputs_json TEXT NOT NULL,
+    round_number INTEGER NOT NULL DEFAULT 1 CHECK (round_number BETWEEN 1 AND 4)
 );
 CREATE TABLE homepage_reward_config (
     id INTEGER PRIMARY KEY CHECK (id = 1),

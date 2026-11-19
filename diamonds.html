@@ -68,6 +68,11 @@
                 <input id="player-id" type="text" inputmode="numeric" autocomplete="off" minlength="6" maxlength="20" pattern="[0-9]{6,20}" title="Enter a player ID containing 6 to 20 digits." placeholder="Enter your numeric player ID" required />
                 <small>Only your in-game player ID. Never enter your password or verification code.</small>
               </div>
+              <div class="form-field">
+                <label for="payment-reference">3. Transaction reference / payment proof <span>Optional</span></label>
+                <input id="payment-reference" type="text" autocomplete="off" maxlength="150" placeholder="Wallet transfer number or InstaPay reference" />
+                <small>Enter the payment transaction ID or sender number if you have already paid. Do not enter a password or one-time code.</small>
+              </div>
               <button class="button button-primary review-button" type="submit" disabled><span>Review order</span><span class="button-arrow" aria-hidden="true">↗</span></button>
               <p class="form-error" data-diamond-error role="alert" hidden></p>
             </form>
@@ -80,6 +85,7 @@
                 <div><dt>Diamond quantity</dt><dd data-diamond-review-amount></dd></div>
                 <div><dt>Price</dt><dd data-diamond-review-price></dd></div>
                 <div><dt>Player ID / UID</dt><dd data-diamond-review-player></dd></div>
+                <div><dt>Payment reference</dt><dd data-diamond-review-reference></dd></div>
               </dl>
               <p class="review-disclaimer">Submitting creates a request only. Payment verification and diamond delivery are not automatic.</p>
               <div class="review-actions">

@@ -18,6 +18,94 @@ final class CommunityEvents
         return array_map(fn (array $event): array => $this->eventDetails((int) $event['id'], $userId), $statement->fetchAll());
     }
 
+    public function publicLeaderboards(): array
+    {
+        $earned = $this->db->query(
+            "SELECT u.username, p.display_name, w.earned_coin_balance AS score
+             FROM wallets w
+             JOIN users u ON u.id = w.user_id AND u.status = 'active'
+             JOIN user_profiles p ON p.user_id = u.id
+             WHERE w.earned_coin_balance > 0
+             ORDER BY w.earned_coin_balance DESC, u.username ASC
+             LIMIT 10",
+        )->fetchAll();
+
+        $wins = $this->db->query(
+            "SELECT u.username, p.display_name, COUNT(*) AS score
+             FROM game_sessions s
+             JOIN users u ON u.id = s.user_id AND u.status = 'active'
+             JOIN user_profiles p ON p.user_id = u.id
+             WHERE s.status = 'completed' AND s.completed_at IS NOT NULL
+             GROUP BY u.id, u.username, p.display_name
+             ORDER BY COUNT(*) DESC, u.username ASC
+             LIMIT 10",
+        )->fetchAll();
+
+        $attendance = $this->db->query(
+            "SELECT u.id, u.username, p.display_name, a.attendance_date
+             FROM daily_attendance a
+             JOIN users u ON u.id = a.user_id AND u.status = 'active'
+             JOIN user_profiles p ON p.user_id = u.id
+             ORDER BY u.id, a.attendance_date DESC",
+        )->fetchAll();
+        $today = new DateTimeImmutable('today', new DateTimeZone('Africa/Cairo'));
+        $streaks = [];
+        $currentUser = null;
+        $dates = [];
+        $finishUser = static function (array $rows, DateTimeImmutable $today): ?array {
+            if ($rows === []) {
+                return null;
+            }
+            $latest = new DateTimeImmutable((string) $rows[0]['attendance_date'], new DateTimeZone('Africa/Cairo'));
+            $daysBehind = (int) $latest->diff($today)->format('%r%a');
+            if ($daysBehind < 0 || $daysBehind > 1) {
+                return null;
+            }
+
+            $streak = 0;
+            $expected = $latest;
+            foreach ($rows as $row) {
+                $date = new DateTimeImmutable((string) $row['attendance_date'], new DateTimeZone('Africa/Cairo'));
+                if ($date->format('Y-m-d') !== $expected->format('Y-m-d')) {
+                    break;
+                }
+                $streak++;
+                $expected = $expected->modify('-1 day');
+            }
+            return $streak > 0 ? [
+                'username' => (string) $rows[0]['username'],
+                'display_name' => $rows[0]['display_name'] === null ? null : (string) $rows[0]['display_name'],
+                'score' => $streak,
+            ] : null;
+        };
+        foreach ($attendance as $row) {
+            $userId = (int) $row['id'];
+            if ($currentUser !== null && $userId !== $currentUser) {
+                $entry = $finishUser($dates, $today);
+                if ($entry !== null) {
+                    $streaks[] = $entry;
+                }
+                $dates = [];
+            }
+            $currentUser = $userId;
+            $dates[] = $row;
+        }
+        if ($currentUser !== null) {
+            $entry = $finishUser($dates, $today);
+            if ($entry !== null) {
+                $streaks[] = $entry;
+            }
+        }
+        usort($streaks, static fn (array $left, array $right): int =>
+            $right['score'] <=> $left['score'] ?: strcmp($left['username'], $right['username']));
+
+        return [
+            'earned_coins' => $this->normalizeLeaderboardRows($earned),
+            'game_wins' => $this->normalizeLeaderboardRows($wins),
+            'attendance_streaks' => $this->normalizeLeaderboardRows(array_slice($streaks, 0, 10)),
+        ];
+    }
+
     public function eventDetails(int $eventId, ?int $userId = null): array
     {
         $event = $this->findEvent($eventId);
@@ -580,6 +668,20 @@ final class CommunityEvents
         $statement = $this->db->prepare('SELECT COUNT(*) FROM community_event_votes WHERE event_id = :event_id');
         $statement->execute(['event_id' => $eventId]);
         return (int) $statement->fetchColumn();
+    }
+
+    private function normalizeLeaderboardRows(array $rows): array
+    {
+        $normalized = [];
+        foreach ($rows as $index => $row) {
+            $normalized[] = [
+                'rank' => $index + 1,
+                'username' => (string) $row['username'],
+                'display_name' => $row['display_name'] === null ? null : (string) $row['display_name'],
+                'score' => (int) $row['score'],
+            ];
+        }
+        return $normalized;
     }
 
     private function logActivity(?int $eventId, ?int $actorId, string $type, array $metadata): void
