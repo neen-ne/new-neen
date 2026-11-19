@@ -67,26 +67,26 @@
     { id: "sunset_sticker", zone: "neon_pier", x: 755, y: 340, label: "Sunset Sticker" },
     { id: "canyon_sticker", zone: "sunset_ridge", x: 1165, y: 720, label: "Canyon Sticker" },
   ];
-  const AVATAR_STICKERS = [
-    { id: "snoop-sticker-01", name: "Moonlit Fox", image: "/assets/hero-loot/snoop-sticker-01.png", crop: [38, 0, 335, 360] },
-    { id: "snoop-sticker-02", name: "NEEN Duo", image: "/assets/hero-loot/snoop-sticker-02.png", crop: [230, 98, 175, 270] },
-    { id: "snoop-sticker-03", name: "Rocket Duo", image: "/assets/hero-loot/snoop-sticker-03.png", crop: [26, 54, 180, 214] },
-    { id: "snoop-sticker-04", name: "Crown King", image: "/assets/hero-loot/snoop-sticker-04.png", crop: [14, 0, 260, 294] },
-    { id: "snoop-sticker-05", name: "Neon Fox", image: "/assets/hero-loot/snoop-sticker-05.png", crop: [22, 0, 374, 356] },
-    { id: "snoop-sticker-06", name: "Cosmic Buddy", image: "/assets/hero-loot/snoop-sticker-06.png", crop: [65, 16, 280, 232] },
-    { id: "snoop-sticker-07", name: "Study Duo", image: "/assets/hero-loot/snoop-sticker-07.png", crop: [235, 70, 155, 176] },
-    { id: "snoop-sticker-08", name: "Victory Duo", image: "/assets/hero-loot/snoop-sticker-08.png", crop: [230, 52, 175, 194] },
-    { id: "snoop-sticker-09", name: "Sunset Fox", image: "/assets/hero-loot/snoop-sticker-09.png", crop: [167, 0, 218, 234] },
+  const AVATAR_LOOKS = [
+    { id: "snoop-sticker-01", name: "Moonlit Blue", jacket: "#18294c", sleeve: "#2787c5", accent: "#80f8ff", trim: "#e5bf61" },
+    { id: "snoop-sticker-02", name: "Rose Pulse", jacket: "#302345", sleeve: "#bd58a2", accent: "#ff9bda", trim: "#f2d486" },
+    { id: "snoop-sticker-03", name: "Starflare", jacket: "#24304d", sleeve: "#3b86df", accent: "#b7e5ff", trim: "#e9b957" },
+    { id: "snoop-sticker-04", name: "Crown Gold", jacket: "#29334b", sleeve: "#c77a35", accent: "#ffd87a", trim: "#f8e9ba" },
+    { id: "snoop-sticker-05", name: "Neon Violet", jacket: "#241f42", sleeve: "#7658d6", accent: "#d4adff", trim: "#f3cc68" },
+    { id: "snoop-sticker-06", name: "Glacier", jacket: "#193b4a", sleeve: "#2f98a9", accent: "#9ef6ff", trim: "#e7c56e" },
+    { id: "snoop-sticker-07", name: "Sakura", jacket: "#30253f", sleeve: "#d2678f", accent: "#ffc1db", trim: "#f5d276" },
+    { id: "snoop-sticker-08", name: "Victory Mint", jacket: "#1d384b", sleeve: "#25a98d", accent: "#8df3d5", trim: "#eec55f" },
+    { id: "snoop-sticker-09", name: "Sunset Ember", jacket: "#3a293d", sleeve: "#df704f", accent: "#ffc078", trim: "#f3d16c" },
   ];
   const AVATAR_STORAGE_KEY = "neen_sunny_avatar";
   const readSavedAvatar = () => {
     try {
       const saved = window.localStorage.getItem(AVATAR_STORAGE_KEY);
-      return AVATAR_STICKERS.some((avatar) => avatar.id === saved)
+      return AVATAR_LOOKS.some((avatar) => avatar.id === saved)
         ? saved
-        : AVATAR_STICKERS[0].id;
+        : AVATAR_LOOKS[0].id;
     } catch {
-      return AVATAR_STICKERS[0].id;
+      return AVATAR_LOOKS[0].id;
     }
   };
   const AMBIENT_ART = Array.from({ length: 5 }, (_, index) => ({
@@ -194,20 +194,20 @@
   };
 
   const setAvatar = (avatarId, persist = false) => {
-    const avatar = AVATAR_STICKERS.find((item) => item.id === avatarId);
+    const avatar = AVATAR_LOOKS.find((item) => item.id === avatarId);
     if (!avatar) return;
     state.avatarId = avatar.id;
-    if (avatarPortrait instanceof HTMLImageElement) {
-      avatarPortrait.src = avatar.image;
-      avatarPortrait.alt = `NEEN avatar: ${avatar.name}`;
+    if (avatarPortrait instanceof HTMLCanvasElement) {
+      avatarPortrait.setAttribute("aria-label", `NEEN avatar: ${avatar.name}`);
+      drawAvatarPortrait(avatar);
     }
     if (avatarSelect instanceof HTMLSelectElement) avatarSelect.value = avatar.id;
     if (!persist) return;
     try {
       window.localStorage.setItem(AVATAR_STORAGE_KEY, avatar.id);
-      setStatus(`${avatar.name} avatar selected and saved in this browser.`);
+      setStatus(`${avatar.name} look selected and saved in this browser.`);
     } catch {
-      setStatus("Avatar changed, but your browser could not save this selection.", true);
+      setStatus("Look changed, but your browser could not save this selection.", true);
     }
   };
 
@@ -231,14 +231,6 @@
       image.src = `/assets/hero-loot/${ambient.imageId}.png`;
       image.addEventListener("load", () => state.dirty = true, { once: true });
       state.images.set(ambient.imageId, image);
-    }
-    for (const avatar of AVATAR_STICKERS) {
-      const key = `avatar-${avatar.id}`;
-      if (state.images.has(key)) continue;
-      const image = new Image();
-      image.decoding = "async";
-      image.src = avatar.image;
-      state.images.set(key, image);
     }
   };
 
@@ -1523,6 +1515,212 @@
     drawAmbientArt(ctx, zone, time);
   };
 
+  const drawNeenAvatar = (ctx, look, runCycle) => {
+    const outline = "#26304b";
+    const stride = runCycle * 3.5;
+
+    drawRoundRect(ctx, -19, -65, 13, 25, 5, look.jacket, outline);
+    drawRoundRect(ctx, -16, -62, 7, 18, 3, "#e5bf61");
+    drawRoundRect(ctx, -14, -59, 5, 14, 2, look.accent);
+
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 11;
+    ctx.beginPath();
+    ctx.moveTo(-6, -27);
+    ctx.lineTo(-7 - stride, -11);
+    ctx.moveTo(6, -27);
+    ctx.lineTo(7 + stride, -11);
+    ctx.stroke();
+    ctx.strokeStyle = "#f1cfb8";
+    ctx.lineWidth = 7;
+    ctx.stroke();
+    drawRoundRect(ctx, -14 - stride, -10, 16, 9, 4, "#edf3f7", outline);
+    drawRoundRect(ctx, -2 + stride, -10, 16, 9, 4, "#edf3f7", outline);
+    drawRoundRect(ctx, -14 - stride, -3, 16, 4, 2, look.accent);
+    drawRoundRect(ctx, -2 + stride, -3, 16, 4, 2, look.accent);
+
+    ctx.fillStyle = look.jacket;
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(-13, -37);
+    ctx.lineTo(-11, -28);
+    ctx.quadraticCurveTo(0, -23, 12, -28);
+    ctx.lineTo(14, -39);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = look.trim;
+    ctx.lineWidth = 1.7;
+    ctx.beginPath();
+    ctx.moveTo(-11, -30);
+    ctx.lineTo(11, -30);
+    ctx.stroke();
+
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 12;
+    ctx.beginPath();
+    ctx.moveTo(-12, -60);
+    ctx.quadraticCurveTo(-21 - stride, -55, -20 - stride, -43);
+    ctx.moveTo(12, -60);
+    ctx.quadraticCurveTo(21 + stride, -54, 19 + stride, -42);
+    ctx.stroke();
+    ctx.strokeStyle = look.sleeve;
+    ctx.lineWidth = 8;
+    ctx.stroke();
+    ctx.strokeStyle = look.accent;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-18 - stride, -51);
+    ctx.lineTo(-14 - stride, -46);
+    ctx.moveTo(17 + stride, -51);
+    ctx.lineTo(13 + stride, -46);
+    ctx.stroke();
+    ctx.fillStyle = "#f1cfb8";
+    ctx.beginPath();
+    ctx.arc(-20 - stride, -41, 4, 0, Math.PI * 2);
+    ctx.arc(19 + stride, -40, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#f0cbb5";
+    ctx.fillRect(-4, -67, 8, 8);
+    ctx.fillStyle = look.jacket;
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(-13, -62);
+    ctx.quadraticCurveTo(-10, -68, -5, -67);
+    ctx.lineTo(7, -67);
+    ctx.quadraticCurveTo(13, -65, 14, -59);
+    ctx.lineTo(12, -37);
+    ctx.quadraticCurveTo(0, -32, -12, -37);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = look.accent;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, -63);
+    ctx.lineTo(0, -40);
+    ctx.moveTo(-8, -53);
+    ctx.lineTo(-4, -49);
+    ctx.lineTo(-8, -45);
+    ctx.moveTo(8, -53);
+    ctx.lineTo(4, -49);
+    ctx.lineTo(8, -45);
+    ctx.stroke();
+    drawRoundRect(ctx, -3, -45, 6, 6, 2, look.trim, outline);
+
+    ctx.fillStyle = "#dfe7ef";
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-10, -87);
+    ctx.lineTo(-20, -111);
+    ctx.quadraticCurveTo(-7, -107, -1, -94);
+    ctx.closePath();
+    ctx.moveTo(10, -87);
+    ctx.lineTo(20, -111);
+    ctx.quadraticCurveTo(7, -107, 1, -94);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#8b9bad";
+    ctx.beginPath();
+    ctx.moveTo(-11, -92);
+    ctx.lineTo(-16, -105);
+    ctx.lineTo(-5, -96);
+    ctx.closePath();
+    ctx.moveTo(11, -92);
+    ctx.lineTo(16, -105);
+    ctx.lineTo(5, -96);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#f0cbb5";
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(0, -77, 14, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#e2e8ef";
+    ctx.beginPath();
+    ctx.moveTo(-14, -81);
+    ctx.quadraticCurveTo(-18, -96, -8, -99);
+    ctx.quadraticCurveTo(-2, -105, 2, -98);
+    ctx.quadraticCurveTo(10, -103, 16, -96);
+    ctx.lineTo(13, -82);
+    ctx.quadraticCurveTo(5, -89, 0, -86);
+    ctx.quadraticCurveTo(-6, -92, -14, -81);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#d1dce7";
+    ctx.beginPath();
+    ctx.moveTo(-13, -82);
+    ctx.quadraticCurveTo(-19, -73, -15, -59);
+    ctx.quadraticCurveTo(-9, -65, -8, -78);
+    ctx.moveTo(12, -83);
+    ctx.quadraticCurveTo(18, -72, 14, -58);
+    ctx.quadraticCurveTo(8, -65, 8, -78);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    drawRoundRect(ctx, -13, -83, 26, 8, 3, "#111b31", outline);
+    ctx.strokeStyle = look.accent;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(-9, -79);
+    ctx.lineTo(9, -79);
+    ctx.stroke();
+    ctx.fillStyle = "#8a594e";
+    ctx.beginPath();
+    ctx.arc(0, -68, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#9d5e59";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-4, -64);
+    ctx.quadraticCurveTo(0, -61, 4, -64);
+    ctx.stroke();
+
+    ctx.strokeStyle = look.trim;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-8, -96);
+    ctx.lineTo(-4, -99);
+    ctx.lineTo(0, -96);
+    ctx.lineTo(4, -99);
+    ctx.lineTo(8, -96);
+    ctx.stroke();
+    ctx.fillStyle = look.accent;
+    ctx.strokeStyle = look.trim;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(0, -101);
+    ctx.lineTo(4, -97);
+    ctx.lineTo(0, -93);
+    ctx.lineTo(-4, -97);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  };
+
+  const drawAvatarPortrait = (look) => {
+    if (!(avatarPortrait instanceof HTMLCanvasElement)) return;
+    const portrait = avatarPortrait.getContext("2d");
+    if (!portrait) return;
+    portrait.clearRect(0, 0, avatarPortrait.width, avatarPortrait.height);
+    portrait.save();
+    portrait.translate(56, 109);
+    drawNeenAvatar(portrait, look, 0);
+    portrait.restore();
+  };
+
   const drawCharacter = (ctx, time, now) => {
     const moving = state.keys.size > 0 || Math.hypot(state.joystickVector.x, state.joystickVector.y) > .08;
     const jumpProgress = state.jumpUntil > now ? 1 - (state.jumpUntil - now) / 560 : 0;
@@ -1532,8 +1730,7 @@
     const bob = moving ? Math.sin(time * 14) * 2.5 : Math.sin(time * 2) * 2;
     const squashX = state.jumpUntil > now && jumpProgress < .12 ? 1.13 : 1;
     const squashY = state.jumpUntil > now && jumpProgress < .12 ? .82 : 1;
-    const avatar = AVATAR_STICKERS.find((item) => item.id === state.avatarId) || AVATAR_STICKERS[0];
-    const avatarImage = imageFor(`avatar-${avatar.id}`);
+    const look = AVATAR_LOOKS.find((item) => item.id === state.avatarId) || AVATAR_LOOKS[0];
     const x = state.position.x;
     const y = state.position.y - jumpHeight + bob;
     ctx.save();
@@ -1546,180 +1743,15 @@
     ctx.scale(state.facing.x < -.15 ? -1 : 1, 1);
     if (dashActive) {
       for (let echo = 3; echo > 0; echo--) {
-        ctx.globalAlpha = .08 + (4 - echo) * .035;
-        ctx.fillStyle = "#86f5ff";
-        ctx.beginPath();
-        ctx.ellipse(-echo * 18, -18, 19, 38, 0, 0, Math.PI * 2);
-        ctx.fill();
-        if (avatarImage?.complete && avatarImage.naturalWidth) {
-          const [sourceX, sourceY, sourceWidth, sourceHeight] = avatar.crop;
-          const scale = Math.min(78 / sourceWidth, 82 / sourceHeight);
-          const width = sourceWidth * scale;
-          const height = sourceHeight * scale;
-          ctx.drawImage(
-            avatarImage,
-            sourceX,
-            sourceY,
-            sourceWidth,
-            sourceHeight,
-            -width / 2 - echo * 18,
-            -98,
-            width,
-            height,
-          );
-        }
+        ctx.save();
+        ctx.globalAlpha = .1 + (4 - echo) * .035;
+        ctx.translate(-echo * 15, 25);
+        drawNeenAvatar(ctx, look, runCycle);
+        ctx.restore();
       }
-      ctx.globalAlpha = 1;
     }
-
-    drawRoundRect(ctx, -27, -18, 16, 30, 7, "#15264a", "#34547d");
-    ctx.fillStyle = "#f4d0b5";
-    ctx.strokeStyle = "#25375b";
-    ctx.lineWidth = 8;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(-7, 9);
-    ctx.quadraticCurveTo(-8 + runCycle * 5, 19, -10 + runCycle * 6, 26);
-    ctx.moveTo(7, 9);
-    ctx.quadraticCurveTo(8 - runCycle * 5, 19, 10 - runCycle * 6, 26);
-    ctx.stroke();
-    drawRoundRect(ctx, -18 + runCycle * 6, 23, 18, 8, 4, "#f7f5ef", "#304468");
-    drawRoundRect(ctx, 1 - runCycle * 6, 23, 18, 8, 4, "#f7f5ef", "#304468");
-
-    ctx.fillStyle = "#171b36";
-    ctx.strokeStyle = "#25375b";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(-16, -12);
-    ctx.quadraticCurveTo(-14, -23, -6, -23);
-    ctx.lineTo(6, -23);
-    ctx.quadraticCurveTo(15, -21, 17, -11);
-    ctx.lineTo(13, 9);
-    ctx.quadraticCurveTo(0, 15, -13, 9);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#101a34";
-    ctx.beginPath();
-    ctx.moveTo(-13, 5);
-    ctx.lineTo(13, 5);
-    ctx.lineTo(19, 17);
-    ctx.quadraticCurveTo(0, 22, -19, 17);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = "#e5bf61";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-12, 8);
-    ctx.lineTo(12, 8);
-    ctx.stroke();
-    drawRoundRect(ctx, -3, 10, 6, 7, 2, "#f2cb68", "#d59644");
-
-    ctx.lineWidth = 12;
-    ctx.strokeStyle = "#1c2e57";
-    ctx.beginPath();
-    ctx.moveTo(-13, -17);
-    ctx.quadraticCurveTo(-23 + runCycle * 3, -11, -22 + runCycle * 5, 0);
-    ctx.moveTo(13, -17);
-    ctx.quadraticCurveTo(23 - runCycle * 3, -11, 22 - runCycle * 5, 0);
-    ctx.stroke();
-    ctx.lineWidth = 8;
-    ctx.strokeStyle = "#2787c5";
-    ctx.beginPath();
-    ctx.moveTo(-13, -17);
-    ctx.quadraticCurveTo(-23 + runCycle * 3, -11, -22 + runCycle * 5, 0);
-    ctx.moveTo(13, -17);
-    ctx.quadraticCurveTo(23 - runCycle * 3, -11, 22 - runCycle * 5, 0);
-    ctx.stroke();
-    ctx.strokeStyle = "#80f8ff";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-18, -16);
-    ctx.lineTo(-14, -10);
-    ctx.lineTo(-20, -4);
-    ctx.moveTo(18, -16);
-    ctx.lineTo(14, -10);
-    ctx.lineTo(20, -4);
-    ctx.stroke();
-
-    ctx.fillStyle = "#f0c8aa";
-    ctx.beginPath();
-    ctx.arc(-22 + runCycle * 5, 1, 5, 0, Math.PI * 2);
-    ctx.arc(22 - runCycle * 5, 1, 5, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#dde4ed";
-    ctx.strokeStyle = "#25375b";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(0, -15, 8, .15, Math.PI - .15);
-    ctx.stroke();
-    ctx.strokeStyle = "#80f8ff";
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.arc(0, -15, 5, .15, Math.PI - .15);
-    ctx.stroke();
-
-    if (avatarImage?.complete && avatarImage.naturalWidth) {
-    const [sourceX, sourceY, sourceWidth, sourceHeight] = avatar.crop;
-    const scale = Math.min(78 / sourceWidth, 82 / sourceHeight);
-    const width = sourceWidth * scale;
-    const height = sourceHeight * scale;
-    ctx.drawImage(
-      avatarImage,
-      sourceX,
-      sourceY,
-      sourceWidth,
-      sourceHeight,
-      -width / 2,
-      -98,
-      width,
-      height,
-    );
-    } else {
-    ctx.fillStyle = "#e5e9f4";
-    ctx.strokeStyle = "#354d72";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-21, -48);
-    ctx.lineTo(-25, -77);
-    ctx.lineTo(-5, -63);
-    ctx.lineTo(0, -80);
-    ctx.lineTo(8, -62);
-    ctx.lineTo(25, -78);
-    ctx.lineTo(21, -47);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#efc9ae";
-    ctx.beginPath();
-    ctx.ellipse(0, -48, 19, 22, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#101b31";
-    ctx.fillRect(-20, -58, 40, 9);
-    ctx.strokeStyle = "#2cd7e5";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-14, -53);
-    ctx.lineTo(14, -53);
-    ctx.stroke();
-    ctx.fillStyle = "#e8bb54";
-    ctx.beginPath();
-    ctx.moveTo(0, -72);
-    ctx.lineTo(5, -65);
-    ctx.lineTo(0, -58);
-    ctx.lineTo(-5, -65);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = "#513a59";
-    ctx.lineWidth = 1.8;
-    ctx.beginPath();
-    ctx.moveTo(-8, -42);
-    ctx.quadraticCurveTo(-4, -38, 0, -42);
-    ctx.moveTo(0, -42);
-    ctx.quadraticCurveTo(5, -38, 9, -42);
-    ctx.stroke();
-    }
+    ctx.translate(0, 25);
+    drawNeenAvatar(ctx, look, runCycle);
     ctx.restore();
   };
 

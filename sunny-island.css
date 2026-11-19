@@ -107,11 +107,10 @@
   box-shadow: 0 3px 0 #85bfc7;
 }
 
-.sunny-avatar-badge img {
+.sunny-avatar-badge canvas {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
   filter: drop-shadow(0 2px 2px rgb(34 67 86 / 18%));
 }
 
