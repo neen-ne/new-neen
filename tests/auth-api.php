@@ -476,6 +476,7 @@ try {
         'Authenticated profile can be read without falsely marking the email verified',
     );
     assertTrue($response['data']['profile']['display_name'] === 'Neen Player', 'Registration creates a user profile');
+    assertTrue($response['data']['profile']['free_fire_id'] === null, 'New profiles have no Free Fire ID by default');
 
     [$status] = request(
         $baseUrl,
@@ -497,6 +498,79 @@ try {
     );
     assertTrue($status === 200, 'Authenticated profile can be updated');
     assertTrue($response['data']['profile']['display_name'] === 'Updated Player', 'Profile update is persisted');
+
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/users/me',
+        $cookies,
+        ['free_fire_id' => '12345678901', 'avatar_url' => 'assets/hero-loot/snoop-sticker-01.png'],
+        $csrf,
+        'POST',
+    );
+    assertTrue($status === 200, 'Profile accepts a Free Fire ID and allowlisted preset avatar through POST');
+    assertTrue(
+        $response['data']['profile']['free_fire_id'] === '12345678901'
+        && $response['data']['profile']['avatar_url'] === 'assets/hero-loot/snoop-sticker-01.png',
+        'Free Fire ID and preset avatar are returned after saving',
+    );
+    [$status, $response] = request($baseUrl, '/api/users/me', $cookies);
+    assertTrue(
+        $status === 200
+        && $response['data']['profile']['free_fire_id'] === '12345678901'
+        && $response['data']['profile']['avatar_url'] === 'assets/hero-loot/snoop-sticker-01.png',
+        'Free Fire ID and preset avatar persist across profile reads',
+    );
+    [$status] = request(
+        $baseUrl,
+        '/api/users/me',
+        $cookies,
+        ['free_fire_id' => '1234'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($status === 422, 'Profile rejects Free Fire IDs outside the 5-to-15 digit range');
+    [$status] = request(
+        $baseUrl,
+        '/api/users/me',
+        $cookies,
+        ['avatar_url' => '../icone/unsafe.jpeg'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($status === 422, 'Profile rejects arbitrary local avatar paths');
+    [$status] = request(
+        $baseUrl,
+        '/api/users/me',
+        $cookies,
+        ['avatar_url' => 'javascript:alert(1)'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue($status === 422, 'Profile rejects unsafe avatar URL schemes');
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/users/me',
+        $cookies,
+        ['avatar_url' => 'https://example.com/player-avatar.png'],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue(
+        $status === 200 && $response['data']['profile']['avatar_url'] === 'https://example.com/player-avatar.png',
+        'Profile continues to accept a valid HTTPS avatar URL',
+    );
+    [$status, $response] = request(
+        $baseUrl,
+        '/api/users/me',
+        $cookies,
+        ['free_fire_id' => ''],
+        $csrf,
+        'PATCH',
+    );
+    assertTrue(
+        $status === 200 && $response['data']['profile']['free_fire_id'] === null,
+        'An empty Free Fire ID clears the saved identifier',
+    );
 
     [$status, $response] = request($baseUrl, '/api/wallet', $cookies);
     assertTrue($status === 200, 'Authenticated user can read their wallet');

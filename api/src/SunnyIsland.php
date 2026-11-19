@@ -15,15 +15,15 @@ final class SunnyIsland extends ChallengeGame
         ['id' => 'sunset_ridge', 'name' => 'Sunset Ridge'],
     ];
     private const COLLECTIBLES = [
-        ['id' => 'golden_compass', 'name' => 'Golden Compass', 'image' => '/assets/hero-loot/gold-coin.png'],
-        ['id' => 'neon_relic', 'name' => 'Neon Relic', 'image' => '/assets/hero-loot/weapon-ak47.png'],
-        ['id' => 'drift_token', 'name' => 'Drift Token', 'image' => '/assets/hero-loot/weapon-mp40.png'],
-        ['id' => 'sun_crate', 'name' => 'Sun Crate', 'image' => '/assets/hero-loot/loot-crate.webp'],
-        ['id' => 'palm_pack', 'name' => 'Palm Pack', 'image' => '/assets/hero-loot/backpack.webp'],
-        ['id' => 'snoop_badge', 'name' => 'Snoop Badge', 'image' => '/assets/hero-loot/snoop-sticker-01.png'],
-        ['id' => 'reef_sticker', 'name' => 'Reef Sticker', 'image' => '/assets/hero-loot/snoop-sticker-02.png'],
-        ['id' => 'sunset_sticker', 'name' => 'Sunset Sticker', 'image' => '/assets/hero-loot/snoop-sticker-03.png'],
-        ['id' => 'canyon_sticker', 'name' => 'Canyon Sticker', 'image' => '/assets/hero-loot/snoop-sticker-04.png'],
+        ['id' => 'golden_compass', 'name' => 'Golden Compass', 'image' => '/assets/hero-loot/gold-coin.png', 'rarity' => 'Legendary'],
+        ['id' => 'neon_relic', 'name' => 'Neon Relic', 'image' => '/assets/hero-loot/weapon-ak47.png', 'rarity' => 'Epic'],
+        ['id' => 'drift_token', 'name' => 'Drift Token', 'image' => '/assets/hero-loot/weapon-mp40.png', 'rarity' => 'Rare'],
+        ['id' => 'sun_crate', 'name' => 'Sun Crate', 'image' => '/assets/hero-loot/loot-crate.webp', 'rarity' => 'Rare'],
+        ['id' => 'palm_pack', 'name' => 'Palm Pack', 'image' => '/assets/hero-loot/backpack.webp', 'rarity' => 'Rare'],
+        ['id' => 'snoop_badge', 'name' => 'Snoop Badge', 'image' => '/assets/hero-loot/snoop-sticker-01.png', 'rarity' => 'Epic'],
+        ['id' => 'reef_sticker', 'name' => 'Reef Sticker', 'image' => '/assets/hero-loot/snoop-sticker-02.png', 'rarity' => 'Uncommon'],
+        ['id' => 'sunset_sticker', 'name' => 'Sunset Sticker', 'image' => '/assets/hero-loot/snoop-sticker-03.png', 'rarity' => 'Epic'],
+        ['id' => 'canyon_sticker', 'name' => 'Canyon Sticker', 'image' => '/assets/hero-loot/snoop-sticker-04.png', 'rarity' => 'Rare'],
     ];
     private const OBJECTIVES = [
         [

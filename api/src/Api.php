@@ -1044,7 +1044,9 @@ final class Api
                 if ($method === 'GET') {
                     $this->send(true, $this->profileData($auth['user_id']));
                 }
-                $this->expectMethod($method, 'PATCH');
+                if (!in_array($method, ['PATCH', 'POST'], true)) {
+                    $this->expectMethod($method, 'PATCH');
+                }
                 $this->requireCsrf($auth);
                 $this->updateProfile($auth['user_id']);
             }
@@ -1518,16 +1520,37 @@ final class Api
 
     private function updateProfile(int $userId): never
     {
-        $allowed = ['display_name', 'full_name', 'avatar_url', 'country', 'bio'];
+        $allowed = ['display_name', 'full_name', 'avatar_url', 'country', 'bio', 'free_fire_id'];
         if ($this->body === []) {
             throw new ApiException('VALIDATION_ERROR', 'Provide at least one profile field.', 422);
         }
 
         $fields = [];
         $values = [];
+        $hasFreeFireId = array_key_exists('free_fire_id', $this->body);
+        $freeFireId = null;
         foreach ($this->body as $field => $value) {
             if (!in_array($field, $allowed, true)) {
                 throw new ApiException('VALIDATION_ERROR', 'The request contains an unsupported profile field.', 422);
+            }
+            if ($field === 'free_fire_id') {
+                if ($value === null) {
+                    $freeFireId = null;
+                    continue;
+                }
+                if (!is_string($value)) {
+                    throw new ApiException('VALIDATION_ERROR', 'Free Fire ID must contain 5 to 15 digits.', 422);
+                }
+                $value = trim($value);
+                if ($value === '') {
+                    $freeFireId = null;
+                    continue;
+                }
+                if (preg_match('/\A[0-9]{5,15}\z/', $value) !== 1) {
+                    throw new ApiException('VALIDATION_ERROR', 'Free Fire ID must contain 5 to 15 digits.', 422);
+                }
+                $freeFireId = $value;
+                continue;
             }
             $maximum = match ($field) {
                 'display_name' => 80,
@@ -1543,8 +1566,13 @@ final class Api
                 throw new ApiException('VALIDATION_ERROR', 'Display name cannot be empty.', 422);
             }
             if ($field === 'avatar_url' && $value !== null) {
-                $url = filter_var($value, FILTER_VALIDATE_URL);
-                if ($url === false || parse_url($value, PHP_URL_SCHEME) !== 'https') {
+                $presetAvatars = ['icone/snoop.jpeg'];
+                for ($index = 1; $index <= 9; $index++) {
+                    $presetAvatars[] = sprintf('assets/hero-loot/snoop-sticker-%02d.png', $index);
+                }
+                $isPreset = in_array($value, $presetAvatars, true);
+                $url = $isPreset ? false : filter_var($value, FILTER_VALIDATE_URL);
+                if (!$isPreset && ($url === false || parse_url($value, PHP_URL_SCHEME) !== 'https')) {
                     throw new ApiException('VALIDATION_ERROR', 'Avatar URL must be a valid HTTPS URL.', 422);
                 }
             }
@@ -1555,14 +1583,31 @@ final class Api
         }
 
         $now = $this->now();
-        $this->transaction(function () use ($fields, $values, $now, $userId): void {
+        $this->transaction(function () use ($fields, $values, $now, $userId, $hasFreeFireId, $freeFireId): void {
             $values['updated_at'] = $now;
             $values['user_id'] = $userId;
-            $statement = $this->db->prepare(
-                'UPDATE user_profiles SET ' . implode(', ', $fields) . ', updated_at = :updated_at
-                 WHERE user_id = :user_id',
-            );
-            $statement->execute($values);
+            if ($fields !== []) {
+                $statement = $this->db->prepare(
+                    'UPDATE user_profiles SET ' . implode(', ', $fields) . ', updated_at = :updated_at
+                     WHERE user_id = :user_id',
+                );
+                $statement->execute($values);
+            }
+            if ($hasFreeFireId) {
+                $statement = $this->db->prepare(
+                    'UPDATE users SET free_fire_id = :free_fire_id, updated_at = :updated_at
+                     WHERE id = :user_id',
+                );
+                $statement->execute([
+                    'free_fire_id' => $freeFireId,
+                    'updated_at' => $now,
+                    'user_id' => $userId,
+                ]);
+                $statement = $this->db->prepare(
+                    'UPDATE user_profiles SET updated_at = :updated_at WHERE user_id = :user_id',
+                );
+                $statement->execute(['updated_at' => $now, 'user_id' => $userId]);
+            }
             $this->audit($userId, 'user_profile_updated', 'user_profiles', $userId);
         });
 
@@ -1736,7 +1781,7 @@ final class Api
     private function profileData(int $userId): array
     {
         $statement = $this->db->prepare(
-            'SELECT u.id AS user_id, u.username, u.email, u.status, u.email_verified,
+            'SELECT u.id AS user_id, u.username, u.email, u.free_fire_id, u.status, u.email_verified,
                     p.full_name, p.display_name, p.avatar_url, p.country, p.bio,
                     p.created_at, p.updated_at
              FROM users u JOIN user_profiles p ON p.user_id = u.id

@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS users (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     username VARCHAR(50) NOT NULL,
     email VARCHAR(254) NOT NULL,
+    free_fire_id VARCHAR(20) NULL,
     password_hash VARCHAR(255) NOT NULL,
     status ENUM('active', 'suspended', 'deleted', 'pending_verification') NOT NULL DEFAULT 'active',
     email_verified TINYINT(1) NOT NULL DEFAULT 0,

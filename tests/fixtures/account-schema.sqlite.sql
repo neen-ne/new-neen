@@ -4,6 +4,7 @@ CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL UNIQUE,
+    free_fire_id TEXT,
     password_hash TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'active',
     email_verified INTEGER NOT NULL DEFAULT 0,

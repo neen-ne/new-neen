@@ -427,3 +427,826 @@
     font-size: 11px;
   }
 }
+
+.account-content {
+  max-width: 1120px;
+}
+
+.account-content [data-auth-panel] {
+  width: min(100%, 760px);
+}
+
+.account-profile {
+  --hub-bg: #0c1728;
+  --hub-panel: #14243a;
+  --hub-panel-soft: #1a3048;
+  --hub-line: rgb(164 203 226 / 16%);
+  --hub-text: #f0f7fb;
+  --hub-muted: #a4bac8;
+  --hub-cyan: #62e5ea;
+  --hub-pink: #ff76b5;
+  display: grid;
+  gap: 22px;
+  padding: clamp(16px, 3.5vw, 36px);
+  overflow: hidden;
+  border: 1px solid rgb(98 229 234 / 22%);
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse at 92% 0%, rgb(64 157 184 / 20%), transparent 36%),
+    linear-gradient(145deg, #0c1728, #142237 58%, #101d31);
+  box-shadow: 0 24px 70px rgb(16 34 55 / 20%);
+  color: var(--hub-text);
+  color-scheme: dark;
+}
+
+.account-profile[hidden],
+.account-profile [hidden] {
+  display: none !important;
+}
+
+.account-profile .section-eyebrow {
+  color: var(--hub-cyan);
+}
+
+.account-profile h2,
+.account-profile h3,
+.account-profile h4 {
+  color: var(--hub-text);
+}
+
+.account-profile .account-copy,
+.account-profile .account-identity {
+  color: var(--hub-muted);
+}
+
+.profile-hub-heading,
+.profile-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.profile-hub-heading h2 {
+  margin: 4px 0 6px;
+  font-size: clamp(27px, 5vw, 42px);
+  line-height: 1.05;
+}
+
+.profile-community-link,
+.profile-inline-link {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--hub-cyan);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.profile-community-link {
+  padding: 11px 14px;
+  border: 1px solid var(--hub-line);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 4%);
+}
+
+.profile-community-link:hover,
+.profile-inline-link:hover {
+  color: #fff;
+}
+
+.gamer-hero {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  padding: clamp(16px, 3vw, 28px);
+  border: 1px solid var(--hub-line);
+  border-radius: 20px;
+  background:
+    linear-gradient(120deg, rgb(36 74 99 / 82%), rgb(20 36 58 / 90%) 55%),
+    var(--hub-panel);
+}
+
+.gamer-avatar-frame {
+  position: relative;
+  width: 124px;
+  height: 124px;
+  padding: 5px;
+  border: 1px solid rgb(98 229 234 / 62%);
+  border-radius: 25px 25px 25px 8px;
+  background: linear-gradient(145deg, #76f1ed, #e880b4);
+  box-shadow: 0 10px 28px rgb(35 206 213 / 20%);
+}
+
+.gamer-avatar-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 19px 19px 19px 5px;
+  background: #dce8ed;
+  object-fit: cover;
+}
+
+.gamer-level-chip {
+  position: absolute;
+  right: -9px;
+  bottom: -7px;
+  padding: 5px 8px;
+  border: 2px solid #14243a;
+  border-radius: 999px;
+  background: var(--hub-pink);
+  color: #20192d;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.gamer-hero-details {
+  min-width: 0;
+}
+
+.gamer-country {
+  margin: 0 0 4px;
+  color: var(--hub-cyan);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.gamer-hero-details h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(27px, 5vw, 42px);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.gamer-username {
+  margin: 5px 0 8px;
+  color: #bdd0dc;
+  font-size: 13px;
+}
+
+.gamer-identity {
+  gap: 6px 12px;
+  font-size: 11px;
+}
+
+.gamer-identity > span:first-child {
+  overflow-wrap: anywhere;
+}
+
+.gamer-bio {
+  max-width: 700px;
+  margin: 10px 0;
+  color: #d3e2ea;
+  font-size: 12px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.gamer-verification {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 1px solid rgb(255 118 181 / 35%);
+  border-radius: 999px;
+  background: rgb(255 118 181 / 9%);
+  color: #ffc0dc;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.gamer-verification.is-verified {
+  border-color: rgb(98 229 186 / 35%);
+  background: rgb(98 229 186 / 9%);
+  color: #9af4d1;
+}
+
+.gamer-xp-block {
+  display: grid;
+  max-width: 440px;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.gamer-xp-block > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #c3d6e1;
+  font-size: 10px;
+}
+
+.gamer-xp-block strong {
+  color: var(--hub-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.gamer-xp-track {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border: 1px solid rgb(98 229 234 / 20%);
+  border-radius: 999px;
+  background: rgb(5 13 24 / 65%);
+}
+
+.gamer-xp-track > span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #55dfe5, #9df6dc);
+  transition: width 240ms ease;
+}
+
+.free-fire-id-pill {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 7px 8px 7px 12px;
+  border: 1px solid var(--hub-line);
+  border-radius: 999px;
+  background: rgb(6 16 28 / 48%);
+  color: var(--hub-muted);
+  font-size: 10px;
+}
+
+.free-fire-id-pill strong {
+  color: var(--hub-text);
+  font-size: 12px;
+  letter-spacing: .05em;
+}
+
+.free-fire-id-pill button,
+.profile-secondary-button {
+  padding: 7px 10px;
+  border: 1px solid rgb(98 229 234 / 30%);
+  border-radius: 8px;
+  background: rgb(98 229 234 / 10%);
+  color: var(--hub-cyan);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.profile-tablist {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 5px;
+  border: 1px solid var(--hub-line);
+  border-radius: 14px;
+  background: rgb(4 13 24 / 55%);
+  scrollbar-width: thin;
+}
+
+.profile-tab {
+  flex: 1 0 auto;
+  min-height: 42px;
+  padding: 9px 13px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--hub-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.profile-tab.is-active,
+.profile-tab[aria-selected="true"] {
+  border-color: rgb(98 229 234 / 25%);
+  background: linear-gradient(120deg, rgb(98 229 234 / 16%), rgb(255 118 181 / 10%));
+  color: var(--hub-text);
+}
+
+.profile-tab:focus-visible,
+.profile-community-link:focus-visible,
+.profile-inline-link:focus-visible,
+.profile-secondary-button:focus-visible,
+.free-fire-id-pill button:focus-visible {
+  outline: 2px solid var(--hub-cyan);
+  outline-offset: 3px;
+}
+
+.profile-tab-panel {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  padding: clamp(4px, 1vw, 10px) 0;
+}
+
+.profile-tab-panel[hidden] {
+  display: none;
+}
+
+.profile-section-heading {
+  align-items: center;
+}
+
+.profile-section-heading h3 {
+  margin: 3px 0 0;
+  font-size: clamp(22px, 4vw, 30px);
+}
+
+.profile-section-heading .eyebrow {
+  margin: 0;
+}
+
+.gamer-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gamer-stat-card {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+  padding: 15px;
+  border: 1px solid var(--hub-line);
+  border-radius: 13px;
+  background: linear-gradient(145deg, rgb(255 255 255 / 5%), rgb(255 255 255 / 2%));
+}
+
+.gamer-stat-card span {
+  color: var(--hub-muted);
+  font-size: 10px;
+}
+
+.gamer-stat-card strong {
+  color: var(--hub-text);
+  font-family: var(--display);
+  font-size: clamp(19px, 3vw, 27px);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.profile-game-grid,
+.profile-codex-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+}
+
+.profile-game-card {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  padding: 15px;
+  border: 1px solid var(--hub-line);
+  border-radius: 14px;
+  background: var(--hub-panel);
+}
+
+.profile-game-card h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.profile-game-meta {
+  margin: 0;
+  color: var(--hub-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.profile-game-card a {
+  width: fit-content;
+  margin-top: 2px;
+  color: var(--hub-cyan);
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.profile-game-card a:hover {
+  color: #fff;
+}
+
+.profile-data-state,
+.codex-progress {
+  margin: 0;
+  color: var(--hub-muted);
+  font-size: 11px;
+}
+
+.codex-card {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--hub-line);
+  border-radius: 13px;
+  background: var(--hub-panel);
+}
+
+.codex-art {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #213b55, #101d30);
+}
+
+.codex-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.codex-card.is-locked .codex-art img {
+  filter: grayscale(1) brightness(0);
+  opacity: .48;
+}
+
+.codex-card h4 {
+  margin: 0 0 4px;
+  font-size: 12px;
+}
+
+.codex-card p {
+  margin: 0;
+  color: var(--hub-muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.codex-card.is-locked h4 {
+  color: #a4b4c0;
+}
+
+.account-profile .account-wallet,
+.profile-security-card {
+  border: 1px solid var(--hub-line);
+  background: var(--hub-panel);
+}
+
+.account-profile .account-wallet small,
+.account-profile .account-coins-section .account-copy,
+.account-profile .profile-security-card p {
+  color: var(--hub-muted);
+}
+
+.account-profile .wallet-balances p,
+.account-profile .attendance-summary p,
+.account-profile .attendance-day,
+.account-profile .coin-order-card,
+.account-profile .coin-ledger-item {
+  border: 1px solid var(--hub-line);
+  background: var(--hub-panel);
+  color: var(--hub-muted);
+}
+
+.account-profile .wallet-balances strong,
+.account-profile .wallet-balances b {
+  color: var(--hub-cyan);
+}
+
+.account-profile .attendance-summary strong,
+.account-profile .attendance-day-reward {
+  color: var(--hub-cyan);
+}
+
+.account-profile .attendance-day.is-earned {
+  border-color: rgb(98 229 186 / 35%);
+  background: rgb(98 229 186 / 8%);
+}
+
+.account-profile .attendance-day.is-earned .attendance-day-state {
+  color: #9af4d1;
+}
+
+.account-profile .attendance-day.is-today {
+  box-shadow: 0 0 0 2px rgb(98 229 234 / 18%);
+}
+
+.account-profile .account-coins-section {
+  border-color: var(--hub-line);
+}
+
+.account-profile .account-coins-section h3 {
+  font-size: 22px;
+}
+
+.account-profile .coin-order-title,
+.account-profile .coin-ledger-title {
+  color: var(--hub-text);
+}
+
+.account-profile .coin-order-meta,
+.account-profile .coin-ledger-meta {
+  color: var(--hub-muted);
+}
+
+.profile-security-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 14px;
+}
+
+.profile-security-card strong {
+  color: var(--hub-text);
+  font-size: 12px;
+}
+
+.profile-security-card p {
+  margin: 5px 0 0;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.profile-secondary-button {
+  min-height: 38px;
+}
+
+.profile-edit-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 16px;
+  padding: 0;
+}
+
+.account-profile .account-field {
+  color: var(--hub-text);
+}
+
+.account-profile .account-field input,
+.account-profile .account-field textarea,
+.account-profile .account-field select {
+  border-color: var(--hub-line);
+  background: #0d1a2a;
+  color: var(--hub-text);
+}
+
+.account-profile .account-field input:focus,
+.account-profile .account-field textarea:focus,
+.account-profile .account-field select:focus {
+  border-color: var(--hub-cyan);
+  outline-color: rgb(98 229 234 / 20%);
+}
+
+.account-profile .account-submit {
+  width: fit-content;
+  min-height: 44px;
+  background: linear-gradient(100deg, #41bdc9, #ea6ba7);
+  color: #081522;
+  font-weight: 900;
+}
+
+.profile-avatar-field,
+.profile-bio-field {
+  grid-column: 1 / -1;
+}
+
+.avatar-preview-wrap {
+  display: grid;
+  width: 92px;
+  height: 92px;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid var(--hub-cyan);
+  border-radius: 18px;
+  background: #dce8ed;
+}
+
+.avatar-preview-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.avatar-preset {
+  display: block;
+  min-width: 0;
+  aspect-ratio: 1;
+  padding: 3px;
+  overflow: hidden;
+  border: 1px solid var(--hub-line);
+  border-radius: 10px;
+  background: #0d1a2a;
+  cursor: pointer;
+}
+
+.avatar-preset img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 7px;
+  object-fit: cover;
+}
+
+.avatar-preset.is-selected,
+.avatar-preset[aria-pressed="true"] {
+  border: 2px solid var(--hub-cyan);
+  box-shadow: 0 0 0 2px rgb(98 229 234 / 12%);
+}
+
+.avatar-preset:focus-visible {
+  outline: 2px solid var(--hub-pink);
+  outline-offset: 2px;
+}
+
+.profile-security-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hub-line);
+}
+
+.account-profile .account-text-button {
+  color: #ff9ac6;
+}
+
+.account-profile .account-text-button:hover {
+  color: #fff;
+}
+
+.account-profile .account-payment-instructions {
+  color: var(--hub-muted);
+}
+
+@media (max-width: 760px) {
+  .gamer-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-security-card {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .profile-secondary-button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .avatar-preset-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .account-content [data-auth-panel] {
+    width: 100%;
+  }
+
+  .account-profile {
+    gap: 16px;
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .profile-hub-heading,
+  .profile-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .profile-community-link {
+    align-self: flex-start;
+  }
+
+  .gamer-hero {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 15px;
+    padding: 14px;
+  }
+
+  .gamer-avatar-frame {
+    width: 72px;
+    height: 72px;
+    padding: 3px;
+    border-radius: 17px 17px 17px 5px;
+  }
+
+  .gamer-avatar-frame img {
+    border-radius: 13px 13px 13px 3px;
+  }
+
+  .gamer-level-chip {
+    right: -8px;
+    bottom: -8px;
+    padding: 4px 6px;
+    font-size: 8px;
+  }
+
+  .gamer-hero-details h3 {
+    font-size: 25px;
+  }
+
+  .gamer-country {
+    font-size: 8px;
+  }
+
+  .gamer-username {
+    font-size: 11px;
+  }
+
+  .gamer-bio {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    font-size: 11px;
+  }
+
+  .free-fire-id-pill {
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .profile-tablist {
+    margin-inline: -2px;
+  }
+
+  .profile-tab {
+    min-height: 40px;
+    padding-inline: 10px;
+    font-size: 10px;
+  }
+
+  .gamer-stats-grid,
+  .profile-game-grid,
+  .profile-codex-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .gamer-stat-card {
+    padding: 11px;
+  }
+
+  .gamer-stat-card span {
+    font-size: 9px;
+  }
+
+  .profile-game-card {
+    padding: 11px;
+  }
+
+  .codex-card {
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .codex-art {
+    width: 46px;
+    height: 46px;
+  }
+
+  .profile-edit-form {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-avatar-field,
+  .profile-bio-field {
+    grid-column: auto;
+  }
+
+  .profile-security-card {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-secondary-button {
+    grid-column: auto;
+    justify-self: stretch;
+  }
+
+  .profile-security-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .account-profile .account-submit {
+    width: 100%;
+  }
+
+  .attendance-summary p {
+    padding: 9px 6px;
+  }
+}

@@ -41,6 +41,14 @@ try {
         }
     }
 
+    $userColumns = $db->query(
+        "SELECT COLUMN_NAME FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'",
+    )->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('free_fire_id', $userColumns, true)) {
+        $db->exec('ALTER TABLE users ADD COLUMN free_fire_id VARCHAR(20) NULL AFTER email');
+    }
+
     $columns = $db->query(
         "SELECT COLUMN_NAME FROM information_schema.COLUMNS
          WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'wallets'",
