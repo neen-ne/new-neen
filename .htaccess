@@ -1,0 +1,14 @@
+Options -Indexes
+
+RewriteEngine On
+RewriteRule (^|/)\. - [F,L]
+RewriteRule ^(?:docs|tests)(?:/|$) - [F,L,NC]
+RewriteRule \.(?:sql|md)$ - [F,L,NC]
+
+<FilesMatch "^\..*">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "(?i)\.(?:sql|md)$">
+    Require all denied
+</FilesMatch>

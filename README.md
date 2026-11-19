@@ -15,7 +15,7 @@ A responsive, multi-page Free Fire creator website built with the project's exis
 - `events.html` — NEEN Events Hub backed by server-managed events, suggestions, votes, published results, and eligible rewards.
 - `events-admin.php` — Server-gated admin dashboard. `events-admin.html` is a content-free compatibility redirect; header access links go directly to the protected PHP page.
 - `owner-dashboard.php` — Separate Owner-only dashboard for live overview data, account/profile/role/status management, ledger-backed wallet adjustments, runtime-backed game settings, site settings, admin activity, and links to the existing admin modules.
-- `events-detail.html`, `events-votes.html`, `events-suggestions.html`, `events-profile.html`, `events-rewards.html`, `events-results.html` — Separate Events Hub views connected to server data and authenticated actions. `events-challenges.html` remains informational; no challenge system is configured.
+- `events-detail.html`, `events-votes.html`, `events-suggestions.html`, `events-profile.html`, `events-rewards.html`, `events-results.html` — Separate Events Hub views connected to server data and authenticated actions. `events-challenges.html` remains informational; no challenge system is configured. `events-leaderboard.html` is currently an inactive placeholder: there is no points ledger or account database connected to produce standings.
 
 The existing content pages share `styles.css`, `script.js`, a consistent navigation/footer, and the existing TikTok profile link. The account page adds `account.css` and `account.js`; event pages also use `events.css`. The social link available in the project is `https://www.tiktok.com/@neen_0o`.
 
@@ -23,7 +23,7 @@ The existing content pages share `styles.css`, `script.js`, a consistent navigat
 
 The PHP 8.3/MySQL APIs in `api/` provide registration, login/logout, profiles, server-side sessions, CSRF protection, a Purchased/Earned Coins wallet, an immutable ledger, configurable purchase/review flows, server-validated game sessions, daily attendance rewards, homepage reward claims, community events, and diamond recharge requests. Configure the hosting environment and install its schema as described in [`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-3.md`](docs/phase-3.md), [`docs/phase-4.md`](docs/phase-4.md), [`docs/phase-5.md`](docs/phase-5.md), [`docs/phase-6.md`](docs/phase-6.md), [`docs/phase-7.md`](docs/phase-7.md), [`docs/phase-8.md`](docs/phase-8.md), and [`docs/phase-9.md`](docs/phase-9.md). No database credentials or production secrets are stored in the repository.
 
-Daily attendance is determined by the server in `Africa/Cairo`; each successful check-in credits 100 Earned Coins, once per date. Seven consecutive check-ins complete a 700-Coin cycle; missing a day starts progress at day one without removing earlier earnings. Memory Match and Picture Jigsaw default to three server-counted free starts per Egypt-local day and 50 Earned Coins per server-verified win; the Owner can change these stored game-catalog settings, and the game runtime enforces them. Neither game debits Coins. Picture Jigsaw uses the existing 3 × 3 board and all three original images. Homepage reward rules start inactive and require an authorized administrator to configure the amount and claim window; claims are recorded once per configured reward window and credited through the existing wallet ledger. Email format and uniqueness are enforced, but email ownership verification is not configured; account profiles show the email verification state accurately. No Coins packages, prices, payment methods, or provider credentials are preconfigured.
+Daily attendance is determined by the server in `Africa/Cairo`; each successful check-in credits 100 Earned Coins, once per date. Seven consecutive check-ins complete a 700-Coin cycle; missing a day starts progress at day one without removing earlier earnings. Memory Match and Picture Jigsaw default to three server-counted free starts per Egypt-local day and 50 Earned Coins per server-verified win; the Owner can change these stored game-catalog settings, and the game runtime enforces them. Neither game debits Coins. Picture Jigsaw uses the existing 3 × 3 board and all three original images. Homepage reward rules start inactive and require an authorized administrator to configure the amount and claim window; claims are recorded once per configured reward window and credited through the existing wallet ledger. Email format and uniqueness are enforced, but email ownership verification is not configured. Registration currently activates accounts without proving email ownership, which permits identity squatting; this is a known pre-launch limitation until SMTP-backed verification is enabled. Password recovery relies on a random, hashed, expiring, single-use token delivered to the registered address and revokes existing sessions after a reset, but does not replace registration-time email verification. Account profiles show the verification state accurately. No Coins packages, prices, payment methods, or provider credentials are preconfigured.
 
 ## Homepage 3D loot preview
 
@@ -31,7 +31,7 @@ The homepage also retains its animated loot preview. Its collectible visuals use
 
 ## Environment and deployment setup
 
-Copy `.env.example` to `.env` before deployment and provide the real values for the hosting environment. The repository intentionally keeps secrets out of source control via `.gitignore` and does not ship production credentials or payment details.
+Use `.env.example` as the list of required environment keys and provide real values through the hosting environment. PHP does not load `.env` files automatically. The repository intentionally keeps local secrets out of source control via `.gitignore` and does not ship production credentials or payment details.
 
 ## Curated image map
 
@@ -49,7 +49,7 @@ Copy `.env.example` to `.env` before deployment and provide the real values for 
 | Events Hub | Neon-crown and sunset portraits | Two decorative community images add character art to the status card without implying live events or participants. |
 | Videos page | No character thumbnails | Only real TikTok embeds and their direct links are shown. |
 
-The new portrait JPEGs were visually inspected and dimension-checked. The earlier image folders, existing art, and all originals remain in the project.
+The new portrait JPEGs were visually inspected and dimension-checked. Referenced image originals remain in the project; confirmed unreferenced legacy assets were removed during the pre-deployment audit.
 
 ## Diamonds recharge and provider requirements
 
@@ -67,10 +67,10 @@ The Owner Dashboard and its current scope, trusted Owner provisioning, deploymen
 
 ## Run locally
 
-Serve this directory with any static HTTP server, for example:
+Run the PHP API and PHP dashboards with PHP's built-in server from the repository root:
 
 ```sh
-python3 -m http.server 4173
+php -S localhost:4173 api/router.php
 ```
 
-Then open `http://localhost:4173/`.
+Then open `http://localhost:4173/`. Set the environment variables listed in `.env.example` in the shell or hosting environment and configure the database before using the PHP API.
