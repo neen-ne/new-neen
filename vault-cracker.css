@@ -186,3 +186,51 @@
     grid-column: 1 / -1;
   }
 }
+
+.vault-icon {
+  aspect-ratio: 1;
+  background:
+    radial-gradient(circle at 50% 45%, rgb(255 255 255 / 96%), transparent 70%),
+    linear-gradient(145deg, #fff7fb, #f3e8f4);
+}
+
+.vault-icon img {
+  display: block;
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  object-position: center;
+  filter: drop-shadow(0 3px 4px rgb(69 52 74 / 15%));
+}
+
+.vault-icon-button {
+  width: 68px;
+  height: 68px;
+  padding: 6px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #fffdfb, #f7eaf3);
+}
+
+.vault-icon-button img {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.vault-guess .vault-icon {
+  width: 50px;
+  height: 50px;
+}
+
+@media (max-width: 560px) {
+  .vault-icon-button {
+    width: 58px;
+    height: 58px;
+  }
+
+  .vault-guess .vault-icon {
+    width: 42px;
+    height: 42px;
+  }
+}

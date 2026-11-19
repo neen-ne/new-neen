@@ -1011,6 +1011,37 @@ const homeHeroArt = homeHero?.querySelector(".hero-art");
 const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
+if (finePointer.matches && !reducedMotion.matches) {
+  let ambientFrame = 0;
+  let pointerX = 0;
+  let pointerY = 0;
+
+  const updateAmbientPosition = () => {
+    if (ambientFrame) return;
+    ambientFrame = window.requestAnimationFrame(() => {
+      document.documentElement.style.setProperty("--ambient-pointer-x", `${pointerX}px`);
+      document.documentElement.style.setProperty("--ambient-pointer-y", `${pointerY}px`);
+      ambientFrame = 0;
+    });
+  };
+
+  const resetAmbientPosition = () => {
+    pointerX = 0;
+    pointerY = 0;
+    updateAmbientPosition();
+  };
+
+  document.addEventListener("pointermove", (event) => {
+    if (event.pointerType === "touch") return;
+    pointerX = ((event.clientX / window.innerWidth) - 0.5) * 10;
+    pointerY = ((event.clientY / window.innerHeight) - 0.5) * 10;
+    updateAmbientPosition();
+  }, { passive: true });
+
+  document.documentElement.addEventListener("pointerleave", resetAmbientPosition, { passive: true });
+  window.addEventListener("blur", resetAmbientPosition);
+}
+
 if (homeHero instanceof HTMLElement && homeHeroArt instanceof HTMLElement && finePointer.matches && !reducedMotion.matches) {
   const resetHeroTilt = () => {
     homeHeroArt.style.removeProperty("--hero-tilt-x");

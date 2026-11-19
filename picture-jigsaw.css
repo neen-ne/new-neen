@@ -438,3 +438,14 @@
     transition-duration: 1ms;
   }
 }
+
+.jigsaw-image-option img {
+  object-fit: contain;
+  object-position: center;
+}
+
+.jigsaw-board-wrap {
+  background:
+    radial-gradient(circle at 50% 50%, rgb(200 200 237 / 24%), transparent 72%),
+    linear-gradient(145deg, #fffdfb, #fff5fa);
+}

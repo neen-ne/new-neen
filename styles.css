@@ -34,6 +34,7 @@
 body {
   min-width: 320px;
   margin: 0;
+  isolation: isolate;
   background:
     radial-gradient(circle at 5% 10%, rgb(255 255 255 / 80%) 0 3px, transparent 4px),
     radial-gradient(circle at 96% 32%, rgb(255 255 255 / 70%) 0 3px, transparent 4px),
@@ -43,12 +44,49 @@ body {
 
 body::before {
   position: fixed;
-  z-index: 5;
+  z-index: -2;
   pointer-events: none;
   inset: 0;
   content: "";
   opacity: 0.035;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.16'/%3E%3C/svg%3E");
+}
+
+body::after {
+  position: fixed;
+  z-index: -1;
+  inset: -2%;
+  content: "";
+  opacity: 0.38;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse at 14% 22%, rgb(214 95 150 / 12%) 0, transparent 28rem),
+    radial-gradient(ellipse at 82% 18%, rgb(200 200 237 / 20%) 0, transparent 25rem),
+    radial-gradient(ellipse 4px 7px at 40px 70px, rgb(214 95 150 / 28%) 0 42%, transparent 72%),
+    radial-gradient(ellipse 3px 6px at 190px 220px, rgb(235 136 180 / 24%) 0 42%, transparent 72%),
+    radial-gradient(circle 1px at 40px 40px, rgb(255 255 255 / 78%) 0 1px, transparent 2px),
+    linear-gradient(116deg, transparent 49.8%, rgb(214 95 150 / 5%) 50%, transparent 50.2%);
+  background-size:
+    100% 100%,
+    100% 100%,
+    360px 420px,
+    460px 540px,
+    150px 170px,
+    100% 100%;
+  background-repeat: no-repeat, no-repeat, repeat, repeat, repeat, no-repeat;
+  translate: var(--ambient-pointer-x, 0px) var(--ambient-pointer-y, 0px);
+  transition: translate 600ms ease-out;
+  animation: neen-ambient-drift 54s ease-in-out infinite alternate;
+}
+
+@keyframes neen-ambient-drift {
+  from {
+    transform: translate3d(-1.2%, 0, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(1.2%, -1.2%, 0) scale(1.035);
+  }
 }
 
 a {
@@ -1441,6 +1479,13 @@ button:focus-visible {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  body::after {
+    animation: none;
+    opacity: 0.2;
+    translate: none;
+    transition: none;
   }
 }
 
@@ -8757,6 +8802,76 @@ html[dir="rtl"] .home-page .loot-drop-heading {
 
 @media (prefers-reduced-motion: reduce) {
   .home-page .home-hero .status-dot {
+    animation: none;
+  }
+}
+
+body.home-page::before {
+  z-index: -2;
+}
+
+body.home-page .home-site-shell {
+  background: transparent;
+}
+
+@media (max-width: 760px) {
+  body::after {
+    inset: -1%;
+    opacity: 0.22;
+    animation-duration: 72s;
+  }
+}
+
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: neen-page-exit 140ms ease-in both;
+}
+
+::view-transition-new(root) {
+  animation: neen-page-enter 240ms ease-out both;
+}
+
+@keyframes neen-page-exit {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes neen-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .button,
+  .outline-link {
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      border-color 180ms ease,
+      background-color 180ms ease,
+      color 180ms ease;
+  }
+
+  .button:hover:not(:disabled),
+  .outline-link:hover {
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
     animation: none;
   }
 }

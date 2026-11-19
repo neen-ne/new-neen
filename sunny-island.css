@@ -1180,6 +1180,14 @@
   }
 }
 
+.sunny-codex-art img {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  object-position: center;
+  filter: drop-shadow(0 4px 5px rgb(34 67 86 / 16%));
+}
+
 .sunny-page {
   color-scheme: light;
   background:

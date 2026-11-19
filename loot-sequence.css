@@ -164,3 +164,25 @@
     height: 47px;
   }
 }
+
+.sequence-preview li,
+.sequence-sticker {
+  aspect-ratio: 1;
+  border-radius: 15px;
+  background:
+    radial-gradient(circle at 50% 42%, rgb(255 255 255 / 98%), transparent 68%),
+    linear-gradient(145deg, #fff7fb, #eee8f8);
+  box-shadow: 0 5px 13px rgb(111 76 129 / 12%);
+}
+
+.sequence-preview img,
+.sequence-sticker img {
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.sequence-preview li img {
+  filter: drop-shadow(0 3px 5px rgb(69 52 74 / 12%));
+}

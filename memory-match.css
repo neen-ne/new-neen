@@ -285,3 +285,22 @@
     transition-duration: 1ms;
   }
 }
+
+.memory-card {
+  aspect-ratio: 1600 / 738;
+}
+
+.memory-card-face {
+  padding: 2%;
+}
+
+.memory-card-face img {
+  object-fit: contain;
+  object-position: center;
+}
+
+@media (max-width: 560px) {
+  .memory-board {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
