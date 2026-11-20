@@ -77,12 +77,19 @@ final class GameRewards
             throw new RuntimeException('The game reward ledger entry could not be read after credit.');
         }
 
+        $xpAwarded = 0;
+        if ($gameSlug !== 'sunny_island') {
+            $xpAwarded = 75;
+            SunnyIsland::grantXp($this->db, $userId, $xpAwarded);
+        }
+
         return [
             'amount' => (int) $balances['amount'],
             'balance_type' => 'earned',
             'earned_coin_balance' => (int) $balances['balance_after'],
             'coin_balance' => (int) $balances['total_balance_after'],
             'ledger_entry_id' => $ledgerEntryId,
+            'xp_awarded' => $xpAwarded,
         ];
     }
 

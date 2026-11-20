@@ -5,8 +5,10 @@ final class SunnyIsland extends ChallengeGame
 {
     private const GAME_SLUG = 'sunny_island';
     private const OBJECTIVES_PER_ADVENTURE = 3;
-    private const XP_PER_ADVENTURE = 100;
-    private const XP_PER_LEVEL = 300;
+    private const XP_PER_ADVENTURE = 250;
+    private const XP_PER_COLLECTIBLE = 50;
+    private const XP_PER_ZONE = 40;
+    private const MAX_LEVEL = 100;
     private const MINIMUM_PRODUCTION_DURATION_SECONDS = 10;
     private const ZONES = [
         ['id' => 'neon_pier', 'name' => 'Neon Pier'],
@@ -217,7 +219,7 @@ final class SunnyIsland extends ChallengeGame
 
             $progress = $this->progressRecord($userId, true);
             $xp = (int) $progress['xp'] + self::XP_PER_ADVENTURE;
-            $level = intdiv($xp, self::XP_PER_LEVEL) + 1;
+            $level = self::levelProgressFromXp($xp)['level'];
             $now = $this->now();
             $statement = $this->db->prepare(
                 'UPDATE sunny_island_progress
@@ -238,6 +240,75 @@ final class SunnyIsland extends ChallengeGame
             $result['xp_awarded'] = self::XP_PER_ADVENTURE;
             return $result;
         });
+    }
+
+
+    public static function levelProgressFromXp(int $xp): array
+    {
+        $xp = max(0, $xp);
+        if ($xp < 2900) {
+            $level = intdiv($xp, 100) + 1;
+            $currentXp = $xp % 100;
+            $requiredXp = 100;
+        } elseif ($xp < 6500) {
+            $offset = $xp - 2900;
+            $level = 30 + intdiv($offset, 120);
+            $currentXp = $offset % 120;
+            $requiredXp = 120;
+        } elseif ($xp < 13700) {
+            $offset = $xp - 6500;
+            $level = 60 + intdiv($offset, 180);
+            $currentXp = $offset % 180;
+            $requiredXp = 180;
+        } else {
+            $level = self::MAX_LEVEL;
+            $currentXp = 180;
+            $requiredXp = 180;
+        }
+
+        return [
+            'level' => $level,
+            'current_xp' => $currentXp,
+            'required_xp' => $requiredXp,
+        ];
+    }
+
+    public static function grantXp(PDO $db, int $userId, int $xpAmount): array
+    {
+        if ($userId < 1 || $xpAmount < 1) {
+            return ['xp' => 0, 'level' => 1];
+        }
+        $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $insert = $driver === 'mysql' ? 'INSERT IGNORE' : 'INSERT OR IGNORE';
+        $now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+        $init = $db->prepare(
+            $insert . " INTO sunny_island_progress
+                (user_id, xp, level, unlocked_collectibles_json, discovered_zones_json,
+                 total_adventures_completed, last_position_json, created_at, updated_at)
+             VALUES (:user_id, 0, 1, '[]', '[]', 0, NULL, :created_at, :updated_at)",
+        );
+        $init->execute(['user_id' => $userId, 'created_at' => $now, 'updated_at' => $now]);
+
+        $lock = $driver === 'mysql' ? ' FOR UPDATE' : '';
+        $select = $db->prepare('SELECT xp FROM sunny_island_progress WHERE user_id = :user_id' . $lock);
+        $select->execute(['user_id' => $userId]);
+        $currentXp = (int) ($select->fetchColumn() ?: 0);
+        $newXp = $currentXp + $xpAmount;
+        $lvl = self::levelProgressFromXp($newXp);
+
+        $update = $db->prepare(
+            'UPDATE sunny_island_progress
+             SET xp = :xp, level = :level, updated_at = :updated_at
+             WHERE user_id = :user_id',
+        );
+        $update->execute([
+            'xp' => $newXp,
+            'level' => $lvl['level'],
+            'updated_at' => $now,
+            'user_id' => $userId,
+        ]);
+
+        return ['xp' => $newXp, 'level' => $lvl['level']];
     }
 
     public static function collectibleIds(): array
@@ -382,19 +453,23 @@ final class SunnyIsland extends ChallengeGame
         $this->ensureProgressRow($userId);
         $current = $this->progressRecord($userId, true);
         $collectibles = $current['unlocked_collectibles'];
+        $newCollectiblesCount = 0;
         if (array_key_exists('collectibles', $data)) {
             foreach ($this->validatedList($data['collectibles'], self::collectibleIds(), 'collectibles') as $id) {
                 if (!in_array($id, $collectibles, true)) {
                     $collectibles[] = $id;
+                    $newCollectiblesCount++;
                 }
             }
         }
 
         $zones = $current['discovered_zones'];
+        $newZonesCount = 0;
         if (array_key_exists('discovered_zones', $data)) {
             foreach ($this->validatedList($data['discovered_zones'], self::zoneIds(), 'discovered_zones') as $id) {
                 if (!in_array($id, $zones, true)) {
                     $zones[] = $id;
+                    $newZonesCount++;
                 }
             }
         }
@@ -404,18 +479,27 @@ final class SunnyIsland extends ChallengeGame
             $position = $this->validatedPosition($data['last_position']);
             if ($position !== null && !in_array($position['zone'], $zones, true)) {
                 $zones[] = $position['zone'];
+                $newZonesCount++;
             }
         }
 
+        $bonusXp = ($newCollectiblesCount * self::XP_PER_COLLECTIBLE) + ($newZonesCount * self::XP_PER_ZONE);
+        $updatedXp = (int) $current['xp'] + $bonusXp;
+        $updatedLevel = self::levelProgressFromXp($updatedXp)['level'];
+
         $statement = $this->db->prepare(
             'UPDATE sunny_island_progress
-             SET unlocked_collectibles_json = :collectibles,
+             SET xp = :xp,
+                 level = :level,
+                 unlocked_collectibles_json = :collectibles,
                  discovered_zones_json = :zones,
                  last_position_json = :position,
                  updated_at = :updated_at
              WHERE user_id = :user_id',
         );
         $statement->execute([
+            'xp' => $updatedXp,
+            'level' => $updatedLevel,
             'collectibles' => json_encode($collectibles, JSON_THROW_ON_ERROR),
             'zones' => json_encode($zones, JSON_THROW_ON_ERROR),
             'position' => $position === null ? null : json_encode($position, JSON_THROW_ON_ERROR),

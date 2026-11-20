@@ -285,8 +285,15 @@
       codexGrid.replaceChildren(element("p", "profile-data-state", reason));
       return null;
     }
-    const level = Number(progress.level) || 1;
-    const xp = Number(progress.xp) || 0;
+    const xp = Math.max(0, Math.floor(Number(progress.xp) || 0));
+    const lvlInfo = xp < 2900
+      ? { level: Math.floor(xp / 100) + 1, currentXp: xp % 100, requiredXp: 100 }
+      : xp < 6500
+        ? { level: 30 + Math.floor((xp - 2900) / 120), currentXp: (xp - 2900) % 120, requiredXp: 120 }
+        : xp < 13700
+          ? { level: 60 + Math.floor((xp - 6500) / 180), currentXp: (xp - 6500) % 180, requiredXp: 180 }
+          : { level: 100, currentXp: 180, requiredXp: 180 };
+    const level = lvlInfo.level;
     const zones = Array.isArray(progress.discovered_zones) ? progress.discovered_zones.length : 0;
     profilePanel.querySelector("[data-island-level]").textContent = String(level);
     profilePanel.querySelector("[data-stat-level]").textContent = String(level);
@@ -294,8 +301,8 @@
     profilePanel.querySelector("[data-stat-adventures]").textContent =
       formatCoins(progress.total_adventures_completed);
     profilePanel.querySelector("[data-stat-zones]").textContent = `${zones} / 4`;
-    profilePanel.querySelector("[data-island-xp]").textContent = `${xp % 300} / 300 XP`;
-    profilePanel.querySelector("[data-island-xp-fill]").style.width = `${(xp % 300) / 3}%`;
+    profilePanel.querySelector("[data-island-xp]").textContent = `${formatCoins(lvlInfo.currentXp)} / ${formatCoins(lvlInfo.requiredXp)} XP`;
+    profilePanel.querySelector("[data-island-xp-fill]").style.width = `${Math.min(100, (lvlInfo.currentXp / lvlInfo.requiredXp) * 100)}%`;
     renderIslandCodex(island.codex, progress);
     return island;
   };

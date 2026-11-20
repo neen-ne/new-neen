@@ -252,9 +252,25 @@
     renderObjectives();
   };
 
+  const levelProgressFromXp = (rawXp) => {
+    const xp = Math.max(0, Math.floor(Number(rawXp) || 0));
+    if (xp < 2900) {
+      return { level: Math.floor(xp / 100) + 1, currentXp: xp % 100, requiredXp: 100 };
+    }
+    if (xp < 6500) {
+      const offset = xp - 2900;
+      return { level: 30 + Math.floor(offset / 120), currentXp: offset % 120, requiredXp: 120 };
+    }
+    if (xp < 13700) {
+      const offset = xp - 6500;
+      return { level: 60 + Math.floor(offset / 180), currentXp: offset % 180, requiredXp: 180 };
+    }
+    return { level: 100, currentXp: 180, requiredXp: 180 };
+  };
+
   const renderProgress = () => {
-    const level = Math.max(1, state.progress.level);
-    const currentLevelXp = state.progress.xp % 300;
+    const lvlInfo = levelProgressFromXp(state.progress.xp);
+    const level = Math.max(1, lvlInfo.level);
     const levelNode = document.querySelector("[data-level]");
     const levelLabel = document.querySelector("[data-level-label]");
     const xpFill = document.querySelector("[data-xp-fill]");
@@ -262,8 +278,8 @@
     const codexCount = document.querySelector("[data-codex-count]");
     if (levelNode) levelNode.textContent = String(level);
     if (levelLabel) levelLabel.textContent = String(level);
-    if (xpFill) xpFill.style.width = `${(currentLevelXp / 300) * 100}%`;
-    if (xpLabel) xpLabel.textContent = `${formatNumber(currentLevelXp)} / 300 XP`;
+    if (xpFill) xpFill.style.width = `${Math.min(100, (lvlInfo.currentXp / lvlInfo.requiredXp) * 100)}%`;
+    if (xpLabel) xpLabel.textContent = `${formatNumber(lvlInfo.currentXp)} / ${formatNumber(lvlInfo.requiredXp)} XP`;
     if (codexCount) codexCount.textContent = `${state.progress.unlocked_collectibles.length}/${state.codex.length || 9}`;
 
     const attempts = document.querySelector("[data-attempts]");
