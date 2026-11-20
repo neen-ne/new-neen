@@ -1100,46 +1100,349 @@
     ctx.stroke();
   };
 
-  const drawSkyAtmosphere = (ctx, time, cloudColor = "rgb(255 255 255 / 26%)", birdColor = "rgb(62 49 78 / 42%)") => {
-    // Drifting multi-layer clouds
+  // === TRUE 3D PERSPECTIVE PROJECTION & VOLUMETRIC WORLD RENDERER ===
+  const project3D = (wx, wy, wz, viewCenterX, viewCenterY) => {
+    const focal = 740;
+    const depth = Math.max(220, focal - wz * 0.85);
+    const scale = focal / depth;
+    const sx = viewCenterX + (wx - viewCenterX) * scale;
+    const sy = viewCenterY + (wy - viewCenterY) * scale - wz * 0.72 * scale;
+    return { x: sx, y: sy, scale };
+  };
+
+  const draw3DBox = (ctx, x, y, w, d, h, palette, viewCenterX, viewCenterY) => {
+    const b0 = project3D(x, y, 0, viewCenterX, viewCenterY);
+    const b1 = project3D(x + w, y, 0, viewCenterX, viewCenterY);
+    const b2 = project3D(x + w, y + d, 0, viewCenterX, viewCenterY);
+    const b3 = project3D(x, y + d, 0, viewCenterX, viewCenterY);
+
+    const t0 = project3D(x, y, h, viewCenterX, viewCenterY);
+    const t1 = project3D(x + w, y, h, viewCenterX, viewCenterY);
+    const t2 = project3D(x + w, y + d, h, viewCenterX, viewCenterY);
+    const t3 = project3D(x, y + d, h, viewCenterX, viewCenterY);
+
     ctx.save();
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = palette.stroke || "rgb(32 26 48 / 38%)";
+    ctx.lineWidth = 1.6;
+
+    // Ground contact shadow
+    ctx.fillStyle = "rgb(20 18 36 / 18%)";
+    ctx.beginPath();
+    ctx.moveTo(b0.x - 6, b0.y + 6);
+    ctx.lineTo(b1.x + 8, b1.y + 6);
+    ctx.lineTo(b2.x + 10, b2.y + 10);
+    ctx.lineTo(b3.x - 6, b3.y + 10);
+    ctx.closePath();
+    ctx.fill();
+
+    // Left or Right visible side face depending on camera position
+    const centerX = x + w * 0.5;
+    if (viewCenterX < centerX) {
+      ctx.fillStyle = palette.side;
+      ctx.beginPath();
+      ctx.moveTo(b0.x, b0.y);
+      ctx.lineTo(b3.x, b3.y);
+      ctx.lineTo(t3.x, t3.y);
+      ctx.lineTo(t0.x, t0.y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = palette.side;
+      ctx.beginPath();
+      ctx.moveTo(b1.x, b1.y);
+      ctx.lineTo(b2.x, b2.y);
+      ctx.lineTo(t2.x, t2.y);
+      ctx.lineTo(t1.x, t1.y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Front face
+    ctx.fillStyle = palette.front;
+    ctx.beginPath();
+    ctx.moveTo(b3.x, b3.y);
+    ctx.lineTo(b2.x, b2.y);
+    ctx.lineTo(t2.x, t2.y);
+    ctx.lineTo(t3.x, t3.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Top roof face
+    ctx.fillStyle = palette.top;
+    ctx.beginPath();
+    ctx.moveTo(t0.x, t0.y);
+    ctx.lineTo(t1.x, t1.y);
+    ctx.lineTo(t2.x, t2.y);
+    ctx.lineTo(t3.x, t3.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const draw3DRotatingCrystal = (ctx, wx, wy, wz, radius, height, time, speed, palette, viewCenterX, viewCenterY) => {
+    const bobZ = wz + Math.sin(time * 2.4 + wx * 0.01) * 14;
+    const center = project3D(wx, wy, bobZ, viewCenterX, viewCenterY);
+    const r = radius * center.scale;
+    const h = height * center.scale;
+    const rot = time * speed;
+    const tilt = 0.34;
+
+    // Build 3D octahedron vertices
+    const verts3D = [
+      { x: 0, y: -h, z: 0 }, // 0: top apex
+      { x: 0, y: h, z: 0 },  // 1: bottom apex
+    ];
+    for (let i = 0; i < 4; i++) {
+      const a = rot + (i * Math.PI) / 2;
+      const rx = Math.cos(a) * r;
+      const rz = Math.sin(a) * r;
+      const ty = rz * Math.sin(tilt);
+      const tz = rz * Math.cos(tilt);
+      verts3D.push({ x: rx, y: ty, z: tz });
+    }
+
+    const faces = [
+      [0, 2, 3], [0, 3, 4], [0, 4, 5], [0, 5, 2],
+      [1, 3, 2], [1, 4, 3], [1, 5, 4], [1, 2, 5],
+    ];
+
+    const sorted = faces
+      .map((f, idx) => {
+        const zAvg = (verts3D[f[0]].z + verts3D[f[1]].z + verts3D[f[2]].z) / 3;
+        return { f, idx, zAvg };
+      })
+      .sort((a, b) => a.zAvg - b.zAvg);
+
+    ctx.save();
+    ctx.translate(center.x, center.y);
+
+    // Volumetric glow behind crystal
+    const glow = ctx.createRadialGradient(0, 0, 2, 0, 0, r * 2.2);
+    glow.addColorStop(0, palette.glow);
+    glow.addColorStop(1, "rgb(255 255 255 / 0%)");
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 2.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tilted 3D orbital ring
+    ctx.strokeStyle = palette.ring;
+    ctx.lineWidth = 2.2 * center.scale;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * 1.55, r * 0.48, Math.sin(time * 0.8) * 0.25, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Render 3D shaded crystal triangles
+    for (const item of sorted) {
+      const [i0, i1, i2] = item.f;
+      const v0 = verts3D[i0];
+      const v1 = verts3D[i1];
+      const v2 = verts3D[i2];
+      const shade = item.zAvg > 0
+        ? (item.idx < 4 ? palette.light : palette.mid)
+        : palette.dark;
+      ctx.fillStyle = shade;
+      ctx.strokeStyle = "rgb(255 255 255 / 55%)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(v0.x, v0.y);
+      ctx.lineTo(v1.x, v1.y);
+      ctx.lineTo(v2.x, v2.y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  };
+
+  const draw3DFloatingIsland = (ctx, wx, wy, wz, rx, ry, rockDepth, time, palette, viewCenterX, viewCenterY) => {
+    const floatZ = wz + Math.sin(time * 1.5 + wx * 0.008) * 12;
+    const topP = project3D(wx, wy, floatZ, viewCenterX, viewCenterY);
+    const tipP = project3D(wx, wy + 18, floatZ - rockDepth, viewCenterX, viewCenterY);
+    const w = rx * topP.scale;
+    const h = ry * topP.scale;
+
+    ctx.save();
+    // 3D Faceted underside rock cone (3 shaded facets)
+    const leftX = topP.x - w;
+    const rightX = topP.x + w;
+    const midLeftX = topP.x - w * 0.32;
+    const midRightX = topP.x + w * 0.36;
+    const rimY = topP.y + h * 0.15;
+
+    ctx.fillStyle = palette.rockLeft;
+    ctx.beginPath();
+    ctx.moveTo(leftX, rimY);
+    ctx.lineTo(midLeftX, topP.y + h * 0.85);
+    ctx.lineTo(tipP.x, tipP.y);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = palette.rockCenter;
+    ctx.beginPath();
+    ctx.moveTo(midLeftX, topP.y + h * 0.85);
+    ctx.lineTo(midRightX, topP.y + h * 0.82);
+    ctx.lineTo(tipP.x, tipP.y);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = palette.rockRight;
+    ctx.beginPath();
+    ctx.moveTo(midRightX, topP.y + h * 0.82);
+    ctx.lineTo(rightX, rimY);
+    ctx.lineTo(tipP.x, tipP.y);
+    ctx.closePath();
+    ctx.fill();
+
+    // Top 3D plateau deck
+    ctx.fillStyle = palette.topRim;
+    ctx.beginPath();
+    ctx.ellipse(topP.x, topP.y + 4 * topP.scale, w, h, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = palette.topGrass;
+    ctx.beginPath();
+    ctx.ellipse(topP.x, topP.y, w * 0.96, h * 0.9, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tiny 3D obelisk spire on the floating island
+    ctx.fillStyle = palette.spireLight;
+    ctx.beginPath();
+    ctx.moveTo(topP.x - 8 * topP.scale, topP.y);
+    ctx.lineTo(topP.x, topP.y - 34 * topP.scale);
+    ctx.lineTo(topP.x, topP.y + 3 * topP.scale);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = palette.spireDark;
+    ctx.beginPath();
+    ctx.moveTo(topP.x + 8 * topP.scale, topP.y);
+    ctx.lineTo(topP.x, topP.y - 34 * topP.scale);
+    ctx.lineTo(topP.x, topP.y + 3 * topP.scale);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  };
+
+  const draw3DPerspectiveGrid = (ctx, startY, endY, strokeColor, viewCenterX) => {
+    ctx.save();
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = 1.4;
+    const vanishX = viewCenterX;
+    const vanishY = startY - 240;
+
+    // Converging 3D depth rays
+    for (let gx = -400; gx <= WORLD.width + 400; gx += 120) {
+      ctx.beginPath();
+      ctx.moveTo(gx, endY);
+      ctx.lineTo(vanishX + (gx - vanishX) * 0.36, startY);
+      ctx.stroke();
+    }
+
+    // Perspective horizontal depth slices (closer spacing near horizon)
+    const steps = 7;
+    for (let s = 1; s <= steps; s++) {
+      const t = Math.pow(s / steps, 1.45);
+      const y = startY + (endY - startY) * t;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(WORLD.width, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  };
+
+  const draw3DMountainRange = (ctx, peaks, baseY, litColor, shadowColor, ridgeColor, viewCenterX, viewCenterY) => {
+    ctx.save();
+    ctx.lineJoin = "round";
+    for (const [px, py, pz, halfWidth] of peaks) {
+      const apex = project3D(px, py, pz, viewCenterX, viewCenterY);
+      const leftBase = project3D(px - halfWidth, baseY, 0, viewCenterX, viewCenterY);
+      const rightBase = project3D(px + halfWidth, baseY, 0, viewCenterX, viewCenterY);
+      const ridgeFoot = project3D(px + halfWidth * 0.14, baseY, 0, viewCenterX, viewCenterY);
+
+      // Sunlit left 3D triangle face
+      ctx.fillStyle = litColor;
+      ctx.beginPath();
+      ctx.moveTo(leftBase.x, leftBase.y);
+      ctx.lineTo(apex.x, apex.y);
+      ctx.lineTo(ridgeFoot.x, ridgeFoot.y);
+      ctx.closePath();
+      ctx.fill();
+
+      // Shadowed right 3D triangle face
+      ctx.fillStyle = shadowColor;
+      ctx.beginPath();
+      ctx.moveTo(apex.x, apex.y);
+      ctx.lineTo(rightBase.x, rightBase.y);
+      ctx.lineTo(ridgeFoot.x, ridgeFoot.y);
+      ctx.closePath();
+      ctx.fill();
+
+      // Crisp 3D ridge edge highlight
+      ctx.strokeStyle = ridgeColor;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(apex.x, apex.y);
+      ctx.lineTo(ridgeFoot.x, ridgeFoot.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  };
+
+  const drawSkyAtmosphere = (ctx, time, cloudColor, birdColor, viewCenterX, viewCenterY) => {
+    ctx.save();
+    // 3D depth-projected drifting clouds at Z=150
     for (let i = 0; i < 6; i++) {
       const speed = 10 + (i % 3) * 6;
-      const cx = ((i * 310 + time * speed) % (WORLD.width + 360)) - 180;
-      const cy = 78 + (i % 4) * 52 + Math.sin(time * 0.7 + i) * 5;
-      const scale = 0.75 + (i % 3) * 0.25;
+      const wx = ((i * 310 + time * speed) % (WORLD.width + 360)) - 180;
+      const wy = 190 + (i % 4) * 52 + Math.sin(time * 0.7 + i) * 5;
+      const p = project3D(wx, wy, 140, viewCenterX, viewCenterY);
+      const scale = (0.75 + (i % 3) * 0.25) * p.scale;
       ctx.fillStyle = cloudColor;
       ctx.beginPath();
-      ctx.arc(cx, cy, 34 * scale, 0, Math.PI * 2);
-      ctx.arc(cx + 28 * scale, cy - 10 * scale, 42 * scale, 0, Math.PI * 2);
-      ctx.arc(cx + 64 * scale, cy - 4 * scale, 32 * scale, 0, Math.PI * 2);
-      ctx.arc(cx + 90 * scale, cy + 6 * scale, 24 * scale, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, 34 * scale, 0, Math.PI * 2);
+      ctx.arc(p.x + 28 * scale, p.y - 10 * scale, 42 * scale, 0, Math.PI * 2);
+      ctx.arc(p.x + 64 * scale, p.y - 4 * scale, 32 * scale, 0, Math.PI * 2);
+      ctx.arc(p.x + 90 * scale, p.y + 6 * scale, 24 * scale, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Soaring animated birds
+    // Soaring birds in 3D sky plane
     ctx.strokeStyle = birdColor;
     ctx.lineWidth = 2.2;
     ctx.lineCap = "round";
     for (let b = 0; b < 5; b++) {
       const bx = ((b * 350 + time * (26 + b * 4)) % (WORLD.width + 200)) - 100;
-      const by = 115 + (b % 3) * 48 + Math.sin(time * 1.8 + b * 2) * 14;
-      const flap = Math.sin(time * 7.5 + b * 1.7) * 7;
+      const by = 225 + (b % 3) * 48 + Math.sin(time * 1.8 + b * 2) * 14;
+      const p = project3D(bx, by, 175, viewCenterX, viewCenterY);
+      const flap = Math.sin(time * 7.5 + b * 1.7) * 7 * p.scale;
       ctx.beginPath();
-      ctx.moveTo(bx - 11, by - flap);
-      ctx.quadraticCurveTo(bx - 5, by - 4, bx, by);
-      ctx.quadraticCurveTo(bx + 5, by - 4, bx + 11, by - flap);
+      ctx.moveTo(p.x - 11 * p.scale, p.y - flap);
+      ctx.quadraticCurveTo(p.x - 5 * p.scale, p.y - 4 * p.scale, p.x, p.y);
+      ctx.quadraticCurveTo(p.x + 5 * p.scale, p.y - 4 * p.scale, p.x + 11 * p.scale, p.y - flap);
       ctx.stroke();
     }
     ctx.restore();
   };
 
   const drawBackground = (ctx, zone, time) => {
+    const cameraX = Math.max(0, Math.min(WORLD.width - WORLD.viewWidth, state.position.x - WORLD.viewWidth / 2));
+    const cameraY = Math.max(0, Math.min(WORLD.height - WORLD.viewHeight, state.position.y - WORLD.viewHeight / 2));
+    const viewCenterX = cameraX + WORLD.viewWidth / 2;
+    const viewCenterY = cameraY + WORLD.viewHeight / 2;
+
     const sky = {
-      neon_pier: ["#4fc2da", "#b8f1e7"],
-      palm_grove: ["#7ec996", "#e4eda6"],
-      loot_canyon: ["#8db1b8", "#e6b878"],
-      sunset_ridge: ["#e98979", "#f9d68b"],
+      neon_pier: ["#359ec4", "#b8f1e7"],
+      palm_grove: ["#68b888", "#e4eda6"],
+      loot_canyon: ["#6e95a3", "#e6b878"],
+      sunset_ridge: ["#d97478", "#f9d68b"],
     }[zone] || ["#78d8ea", "#d9f8f2"];
     const gradient = ctx.createLinearGradient(0, 0, 0, WORLD.height);
     gradient.addColorStop(0, sky[0]);
@@ -1148,34 +1451,69 @@
     ctx.fillRect(0, 0, WORLD.width, WORLD.height);
 
     if (zone === "neon_pier") {
-      ctx.fillStyle = "#42bfd0";
-      ctx.fillRect(0, 0, WORLD.width, WORLD.height);
-      for (let index = 0; index < 19; index++) {
-        const y = 35 + index * 38;
+      // 3D Perspective Ocean Plane
+      const oceanGrad = ctx.createLinearGradient(0, 0, 0, 500);
+      oceanGrad.addColorStop(0, "#2487ab");
+      oceanGrad.addColorStop(1, "#4fd4df");
+      ctx.fillStyle = oceanGrad;
+      ctx.fillRect(0, 0, WORLD.width, 500);
+
+      for (let index = 0; index < 14; index++) {
+        const y = 45 + index * 32;
         ctx.globalAlpha = 0.26 + Math.sin(time * 2.6 + index) * 0.1;
-        ctx.strokeStyle = index % 2 ? "#eafffc" : "#b6fbf1";
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = index % 2 ? "#eafffc" : "#9cf8ff";
+        ctx.lineWidth = 2.5 + (index / 14) * 2;
         ctx.beginPath();
         for (let x = 0; x <= WORLD.width; x += 42) {
-          const waveY = y + Math.sin(x * 0.009 + time * 1.9 + index) * 7;
+          const waveY = y + Math.sin(x * 0.009 + time * 1.9 + index) * (4 + index * 0.25);
           if (x === 0) ctx.moveTo(x, waveY);
           else ctx.lineTo(x, waveY);
         }
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
-      drawSkyAtmosphere(ctx, time, "rgb(255 255 255 / 22%)", "rgb(27 78 84 / 45%)");
-      ctx.fillStyle = "#276e70";
-      ctx.beginPath();
-      ctx.ellipse(360, 248, 280, 96, -0.05, 0, Math.PI * 2);
-      ctx.ellipse(1240, 220, 330, 110, 0.04, 0, Math.PI * 2);
-      ctx.fill();
 
-      // Bobbing boats on animated water
+      drawSkyAtmosphere(ctx, time, "rgb(255 255 255 / 26%)", "rgb(22 68 78 / 48%)", viewCenterX, viewCenterY);
+
+      // 3D Floating Islands in the distant bay
+      const bayIslandPalette = {
+        rockLeft: "#276972",
+        rockCenter: "#1d525a",
+        rockRight: "#153d44",
+        topRim: "#9ee8c8",
+        topGrass: "#46a883",
+        spireLight: "#80f8ff",
+        spireDark: "#38a3b8",
+      };
+      draw3DFloatingIsland(ctx, 360, 290, 145, 135, 34, 95, time, bayIslandPalette, viewCenterX, viewCenterY);
+      draw3DFloatingIsland(ctx, 1240, 270, 165, 155, 38, 110, time + 1.4, bayIslandPalette, viewCenterX, viewCenterY);
+
+      // 3D Rotating Holographic Crystal Beacon over the water
+      draw3DRotatingCrystal(
+        ctx,
+        800,
+        290,
+        150,
+        28,
+        46,
+        time,
+        1.5,
+        {
+          glow: "rgb(128 248 255 / 45%)",
+          ring: "rgb(255 120 195 / 80%)",
+          light: "#d4fcff",
+          mid: "#6beeff",
+          dark: "#269cb8",
+        },
+        viewCenterX,
+        viewCenterY
+      );
+
+      // Bobbing boats
       for (const [bx, by, bs, bc, phase] of [
-        [440, 335, 0.86, "#e47859", 0],
-        [935, 305, 1.12, "#315d8a", 1.7],
-        [1450, 372, 0.7, "#f2c96f", 3.1],
+        [440, 345, 0.86, "#e47859", 0],
+        [935, 315, 1.12, "#315d8a", 1.7],
+        [1450, 382, 0.7, "#f2c96f", 3.1],
       ]) {
         ctx.save();
         ctx.translate(bx, by + Math.sin(time * 2.3 + phase) * 5);
@@ -1184,23 +1522,37 @@
         ctx.restore();
       }
 
+      // 3D Extruded Pier Pilings & Boardwalk Deck
       for (const postX of [120, 330, 550, 770, 990, 1210, 1430, 1570]) {
-        ctx.fillStyle = "#684a3d";
-        ctx.fillRect(postX - 7, 430, 14, 300);
+        draw3DBox(
+          ctx,
+          postX - 9,
+          650,
+          18,
+          24,
+          68,
+          { top: "#8c624e", front: "#684a3d", side: "#4e362c" },
+          viewCenterX,
+          viewCenterY
+        );
       }
+
       drawStiltHut(ctx, 245, 455, 0.9);
       drawStiltHut(ctx, 1135, 420, 1.08);
       drawStiltHut(ctx, 690, 360, 0.68);
-      ctx.fillStyle = "#a96849";
-      ctx.fillRect(0, 475, WORLD.width, 195);
-      ctx.fillStyle = "#d38d5f";
-      for (let x = 0; x < WORLD.width; x += 73) {
-        ctx.fillRect(x, 475, 6, 195);
-      }
-      ctx.fillStyle = "#f2bd78";
-      for (let y = 485; y < 670; y += 39) ctx.fillRect(0, y, WORLD.width, 4);
+
+      // 3D Pier Platform with front thickness edge
+      ctx.fillStyle = "#b57252";
+      ctx.fillRect(0, 475, WORLD.width, 185);
+      ctx.fillStyle = "#7a4933";
+      ctx.fillRect(0, 660, WORLD.width, 22);
+      draw3DPerspectiveGrid(ctx, 475, 660, "rgb(255 215 162 / 34%)", viewCenterX);
+
+      // Sandy beach with 3D perspective contour lines
       ctx.fillStyle = "#dfc47f";
       ctx.fillRect(0, 760, WORLD.width, 240);
+      draw3DPerspectiveGrid(ctx, 760, 1000, "rgb(184 146 74 / 26%)", viewCenterX);
+
       for (const palmX of [65, 380, 745, 1115, 1510]) {
         ctx.save();
         ctx.translate(palmX, 895);
@@ -1208,6 +1560,7 @@
         drawPalm(ctx, 0, 0, 0.54, "#398b68");
         ctx.restore();
       }
+
       ctx.save();
       ctx.setLineDash([17, 15]);
       ctx.lineDashOffset = -time * 28;
@@ -1220,14 +1573,49 @@
     } else if (zone === "palm_grove") {
       ctx.fillStyle = "#74ba72";
       ctx.fillRect(0, 0, WORLD.width, WORLD.height);
-      drawSkyAtmosphere(ctx, time, "rgb(255 255 240 / 24%)", "rgb(45 84 52 / 44%)");
-      ctx.fillStyle = "#8dc778";
-      for (let index = 0; index < 8; index++) {
-        const sway = Math.sin(time * 1.4 + index) * 8;
-        ctx.beginPath();
-        ctx.ellipse(index * 230 + 30 + sway, 205 + (index % 2) * 38, 190, 115, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      drawSkyAtmosphere(ctx, time, "rgb(255 255 240 / 26%)", "rgb(45 84 52 / 46%)", viewCenterX, viewCenterY);
+
+      // 3D Faceted Emerald Hills in background
+      draw3DMountainRange(
+        ctx,
+        [
+          [180, 320, 145, 230],
+          [560, 310, 175, 260],
+          [1040, 310, 185, 270],
+          [1440, 320, 155, 240],
+        ],
+        335,
+        "#8fd17d",
+        "#5ca163",
+        "#b6eb9b",
+        viewCenterX,
+        viewCenterY
+      );
+
+      // 3D Floating Sanctuary Island
+      draw3DFloatingIsland(
+        ctx,
+        240,
+        275,
+        175,
+        115,
+        28,
+        82,
+        time + 0.8,
+        {
+          rockLeft: "#7c6b53",
+          rockCenter: "#61533f",
+          rockRight: "#493e2e",
+          topRim: "#b5e68e",
+          topGrass: "#67b868",
+          spireLight: "#ffe680",
+          spireDark: "#c79a3b",
+        },
+        viewCenterX,
+        viewCenterY
+      );
+
+      // Curved stone pathway with 3D perspective tiles
       ctx.fillStyle = "#d1bb86";
       ctx.beginPath();
       ctx.moveTo(0, 690);
@@ -1238,58 +1626,76 @@
       ctx.bezierCurveTo(440, 1010, 250, 785, 0, 940);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = "#8c7458";
-      ctx.fillRect(450, 235, 700, 15);
-      ctx.fillStyle = "#ceb990";
-      ctx.fillRect(485, 250, 630, 198);
-      ctx.fillStyle = "#b39a73";
-      ctx.fillRect(505, 260, 590, 18);
-      ctx.fillRect(500, 425, 600, 22);
-      ctx.fillStyle = "#6b7760";
-      ctx.fillRect(530, 278, 540, 142);
-      for (const columnX of [540, 624, 716, 810, 904, 990, 1065]) {
-        ctx.fillStyle = "#d6c29a";
-        ctx.fillRect(columnX, 278, 17, 144);
-        ctx.fillStyle = "#a88d69";
-        ctx.fillRect(columnX - 5, 278, 27, 10);
-        ctx.fillRect(columnX - 5, 412, 27, 10);
+      draw3DPerspectiveGrid(ctx, 480, 980, "rgb(96 124 72 / 18%)", viewCenterX);
+
+      // 3D Extruded Ancient Temple Back Wall & Roof Entablature
+      draw3DBox(
+        ctx,
+        485,
+        360,
+        630,
+        85,
+        135,
+        { top: "#dfd0ad", front: "#7c876e", side: "#5e6852" },
+        viewCenterX,
+        viewCenterY
+      );
+
+      // 3D Extruded Temple Columns
+      const colPalette = { top: "#efe3c6", front: "#d6c29a", side: "#a88d69" };
+      for (const columnX of [535, 620, 712, 806, 900, 986, 1062]) {
+        draw3DBox(ctx, columnX, 412, 22, 26, 126, colPalette, viewCenterX, viewCenterY);
       }
-      ctx.strokeStyle = "#d7c49b";
-      ctx.lineWidth = 20;
-      for (const archX of [670, 855, 1018]) {
-        ctx.beginPath();
-        ctx.moveTo(archX - 36, 421);
-        ctx.lineTo(archX - 36, 334);
-        ctx.arc(archX, 334, 36, Math.PI, 0);
-        ctx.lineTo(archX + 36, 421);
-        ctx.stroke();
-      }
-      // Glowing ancient energy runes inside temple arches
+
+      // 3D Extruded Temple Roof Beam
+      draw3DBox(
+        ctx,
+        462,
+        396,
+        676,
+        46,
+        24,
+        { top: "#e8d9b7", front: "#c4ae84", side: "#967d58" },
+        viewCenterX,
+        viewCenterY
+      );
+
+      // 3D Rotating Energy Crystals hovering inside temple bays
       for (const [idx, archX] of [670, 855, 1018].entries()) {
-        const pulse = 0.35 + Math.sin(time * 2.5 + idx * 1.4) * 0.2;
-        ctx.fillStyle = `rgb(142 255 214 / ${Math.round(pulse * 100)}%)`;
-        ctx.beginPath();
-        ctx.arc(archX, 365 + Math.sin(time * 2 + idx) * 6, 12, 0, Math.PI * 2);
-        ctx.fill();
+        draw3DRotatingCrystal(
+          ctx,
+          archX,
+          428,
+          68,
+          18,
+          30,
+          time + idx * 1.1,
+          1.7,
+          {
+            glow: "rgb(142 255 214 / 45%)",
+            ring: "rgb(255 224 120 / 85%)",
+            light: "#d9ffef",
+            mid: "#7cf5c4",
+            dark: "#369c77",
+          },
+          viewCenterX,
+          viewCenterY
+        );
       }
-      ctx.fillStyle = "#987b58";
-      for (const block of [
-        [457, 250, 66, 25], [540, 216, 118, 20], [735, 230, 56, 22],
-        [944, 218, 68, 23], [1058, 246, 94, 24], [478, 438, 160, 20],
-        [705, 438, 136, 20], [897, 438, 216, 20],
-      ]) ctx.fillRect(...block);
+
       drawWatchtower(ctx, 1330, 390);
       for (const crateX of [320, 1260]) {
-        drawRoundRect(ctx, crateX - 31, 625, 62, 54, 7, "#a97845", "#62573e");
-        ctx.strokeStyle = "#e3c484";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(crateX - 22, 634, 44, 36);
-        ctx.beginPath();
-        ctx.moveTo(crateX - 22, 634);
-        ctx.lineTo(crateX + 22, 670);
-        ctx.moveTo(crateX + 22, 634);
-        ctx.lineTo(crateX - 22, 670);
-        ctx.stroke();
+        draw3DBox(
+          ctx,
+          crateX - 30,
+          645,
+          60,
+          42,
+          44,
+          { top: "#d6a468", front: "#a97845", side: "#7d5630" },
+          viewCenterX,
+          viewCenterY
+        );
       }
       for (let index = 0; index < 6; index++) {
         const px = 105 + index * 265;
@@ -1301,154 +1707,214 @@
         ctx.restore();
       }
     } else if (zone === "loot_canyon") {
-      ctx.fillStyle = "#8a9b91";
+      ctx.fillStyle = "#829692";
       ctx.fillRect(0, 0, WORLD.width, WORLD.height);
-      drawSkyAtmosphere(ctx, time, "rgb(255 248 232 / 22%)", "rgb(52 68 68 / 45%)");
+      drawSkyAtmosphere(ctx, time, "rgb(255 248 232 / 24%)", "rgb(52 68 68 / 48%)", viewCenterX, viewCenterY);
+
+      // 3D Canyon Cliffs in background
+      draw3DMountainRange(
+        ctx,
+        [
+          [160, 310, 195, 220],
+          [800, 290, 215, 310],
+          [1440, 310, 200, 230],
+        ],
+        340,
+        "#94a69e",
+        "#617370",
+        "#c2d1c4",
+        viewCenterX,
+        viewCenterY
+      );
+
+      // 3D Perspective Foundry Floor
       ctx.fillStyle = "#b8aa87";
       ctx.fillRect(0, 715, WORLD.width, 285);
-      ctx.fillStyle = "#d0bd91";
-      ctx.fillRect(0, 755, WORLD.width, 7);
-      ctx.fillRect(0, 940, WORLD.width, 7);
-      for (let x = 70; x < WORLD.width; x += 200) {
-        ctx.fillStyle = "rgb(65 79 75 / 23%)";
-        ctx.fillRect(x, 770, 95, 4);
-      }
-      ctx.fillStyle = "#586a68";
-      ctx.fillRect(255, 170, 1090, 290);
-      ctx.fillStyle = "#71827a";
-      ctx.fillRect(282, 200, 1035, 232);
-      ctx.fillStyle = "#3e5052";
-      ctx.fillRect(320, 248, 170, 150);
-      ctx.fillRect(548, 248, 170, 150);
-      ctx.fillRect(776, 248, 170, 150);
-      ctx.fillRect(1004, 248, 270, 150);
-      ctx.fillStyle = "#31484d";
-      ctx.fillRect(282, 423, 1035, 18);
-      ctx.strokeStyle = "#d2b37b";
-      ctx.lineWidth = 12;
-      ctx.beginPath();
-      ctx.moveTo(230, 200);
-      ctx.lineTo(1370, 200);
-      ctx.moveTo(310, 168);
-      ctx.lineTo(310, 445);
-      ctx.moveTo(1290, 168);
-      ctx.lineTo(1290, 445);
-      for (let x = 310; x < 1280; x += 160) {
-        ctx.moveTo(x, 200);
-        ctx.lineTo(x + 80, 265);
-        ctx.lineTo(x + 160, 200);
-      }
-      ctx.stroke();
+      draw3DPerspectiveGrid(ctx, 715, 1000, "rgb(65 79 75 / 26%)", viewCenterX);
 
-      // Animated overhead crane trolley & warning lights
+      // 3D Extruded Skycrate Foundry Building
+      draw3DBox(
+        ctx,
+        260,
+        365,
+        1080,
+        75,
+        185,
+        { top: "#879991", front: "#586a68", side: "#3e5052" },
+        viewCenterX,
+        viewCenterY
+      );
+
+      // Recessed foundry bays
+      const bayWall = project3D(285, 438, 0, viewCenterX, viewCenterY);
+      const bayTop = project3D(285, 438, 155, viewCenterX, viewCenterY);
+      ctx.fillStyle = "#394b4d";
+      for (const [bx, bw] of [[320, 170], [548, 170], [776, 170], [1004, 270]]) {
+        ctx.fillRect(bx, bayTop.y + 18, bw, bayWall.y - bayTop.y - 18);
+      }
+
+      // 3D Overhead Crane Trolley
       const trolleyX = 800 + Math.sin(time * 0.7) * 420;
-      ctx.fillStyle = "#f3b844";
-      ctx.fillRect(trolleyX - 28, 186, 56, 22);
-      ctx.strokeStyle = "#2c3a3e";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(trolleyX, 208);
-      ctx.lineTo(trolleyX, 255 + Math.sin(time * 2.2) * 8);
-      ctx.stroke();
-      const beaconAlpha = 0.4 + Math.abs(Math.sin(time * 4)) * 0.6;
-      ctx.fillStyle = `rgb(255 88 114 / ${Math.round(beaconAlpha * 100)}%)`;
-      ctx.beginPath();
-      ctx.arc(310, 160, 9, 0, Math.PI * 2);
-      ctx.arc(1290, 160, 9, 0, Math.PI * 2);
-      ctx.fill();
+      draw3DBox(
+        ctx,
+        trolleyX - 30,
+        420,
+        60,
+        30,
+        24,
+        { top: "#ffd875", front: "#f3b844", side: "#b88224" },
+        viewCenterX,
+        viewCenterY
+      );
 
       ctx.fillStyle = "#edf0d0";
       ctx.font = "900 23px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("SKYCRATE WORKS", 800, 235);
-      drawCargoContainer(ctx, 74, 536, 262, 158, "#d46f55");
-      drawCargoContainer(ctx, 368, 592, 265, 117, "#4f8e98");
-      drawCargoContainer(ctx, 1025, 535, 260, 155, "#d7aa55");
-      drawCargoContainer(ctx, 1320, 590, 205, 121, "#637bb0");
+      ctx.fillText("SKYCRATE WORKS", 800, bayTop.y + 12);
+
+      // 3D Extruded Shipping Containers
+      draw3DBox(ctx, 74, 625, 250, 70, 92, { top: "#eb8b73", front: "#d46f55", side: "#9c4935" }, viewCenterX, viewCenterY);
+      draw3DBox(ctx, 368, 650, 255, 65, 76, { top: "#6db0ba", front: "#4f8e98", side: "#34646c" }, viewCenterX, viewCenterY);
+      draw3DBox(ctx, 1025, 625, 250, 70, 92, { top: "#ecc474", front: "#d7aa55", side: "#9e7731" }, viewCenterX, viewCenterY);
+      draw3DBox(ctx, 1320, 650, 200, 65, 78, { top: "#829ad1", front: "#637bb0", side: "#425580" }, viewCenterX, viewCenterY);
+
+      // 3D Rotating Plasma Crystal Core in canyon center
+      draw3DRotatingCrystal(
+        ctx,
+        830,
+        615,
+        55,
+        24,
+        40,
+        time,
+        1.8,
+        {
+          glow: "rgb(210 140 255 / 46%)",
+          ring: "rgb(255 79 163 / 85%)",
+          light: "#f6e3ff",
+          mid: "#c97aff",
+          dark: "#753aa6",
+        },
+        viewCenterX,
+        viewCenterY
+      );
+
       drawHazardBarrel(ctx, 220, 720);
       drawHazardBarrel(ctx, 670, 695, "#cc6550");
       drawHazardBarrel(ctx, 930, 735);
       drawHazardBarrel(ctx, 1450, 750, "#cc6550");
       drawCrystalCover(ctx, 730, 585);
       drawCrystalCover(ctx, 935, 620);
-      ctx.fillStyle = "#a26b4c";
-      for (const crateX of [415, 812, 1180]) {
-        drawRoundRect(ctx, crateX - 23, 725, 46, 38, 5, "#a26b4c", "#5e554a");
-        ctx.strokeStyle = "#e2bc78";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(crateX - 15, 732, 30, 23);
-      }
-      ctx.fillStyle = "rgb(255 255 255 / 22%)";
-      ctx.beginPath();
-      ctx.ellipse(800, 860, 680, 44, 0, 0, Math.PI * 2);
-      ctx.fill();
     } else {
-      // Sunset Ridge / Solstice Bellspire — rich animated sky, rotating sunbeams, drifting mist & petals
+      // Sunset Ridge / Solstice Bellspire — Full 3D Volumetric Peaks, Floating Sky Islands & 3D Solar Core
       const sunsetGrad = ctx.createLinearGradient(0, 0, 0, WORLD.height);
-      sunsetGrad.addColorStop(0, "#e5837c");
-      sunsetGrad.addColorStop(0.55, "#f3b178");
+      sunsetGrad.addColorStop(0, "#df797c");
+      sunsetGrad.addColorStop(0.52, "#f2ad77");
       sunsetGrad.addColorStop(1, "#f7d48b");
       ctx.fillStyle = sunsetGrad;
       ctx.fillRect(0, 0, WORLD.width, WORLD.height);
 
-      const sunX = 1295 + Math.sin(time * 0.25) * 14;
-      const sunY = 155 + Math.cos(time * 0.2) * 6;
+      const sunPos = project3D(1295, 240, 180, viewCenterX, viewCenterY);
 
-      // Rotating sunbeams / god rays
+      // Rotating volumetric sunbeams
       ctx.save();
-      ctx.translate(sunX, sunY);
+      ctx.translate(sunPos.x, sunPos.y);
       ctx.rotate(time * 0.08);
       for (let r = 0; r < 12; r++) {
         ctx.rotate((Math.PI * 2) / 12);
-        const rayGrad = ctx.createLinearGradient(0, 0, 0, 680);
-        rayGrad.addColorStop(0, "rgb(255 244 185 / 24%)");
+        const rayGrad = ctx.createLinearGradient(0, 0, 0, 720);
+        rayGrad.addColorStop(0, "rgb(255 244 185 / 26%)");
         rayGrad.addColorStop(1, "rgb(255 210 130 / 0%)");
         ctx.fillStyle = rayGrad;
         ctx.beginPath();
         ctx.moveTo(-18, 0);
         ctx.lineTo(18, 0);
-        ctx.lineTo(68, 680);
-        ctx.lineTo(-68, 680);
+        ctx.lineTo(74, 720);
+        ctx.lineTo(-74, 720);
         ctx.closePath();
         ctx.fill();
       }
       ctx.restore();
 
-      // Pulsing solar halo & core
+      // Pulsing 3D Solar Halo & Tilted Orbital Rings
       const pulseRadius = 128 + Math.sin(time * 1.8) * 12;
-      const sun = ctx.createRadialGradient(sunX, sunY, 16, sunX, sunY, pulseRadius);
+      const sun = ctx.createRadialGradient(sunPos.x, sunPos.y, 16, sunPos.x, sunPos.y, pulseRadius);
       sun.addColorStop(0, "rgb(255 252 210 / 98%)");
       sun.addColorStop(0.45, "rgb(255 224 140 / 55%)");
       sun.addColorStop(1, "rgb(255 210 111 / 0%)");
       ctx.fillStyle = sun;
       ctx.beginPath();
-      ctx.arc(sunX, sunY, pulseRadius, 0, Math.PI * 2);
+      ctx.arc(sunPos.x, sunPos.y, pulseRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      drawSkyAtmosphere(ctx, time, "rgb(255 236 218 / 28%)", "rgb(98 54 68 / 48%)");
-
-      // Distant mountain peaks
-      ctx.fillStyle = "#bd7b74";
+      ctx.save();
+      ctx.translate(sunPos.x, sunPos.y);
+      ctx.strokeStyle = "rgb(255 245 190 / 48%)";
+      ctx.lineWidth = 2.4;
       ctx.beginPath();
-      ctx.moveTo(0, 580);
-      ctx.lineTo(220, 255);
-      ctx.lineTo(470, 535);
-      ctx.lineTo(700, 190);
-      ctx.lineTo(975, 545);
-      ctx.lineTo(1240, 235);
-      ctx.lineTo(1600, 515);
-      ctx.lineTo(1600, 760);
-      ctx.lineTo(0, 760);
-      ctx.closePath();
-      ctx.fill();
+      ctx.ellipse(0, 0, 118, 32, -0.24 + Math.sin(time * 0.5) * 0.06, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
 
-      // Animated drifting valley mist ribbons between back & front mountains
+      drawSkyAtmosphere(ctx, time, "rgb(255 236 218 / 28%)", "rgb(98 54 68 / 48%)", viewCenterX, viewCenterY);
+
+      // Far 3D Low-Poly Faceted Mountain Range
+      draw3DMountainRange(
+        ctx,
+        [
+          [210, 560, 310, 260],
+          [700, 560, 375, 310],
+          [1240, 560, 330, 285],
+        ],
+        560,
+        "#cf887e",
+        "#9f6166",
+        "#f7be9c",
+        viewCenterX,
+        viewCenterY
+      );
+
+      // 3D Floating Sky Islands in the Sunset Sky
+      const sunsetIslandPalette = {
+        rockLeft: "#9c626c",
+        rockCenter: "#784956",
+        rockRight: "#593441",
+        topRim: "#f7ce88",
+        topGrass: "#e39c6b",
+        spireLight: "#fff3b8",
+        spireDark: "#e09f48",
+      };
+      draw3DFloatingIsland(ctx, 440, 335, 195, 115, 28, 86, time, sunsetIslandPalette, viewCenterX, viewCenterY);
+      draw3DFloatingIsland(ctx, 1020, 315, 210, 128, 30, 94, time + 1.9, sunsetIslandPalette, viewCenterX, viewCenterY);
+
+      // Rotating 3D Solar Crystal hovering above the ridge
+      draw3DRotatingCrystal(
+        ctx,
+        440,
+        335,
+        245,
+        20,
+        34,
+        time,
+        1.6,
+        {
+          glow: "rgb(255 224 120 / 48%)",
+          ring: "rgb(255 110 175 / 85%)",
+          light: "#fffbe0",
+          mid: "#ffd269",
+          dark: "#c97d28",
+        },
+        viewCenterX,
+        viewCenterY
+      );
+
+      // Drifting valley mist between far and near 3D mountains
       for (let m = 0; m < 4; m++) {
         const mx = ((m * 430 + time * (22 + m * 6)) % (WORLD.width + 500)) - 250;
-        const my = 430 + m * 48 + Math.sin(time * 1.1 + m) * 8;
+        const my = 480 + m * 42 + Math.sin(time * 1.1 + m) * 8;
         const mistGrad = ctx.createLinearGradient(mx - 180, my, mx + 180, my);
         mistGrad.addColorStop(0, "rgb(255 236 214 / 0%)");
-        mistGrad.addColorStop(0.5, "rgb(255 236 214 / 26%)");
+        mistGrad.addColorStop(0.5, "rgb(255 236 214 / 28%)");
         mistGrad.addColorStop(1, "rgb(255 236 214 / 0%)");
         ctx.fillStyle = mistGrad;
         ctx.beginPath();
@@ -1456,48 +1922,35 @@
         ctx.fill();
       }
 
-      // Foreground mountain ridge
-      ctx.fillStyle = "#8d6772";
-      ctx.beginPath();
-      ctx.moveTo(0, 665);
-      ctx.lineTo(285, 470);
-      ctx.lineTo(500, 688);
-      ctx.lineTo(735, 450);
-      ctx.lineTo(1000, 690);
-      ctx.lineTo(1240, 465);
-      ctx.lineTo(1510, 680);
-      ctx.lineTo(1600, 640);
-      ctx.lineTo(1600, 1000);
-      ctx.lineTo(0, 1000);
-      ctx.closePath();
-      ctx.fill();
+      // Near 3D Low-Poly Mountain Range
+      draw3DMountainRange(
+        ctx,
+        [
+          [285, 720, 235, 275],
+          [735, 720, 255, 290],
+          [1240, 720, 240, 285],
+        ],
+        720,
+        "#9e737c",
+        "#73505c",
+        "#d49b96",
+        viewCenterX,
+        viewCenterY
+      );
 
-      // Golden ridge terrain
+      // Golden 3D Ridge Terrain with Perspective Depth Lines
       ctx.fillStyle = "#d7b979";
       ctx.beginPath();
-      ctx.moveTo(0, 770);
-      ctx.quadraticCurveTo(360, 665, 700, 805);
-      ctx.quadraticCurveTo(1090, 950, 1600, 760);
+      ctx.moveTo(0, 755);
+      ctx.quadraticCurveTo(360, 665, 700, 795);
+      ctx.quadraticCurveTo(1090, 935, 1600, 750);
       ctx.lineTo(1600, 1000);
       ctx.lineTo(0, 1000);
       ctx.closePath();
       ctx.fill();
+      draw3DPerspectiveGrid(ctx, 735, 1000, "rgb(168 124 58 / 26%)", viewCenterX);
 
-      // Animated wind & shimmer lines along the golden ground
-      ctx.strokeStyle = "rgb(255 242 204 / 52%)";
-      ctx.lineWidth = 4;
-      for (let i = 0; i < 16; i++) {
-        const wx = ((i * 115 + time * 42) % (WORLD.width + 120)) - 60;
-        const wy = 805 + (i % 4) * 24;
-        ctx.beginPath();
-        ctx.moveTo(wx, wy);
-        ctx.lineTo(wx + 62, wy);
-        ctx.stroke();
-      }
-      ctx.fillStyle = "rgb(255 244 189 / 24%)";
-      ctx.fillRect(0, 732, WORLD.width, 8);
-
-      // Floating sakura & golden energy petals drifting diagonally
+      // Floating sakura & golden energy petals
       for (let p = 0; p < 22; p++) {
         const px = ((p * 89 + time * (34 + (p % 4) * 9)) % (WORLD.width + 80)) - 40;
         const py = ((p * 67 + time * (16 + (p % 3) * 6) + Math.sin(time * 2 + p) * 18) % 860) + 40;
@@ -1512,14 +1965,16 @@
       }
     }
 
-    // Ambient glowing energy motes across all zones
-    for (let index = 0; index < 26; index++) {
-      const x = (index * 97 + time * (14 + (index % 6) * 4) + Math.sin(time * 1.4 + index) * 14) % WORLD.width;
-      const y = 75 + ((index * 67 + Math.cos(time * 1.2 + index) * 22) % 780);
+    // Ambient 3D depth-projected energy motes
+    for (let index = 0; index < 24; index++) {
+      const wx = (index * 97 + time * (14 + (index % 6) * 4) + Math.sin(time * 1.4 + index) * 14) % WORLD.width;
+      const wy = 140 + ((index * 67 + Math.cos(time * 1.2 + index) * 22) % 720);
+      const wz = 20 + (index % 5) * 28;
+      const mp = project3D(wx, wy, wz, viewCenterX, viewCenterY);
       const alpha = 0.25 + Math.abs(Math.sin(time * 2.2 + index)) * 0.45;
       ctx.fillStyle = index % 3 === 0 ? `rgb(255 154 208 / ${Math.round(alpha * 100)}%)` : `rgb(255 255 240 / ${Math.round(alpha * 100)}%)`;
       ctx.beginPath();
-      ctx.arc(x, y, 2.2 + (index % 3) * 1.1, 0, Math.PI * 2);
+      ctx.arc(mp.x, mp.y, (2.2 + (index % 3) * 1.1) * mp.scale, 0, Math.PI * 2);
       ctx.fill();
     }
   };
