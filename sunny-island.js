@@ -44,6 +44,40 @@
     loot_canyon: "Skycrate Foundry",
     sunset_ridge: "Solstice Bellspire",
   };
+  const ZONES_AR = {
+    neon_pier: "خليج الأكواخ المضيء",
+    palm_grove: "قصر أوراق التاج",
+    loot_canyon: "مصنع الصناديق المعلقة",
+    sunset_ridge: "برج جرس الانقلاب الشمسي",
+  };
+  const isArabic = () =>
+    document.documentElement.lang?.toLowerCase().startsWith("ar") ||
+    document.documentElement.dir === "rtl";
+
+  const zoneName = (zone) => (isArabic() ? ZONES_AR[zone] : ZONES[zone]) || zone;
+
+  const OBJECTIVE_TEXT_AR = {
+    find_relic: "اعثر على البوصلة الذهبية في وادي الغنائم",
+    collect_drops: "اجمع ثلاث قطرات شمسية في بستان النخيل",
+    reach_sunset_ridge: "اوصل إلى نقطة المراقبة في قمة الغروب",
+    activate_beacons: "فعّل المنارتين القديمتين في الرصيف المضيء",
+  };
+
+  const translateObjectiveText = (objective) => {
+    if (!isArabic()) {
+      return objective.description || objective.id.replaceAll("_", " ");
+    }
+    if (objective.id && OBJECTIVE_TEXT_AR[objective.id]) {
+      return OBJECTIVE_TEXT_AR[objective.id];
+    }
+    const raw = String(objective.description || "").trim();
+    const lower = raw.toLowerCase();
+    if (lower.includes("golden compass")) return OBJECTIVE_TEXT_AR.find_relic;
+    if (lower.includes("sunny drops") || lower.includes("three sunny")) return OBJECTIVE_TEXT_AR.collect_drops;
+    if (lower.includes("lookout") || lower.includes("sunset ridge")) return OBJECTIVE_TEXT_AR.reach_sunset_ridge;
+    if (lower.includes("beacon")) return OBJECTIVE_TEXT_AR.activate_beacons;
+    return raw || objective.id.replaceAll("_", " ");
+  };
   const PORTALS = {
     neon_pier: [
       { x: 1475, y: 565, zone: "palm_grove", label: "Follow the boardwalk to Crownleaf Manor" },
@@ -356,6 +390,7 @@
   };
 
   const renderProgress = () => {
+    const ar = isArabic();
     const lvlInfo = levelProgressFromXp(state.progress.xp);
     const level = Math.max(1, lvlInfo.level);
     const levelNode = document.querySelector("[data-level]");
@@ -372,7 +407,9 @@
     const attempts = document.querySelector("[data-attempts]");
     const rewardNode = document.querySelector("[data-reward]");
     if (attempts) {
-      attempts.textContent = `Daily adventures: ${state.adventure.attempts_remaining_today} / ${state.adventure.free_attempts_per_day} left`;
+      attempts.textContent = ar
+        ? `المغامرات اليومية: ${state.adventure.attempts_remaining_today} / ${state.adventure.free_attempts_per_day} متبقية`
+        : `Daily adventures: ${state.adventure.attempts_remaining_today} / ${state.adventure.free_attempts_per_day} left`;
     }
     if (rewardNode) {
       rewardNode.textContent = state.authenticated
@@ -384,42 +421,53 @@
     startButton.disabled = !state.authenticated || state.busy
       || state.adventure.attempts_remaining_today < 1
       || Boolean(state.session && ["started", "in_progress"].includes(state.session.status));
-    startButton.textContent = state.session && ["started", "in_progress"].includes(state.session.status)
-      ? "Adventure in Progress"
-      : state.adventure.attempts_remaining_today > 0
-        ? "Start Daily Adventure"
-        : "Daily Runs Used";
+    if (state.session && ["started", "in_progress"].includes(state.session.status)) {
+      startButton.textContent = ar ? "المغامرة جارية الآن" : "Adventure in Progress";
+    } else if (state.adventure.attempts_remaining_today > 0) {
+      startButton.textContent = ar ? "ابدأ مغامرة اليوم" : "Start Daily Adventure";
+    } else {
+      startButton.textContent = ar ? "انتهت محاولات اليوم" : "Daily Runs Used";
+    }
     renderCodex();
     renderObjectives();
   };
 
   const renderObjectives = () => {
+    const ar = isArabic();
     objectivesNode.replaceChildren();
     const title = document.querySelector("[data-quest-title]");
     const subtitle = document.querySelector("[data-quest-subtitle]");
     if (!state.session || !["started", "in_progress"].includes(state.session.status)) {
-      if (title) title.textContent = "Free Roam";
-      if (subtitle) subtitle.textContent = "Pick up treasures and explore every zone.";
+      if (title) title.textContent = ar ? "تجوال حر" : "Free Roam";
+      if (subtitle) {
+        subtitle.textContent = ar
+          ? "اجمع الكنوز واستكشف كل المناطق."
+          : "Pick up treasures and explore every zone.";
+      }
       const empty = document.createElement("p");
       empty.className = "sunny-empty-objectives";
       empty.textContent = state.authenticated
-        ? "Start a daily adventure to reveal your three island objectives."
-        : "Sign in to save discoveries and start a daily adventure.";
+        ? (ar ? "ابدأ مغامرة يومية لكشف أهدافك الثلاثة في الجزيرة." : "Start a daily adventure to reveal your three island objectives.")
+        : (ar ? "سجّل الدخول لحفظ اكتشافاتك وبدء مغامرة يومية." : "Sign in to save discoveries and start a daily adventure.");
       objectivesNode.append(empty);
       if (state.authenticated && state.adventure.attempts_remaining_today > 0) {
         const quickStart = document.createElement("button");
         quickStart.type = "button";
         quickStart.className = "sunny-main-button";
         quickStart.style.marginTop = "0.75rem";
-        quickStart.textContent = "Reveal Today's 3 Objectives";
+        quickStart.textContent = ar ? "اكشف أهداف اليوم الثلاثة" : "Reveal Today's 3 Objectives";
         quickStart.addEventListener("click", () => void startAdventure());
         objectivesNode.append(quickStart);
       }
       completeButton.hidden = true;
       return;
     }
-    if (title) title.textContent = "Today's Adventure";
-    if (subtitle) subtitle.textContent = "Explore the island and finish each server-assigned objective.";
+    if (title) title.textContent = ar ? "مغامرة اليوم" : "Today's Adventure";
+    if (subtitle) {
+      subtitle.textContent = ar
+        ? "استكشف الجزيرة وأكمل كل هدف محدد من الخادم."
+        : "Explore the island and finish each server-assigned objective.";
+    }
     const objectives = Array.isArray(state.session.objectives) ? state.session.objectives : [];
     for (const objective of objectives) {
       const row = document.createElement("div");
@@ -429,9 +477,9 @@
       check.textContent = objective.completed ? "✓" : "•";
       const copy = document.createElement("span");
       const titleText = document.createElement("strong");
-      titleText.textContent = objective.description || objective.id.replaceAll("_", " ");
+      titleText.textContent = translateObjectiveText(objective);
       const zoneText = document.createElement("small");
-      zoneText.textContent = ZONES[objective.zone] || objective.zone;
+      zoneText.textContent = zoneName(objective.zone);
       copy.append(titleText, zoneText);
       row.append(check, copy);
       objectivesNode.append(row);
@@ -439,6 +487,7 @@
     const complete = objectives.length > 0 && objectives.every((objective) => objective.completed);
     completeButton.hidden = !complete;
     completeButton.disabled = state.busy || !complete;
+    completeButton.textContent = ar ? "إكمال المغامرة واستلام المكافأة" : "Complete Adventure";
   };
 
   const renderCodex = () => {
@@ -732,7 +781,7 @@
     state.progress.discovered_zones = [...new Set([...state.progress.discovered_zones, zone])];
     renderMap();
     spawnBurst(state.position.x, state.position.y, "#fff5c3", 12);
-    toast(`Welcome to ${ZONES[zone]}!`, 2200);
+    toast(isArabic() ? `مرحباً بك في ${zoneName(zone)}!` : `Welcome to ${zoneName(zone)}!`, 2200);
     setStatus(`Entered ${ZONES[zone]}. Your location is being saved.`);
     await syncProgress({ discovered_zones: state.progress.discovered_zones });
     if (zone === "palm_grove" && state.progress.unlocked_collectibles.length >= 3) {
@@ -796,8 +845,8 @@
         const gState = getGuardianState(blocker);
         gState.hitFlashUntil = performance.now() + 260;
         spawnBurst(blocker.x, blocker.y - 35, "#ff5a8a", 12);
-        toast(`Defeat ${blocker.name} first! Press F or click to shoot.`, 2600);
-        addFloatingText(blocker.x, blocker.y - 96, "DEFEAT GUARDIAN FIRST!", "#ff9ec2");
+        toast(isArabic() ? `اهزم حارس البوابة أولاً! اضغط F أو انقر لإطلاق شعاع العصا.` : `Defeat ${blocker.name} first! Press F or click to shoot.`, 2600);
+        addFloatingText(blocker.x, blocker.y - 96, isArabic() ? "اهزم الحارس أولاً!" : "DEFEAT GUARDIAN FIRST!", "#ff9ec2");
         return;
       }
       await enterZone(item.zone);
@@ -2595,7 +2644,7 @@
             spawnBurst(guardian.x, guardian.y - 36, "#ff4fa3", 32);
             spawnBurst(guardian.x, guardian.y - 36, "#ffd866", 28);
             addFloatingText(guardian.x, guardian.y - 75, "GUARDIAN DEFEATED! ★", "#fff5b8");
-            toast(`${guardian.name} defeated! The portal is now open!`, 3400);
+            toast(isArabic() ? `تمت هزيمة الحارس وفتح البوابة!` : `${guardian.name} defeated! The portal is now open!`, 3400);
             updateInteraction();
           } else {
             playCombatTone("hit");
@@ -3485,6 +3534,11 @@
   state.codex = initialCatalog;
   setAvatar(state.avatarId);
   loadImages(initialCatalog);
+  const langObserver = new MutationObserver(() => {
+    renderProgress();
+    renderMap();
+  });
+  langObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["lang", "dir"] });
   renderProgress();
   renderMap();
   state.animationFrame = requestAnimationFrame(renderFrame);
