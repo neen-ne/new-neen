@@ -1668,3 +1668,24 @@ html[dir="rtl"] .sunny-avatar-picker select {
     margin-inline-start: 0;
   }
 }
+
+
+/* === CLEAR ABSOLUTE SITE-HEADER (88px DESKTOP / 70px MOBILE) === */
+.sunny-page {
+  padding-top: 112px;
+}
+
+html[dir="rtl"] .sunny-intro h1 {
+  line-height: 1.24;
+  padding-top: 4px;
+}
+
+html[dir="rtl"] .sunny-intro-copy {
+  text-align: right;
+}
+
+@media (max-width: 760px) {
+  .sunny-page {
+    padding-top: 90px;
+  }
+}
