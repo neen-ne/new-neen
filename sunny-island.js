@@ -100,8 +100,8 @@
       id: "guardian_ridge",
       zone: "sunset_ridge",
       portalZone: null,
-      x: 1185,
-      y: 455,
+      x: 960,
+      y: 690,
       maxHp: 4,
       name: "Solstice Ember Boss",
       theme: "solar",
@@ -1100,25 +1100,23 @@
     ctx.stroke();
   };
 
-  // === BALANCED 3D PARALLAX & VOLUMETRIC DIORAMA ENGINE ===
+  // === POLISHED 3D PARALLAX & SEAMLESS VOLUMETRIC WORLD ===
   const parallaxShift = (wx, depthFactor, viewCenterX) =>
     (viewCenterX - wx) * depthFactor;
 
   const draw3DBlock = (ctx, x, y, w, h, depthX, depthY, palette, viewCenterX) => {
-    const shiftX = parallaxShift(x + w * 0.5, 0.045, viewCenterX);
+    const shiftX = parallaxShift(x + w * 0.5, 0.04, viewCenterX);
     const dx = depthX + shiftX;
     const dy = -Math.abs(depthY);
 
     ctx.save();
     ctx.lineJoin = "round";
-    ctx.strokeStyle = palette.stroke || "rgb(34 28 50 / 32%)";
+    ctx.strokeStyle = palette.stroke || "rgb(34 28 50 / 28%)";
     ctx.lineWidth = 1.4;
 
-    // Ground shadow
-    ctx.fillStyle = "rgb(22 18 38 / 15%)";
+    ctx.fillStyle = "rgb(22 18 38 / 14%)";
     ctx.fillRect(x - 4, y + h - 3, w + 10, 8);
 
-    // Side 3D depth face (switches smoothly based on camera X)
     if (dx >= 0) {
       ctx.fillStyle = palette.side;
       ctx.beginPath();
@@ -1141,7 +1139,6 @@
       ctx.stroke();
     }
 
-    // Top 3D roof face
     ctx.fillStyle = palette.top;
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -1152,11 +1149,9 @@
     ctx.fill();
     ctx.stroke();
 
-    // Front face (anchored to exact map coordinates)
     ctx.fillStyle = palette.front;
     ctx.fillRect(x, y, w, h);
     ctx.strokeRect(x, y, w, h);
-
     ctx.restore();
   };
 
@@ -1193,12 +1188,12 @@
     ctx.save();
     ctx.translate(px, py);
 
-    const glow = ctx.createRadialGradient(0, 0, 2, 0, 0, radius * 2);
+    const glow = ctx.createRadialGradient(0, 0, 2, 0, 0, radius * 2.1);
     glow.addColorStop(0, palette.glow);
     glow.addColorStop(1, "rgb(255 255 255 / 0%)");
     ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(0, 0, radius * 2, 0, Math.PI * 2);
+    ctx.arc(0, 0, radius * 2.1, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.strokeStyle = palette.ring;
@@ -1226,120 +1221,179 @@
   };
 
   const draw3DFloatingIsland = (ctx, x, y, rx, ry, rockDepth, time, palette, viewCenterX) => {
-    const px = x + parallaxShift(x, 0.06, viewCenterX);
+    const px = x + parallaxShift(x, 0.055, viewCenterX);
     const py = y + Math.sin(time * 1.5 + x * 0.008) * 5;
     const tipY = py + rockDepth;
 
     ctx.save();
-    // 3-facet 3D rocky cone underside
+
+    // 1. Cascading waterfall / energy stream dripping below the floating cliff
+    const streamGrad = ctx.createLinearGradient(px, py + ry, px, tipY + 55);
+    streamGrad.addColorStop(0, "rgb(255 250 220 / 55%)");
+    streamGrad.addColorStop(1, "rgb(255 250 220 / 0%)");
+    ctx.fillStyle = streamGrad;
+    ctx.fillRect(px + rx * 0.22, py + ry * 0.5, 7, rockDepth + 48);
+
+    // 2. Multi-faceted 3D rocky crag underside
     ctx.fillStyle = palette.rockLeft;
     ctx.beginPath();
-    ctx.moveTo(px - rx, py + ry * 0.2);
-    ctx.lineTo(px - rx * 0.28, py + ry * 0.85);
-    ctx.lineTo(px, tipY);
+    ctx.moveTo(px - rx * 0.94, py + ry * 0.25);
+    ctx.lineTo(px - rx * 0.35, py + ry * 0.95);
+    ctx.lineTo(px - rx * 0.12, tipY * 0.98 + py * 0.02);
     ctx.closePath();
     ctx.fill();
 
     ctx.fillStyle = palette.rockCenter;
     ctx.beginPath();
-    ctx.moveTo(px - rx * 0.28, py + ry * 0.85);
-    ctx.lineTo(px + rx * 0.32, py + ry * 0.82);
-    ctx.lineTo(px, tipY);
+    ctx.moveTo(px - rx * 0.35, py + ry * 0.95);
+    ctx.lineTo(px + rx * 0.34, py + ry * 0.92);
+    ctx.lineTo(px + rx * 0.04, tipY);
+    ctx.lineTo(px - rx * 0.12, tipY * 0.98 + py * 0.02);
     ctx.closePath();
     ctx.fill();
 
     ctx.fillStyle = palette.rockRight;
     ctx.beginPath();
-    ctx.moveTo(px + rx * 0.32, py + ry * 0.82);
-    ctx.lineTo(px + rx, py + ry * 0.2);
-    ctx.lineTo(px, tipY);
+    ctx.moveTo(px + rx * 0.34, py + ry * 0.92);
+    ctx.lineTo(px + rx * 0.94, py + ry * 0.25);
+    ctx.lineTo(px + rx * 0.04, tipY);
     ctx.closePath();
     ctx.fill();
 
-    // 3D top deck rim & grass surface
+    // 3. Thick 3D cliff rim wall
+    ctx.fillStyle = palette.rockCenter;
+    ctx.beginPath();
+    ctx.ellipse(px, py + 7, rx, ry, 0, 0, Math.PI);
+    ctx.fill();
+
+    // 4. Lush 3D top plateau deck
     ctx.fillStyle = palette.topRim;
     ctx.beginPath();
-    ctx.ellipse(px, py + 3, rx, ry, 0, 0, Math.PI * 2);
+    ctx.ellipse(px, py + 2, rx, ry, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = palette.topGrass;
     ctx.beginPath();
-    ctx.ellipse(px, py, rx * 0.95, ry * 0.88, 0, 0, Math.PI * 2);
+    ctx.ellipse(px, py - 1, rx * 0.93, ry * 0.84, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 3D dual-shaded spire
+    // 5. Mini 3D Ruins / Foliage Cluster on top (instead of single needle)
+    ctx.fillStyle = palette.spireDark;
+    ctx.beginPath();
+    ctx.arc(px - rx * 0.35, py - 5, 11, 0, Math.PI * 2);
+    ctx.arc(px - rx * 0.2, py - 8, 9, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.fillStyle = palette.spireLight;
     ctx.beginPath();
-    ctx.moveTo(px - 6, py);
-    ctx.lineTo(px, py - 24);
-    ctx.lineTo(px, py + 2);
+    ctx.arc(px - rx * 0.37, py - 7, 9, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Small 3D floating crystal above the island
+    const cryY = py - 20 + Math.sin(time * 3 + x) * 3;
+    ctx.fillStyle = palette.spireLight;
+    ctx.beginPath();
+    ctx.moveTo(px + rx * 0.18, cryY - 12);
+    ctx.lineTo(px + rx * 0.18 - 7, cryY);
+    ctx.lineTo(px + rx * 0.18, cryY + 10);
     ctx.closePath();
     ctx.fill();
 
     ctx.fillStyle = palette.spireDark;
     ctx.beginPath();
-    ctx.moveTo(px + 6, py);
-    ctx.lineTo(px, py - 24);
-    ctx.lineTo(px, py + 2);
+    ctx.moveTo(px + rx * 0.18, cryY - 12);
+    ctx.lineTo(px + rx * 0.18 + 7, cryY);
+    ctx.lineTo(px + rx * 0.18, cryY + 10);
     ctx.closePath();
     ctx.fill();
+
     ctx.restore();
   };
 
   const draw3DMountainRange = (ctx, peaks, baseY, litColor, shadowColor, ridgeColor, depthFactor, viewCenterX) => {
     ctx.save();
     ctx.lineJoin = "round";
+
+    // Continuous mountain massif base extending deep below foreground terrain so bases NEVER float
+    const deepBottom = baseY + 180;
+    ctx.fillStyle = shadowColor;
+    ctx.beginPath();
+    ctx.moveTo(-120, deepBottom);
+    ctx.lineTo(-120, baseY - 35);
+    for (const [px, peakY, halfWidth] of peaks) {
+      const shift = parallaxShift(px, depthFactor, viewCenterX);
+      ctx.lineTo(px - halfWidth * 0.72 + shift * 0.4, baseY - 45);
+      ctx.lineTo(px + shift, peakY);
+      ctx.lineTo(px + halfWidth * 0.72 + shift * 0.4, baseY - 45);
+    }
+    ctx.lineTo(WORLD.width + 120, baseY - 35);
+    ctx.lineTo(WORLD.width + 120, deepBottom);
+    ctx.closePath();
+    ctx.fill();
+
+    // Sunlit & shadowed 3D faceted mountain peaks
     for (const [px, peakY, halfWidth] of peaks) {
       const shift = parallaxShift(px, depthFactor, viewCenterX);
       const apexX = px + shift;
-      const ridgeFootX = px + halfWidth * 0.12 + shift * 0.5;
+      const ridgeFootX = px + halfWidth * 0.1 + shift * 0.45;
 
-      // Sunlit left 3D face
+      // Sunlit left 3D slope
       ctx.fillStyle = litColor;
       ctx.beginPath();
-      ctx.moveTo(px - halfWidth, baseY);
+      ctx.moveTo(px - halfWidth, deepBottom);
       ctx.lineTo(apexX, peakY);
-      ctx.lineTo(ridgeFootX, baseY);
+      ctx.lineTo(ridgeFootX, deepBottom);
       ctx.closePath();
       ctx.fill();
 
-      // Shadowed right 3D face
+      // Shadowed right 3D slope
       ctx.fillStyle = shadowColor;
       ctx.beginPath();
       ctx.moveTo(apexX, peakY);
-      ctx.lineTo(px + halfWidth, baseY);
-      ctx.lineTo(ridgeFootX, baseY);
+      ctx.lineTo(px + halfWidth, deepBottom);
+      ctx.lineTo(ridgeFootX, deepBottom);
       ctx.closePath();
       ctx.fill();
 
-      // Crisp 3D ridge line
+      // Crisp 3D ridge highlight
       ctx.strokeStyle = ridgeColor;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(apexX, peakY);
-      ctx.lineTo(ridgeFootX, baseY);
+      ctx.lineTo(ridgeFootX, baseY + 20);
       ctx.stroke();
     }
+
+    // Soft atmospheric valley mist gradient blending the lower slopes
+    const mist = ctx.createLinearGradient(0, baseY - 60, 0, baseY + 80);
+    mist.addColorStop(0, "rgb(255 244 224 / 0%)");
+    mist.addColorStop(1, "rgb(255 236 208 / 26%)");
+    ctx.fillStyle = mist;
+    ctx.fillRect(0, baseY - 60, WORLD.width, 140);
+
     ctx.restore();
   };
 
   const draw3DPerspectiveGrid = (ctx, startY, endY, strokeColor, viewCenterX) => {
     ctx.save();
+    // Soft curved 3D terrain contour ribbons instead of harsh straight spiderweb lines
     ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = 1.2;
-    for (let gx = -320; gx <= WORLD.width + 320; gx += 130) {
-      ctx.beginPath();
-      ctx.moveTo(gx, endY);
-      ctx.lineTo(viewCenterX + (gx - viewCenterX) * 0.45, startY);
-      ctx.stroke();
-    }
-    const steps = 6;
-    for (let s = 1; s <= steps; s++) {
-      const t = Math.pow(s / steps, 1.4);
+    ctx.lineWidth = 2;
+    const bands = 4;
+    for (let b = 1; b <= bands; b++) {
+      const t = b / (bands + 1);
       const y = startY + (endY - startY) * t;
+      const waveOffset = parallaxShift(800, 0.03 * b, viewCenterX);
       ctx.beginPath();
       ctx.moveTo(0, y);
-      ctx.lineTo(WORLD.width, y);
+      ctx.bezierCurveTo(
+        420 + waveOffset,
+        y - 18,
+        1180 + waveOffset,
+        y + 18,
+        WORLD.width,
+        y - 6
+      );
       ctx.stroke();
     }
     ctx.restore();
@@ -1347,7 +1401,6 @@
 
   const drawSkyAtmosphere = (ctx, time, cloudColor, birdColor, viewCenterX) => {
     ctx.save();
-    // Clouds strictly in the upper sky band (y: 45..165)
     for (let i = 0; i < 6; i++) {
       const speed = 10 + (i % 3) * 5;
       const cx = ((i * 300 + time * speed) % (WORLD.width + 340)) - 170 + parallaxShift(i * 300, 0.05, viewCenterX);
@@ -1362,7 +1415,6 @@
       ctx.fill();
     }
 
-    // Birds strictly in the upper sky band (y: 75..185)
     ctx.strokeStyle = birdColor;
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
@@ -1396,7 +1448,6 @@
     ctx.fillRect(0, 0, WORLD.width, WORLD.height);
 
     if (zone === "neon_pier") {
-      // 1. Ocean plane (y: 0..475)
       const oceanGrad = ctx.createLinearGradient(0, 0, 0, 475);
       oceanGrad.addColorStop(0, "#2b94b8");
       oceanGrad.addColorStop(1, "#52d4df");
@@ -1420,7 +1471,6 @@
 
       drawSkyAtmosphere(ctx, time, "rgb(255 255 255 / 24%)", "rgb(22 68 78 / 45%)", viewCenterX);
 
-      // 2. Distant 3D Floating Islands cleanly in upper horizon (y: 165..175, away from stilt huts)
       const bayIslandPalette = {
         rockLeft: "#276972",
         rockCenter: "#1d525a",
@@ -1430,14 +1480,13 @@
         spireLight: "#80f8ff",
         spireDark: "#38a3b8",
       };
-      draw3DFloatingIsland(ctx, 430, 175, 92, 22, 54, time, bayIslandPalette, viewCenterX);
-      draw3DFloatingIsland(ctx, 1340, 165, 105, 24, 60, time + 1.4, bayIslandPalette, viewCenterX);
+      draw3DFloatingIsland(ctx, 430, 165, 92, 22, 54, time, bayIslandPalette, viewCenterX);
+      draw3DFloatingIsland(ctx, 1340, 155, 105, 24, 60, time + 1.4, bayIslandPalette, viewCenterX);
 
-      // 3. Rotating 3D Crystal floating in open sky center (860, 170)
       draw3DRotatingCrystal(
         ctx,
         860,
-        170,
+        165,
         20,
         32,
         time,
@@ -1452,7 +1501,6 @@
         viewCenterX
       );
 
-      // 4. Bobbing boats on open water
       for (const [bx, by, bs, bc, phase] of [
         [450, 325, 0.84, "#e47859", 0],
         [930, 295, 1.05, "#315d8a", 1.7],
@@ -1465,19 +1513,16 @@
         ctx.restore();
       }
 
-      // 5. Stilt huts & wooden boardwalk deck
       drawStiltHut(ctx, 245, 455, 0.9);
       drawStiltHut(ctx, 1135, 420, 1.05);
       drawStiltHut(ctx, 690, 360, 0.68);
 
-      // Boardwalk surface (y: 475..665) + 3D front thickness edge (y: 665..685)
       ctx.fillStyle = "#b57252";
       ctx.fillRect(0, 475, WORLD.width, 190);
       draw3DPerspectiveGrid(ctx, 475, 665, "rgb(255 215 162 / 32%)", viewCenterX);
       ctx.fillStyle = "#7a4933";
       ctx.fillRect(0, 665, WORLD.width, 20);
 
-      // 3D Pier support pilings cleanly UNDERNEATH the boardwalk front edge (y: 685..755)
       for (const postX of [120, 330, 550, 770, 990, 1210, 1430, 1570]) {
         draw3DBlock(
           ctx,
@@ -1492,7 +1537,6 @@
         );
       }
 
-      // 6. Sandy foreground beach (y: 760..1000)
       ctx.fillStyle = "#dfc47f";
       ctx.fillRect(0, 760, WORLD.width, 240);
       draw3DPerspectiveGrid(ctx, 760, 1000, "rgb(184 146 74 / 24%)", viewCenterX);
@@ -1508,7 +1552,7 @@
       ctx.save();
       ctx.setLineDash([17, 15]);
       ctx.lineDashOffset = -time * 28;
-      ctx.strokeStyle = `rgb(120 251 255 / ${45 + Math.sin(time * 2.4) * 12}%)`;
+      ctx.strokeStyle = "rgb(120 251 255 / " + (45 + Math.sin(time * 2.4) * 12) + "%)";
       ctx.lineWidth = 7;
       ctx.beginPath();
       ctx.ellipse(800, 510, 760, 455, 0, 0, Math.PI * 2);
@@ -1519,16 +1563,15 @@
       ctx.fillRect(0, 0, WORLD.width, WORLD.height);
       drawSkyAtmosphere(ctx, time, "rgb(255 255 240 / 24%)", "rgb(45 84 52 / 44%)", viewCenterX);
 
-      // 1. Soft 3D faceted emerald hills in upper background (y: 125..235)
       draw3DMountainRange(
         ctx,
         [
-          [160, 140, 190],
-          [420, 130, 210],
-          [1180, 130, 210],
-          [1460, 140, 190],
+          [160, 140, 220],
+          [480, 130, 240],
+          [1120, 130, 240],
+          [1460, 140, 220],
         ],
-        235,
+        245,
         "#8fd17d",
         "#5ca163",
         "#b6eb9b",
@@ -1536,7 +1579,6 @@
         viewCenterX
       );
 
-      // 2. Floating Sanctuary Island cleanly on far upper-left (200, 130)
       draw3DFloatingIsland(
         ctx,
         200,
@@ -1557,7 +1599,6 @@
         viewCenterX
       );
 
-      // 3. Winding stone path across the meadow
       ctx.fillStyle = "#d1bb86";
       ctx.beginPath();
       ctx.moveTo(0, 690);
@@ -1570,7 +1611,6 @@
       ctx.fill();
       draw3DPerspectiveGrid(ctx, 480, 980, "rgb(96 124 72 / 16%)", viewCenterX);
 
-      // 4. Ancient Temple in its exact original footprint (x: 485..1115, y: 245..445) with 3D depth
       draw3DBlock(
         ctx,
         485,
@@ -1583,7 +1623,6 @@
         viewCenterX
       );
 
-      // Temple top cornice & base plinth
       draw3DBlock(
         ctx,
         465,
@@ -1598,13 +1637,11 @@
       ctx.fillStyle = "#b39a73";
       ctx.fillRect(500, 425, 600, 20);
 
-      // 7 3D extruded columns cleanly aligned inside the temple
       const colPalette = { top: "#efe3c6", front: "#d6c29a", side: "#a88d69" };
       for (const columnX of [540, 624, 716, 810, 904, 990, 1065]) {
         draw3DBlock(ctx, columnX, 278, 17, 144, 7, 6, colPalette, viewCenterX);
       }
 
-      // 3 small rotating 3D energy crystals centered inside the temple bays
       for (const [idx, archX] of [670, 855, 1018].entries()) {
         draw3DRotatingCrystal(
           ctx,
@@ -1627,7 +1664,6 @@
 
       drawWatchtower(ctx, 1330, 390);
 
-      // 3D wooden crates in their exact original spots (320, 625) & (1260, 625)
       for (const crateX of [320, 1260]) {
         draw3DBlock(
           ctx,
@@ -1656,15 +1692,14 @@
       ctx.fillRect(0, 0, WORLD.width, WORLD.height);
       drawSkyAtmosphere(ctx, time, "rgb(255 248 232 / 22%)", "rgb(52 68 68 / 45%)", viewCenterX);
 
-      // 1. 3D Canyon Cliffs cleanly behind the factory roofline (y: 80..185)
       draw3DMountainRange(
         ctx,
         [
-          [170, 95, 190],
-          [800, 82, 260],
-          [1430, 95, 190],
+          [170, 95, 220],
+          [800, 82, 310],
+          [1430, 95, 220],
         ],
-        185,
+        195,
         "#94a69e",
         "#617370",
         "#c2d1c4",
@@ -1672,12 +1707,10 @@
         viewCenterX
       );
 
-      // 2. Foundry yard floor (y: 715..1000)
       ctx.fillStyle = "#b8aa87";
       ctx.fillRect(0, 715, WORLD.width, 285);
       draw3DPerspectiveGrid(ctx, 715, 1000, "rgb(65 79 75 / 24%)", viewCenterX);
 
-      // 3. Skycrate Works Factory in its exact original footprint (x: 260..1340, y: 175..440)
       draw3DBlock(
         ctx,
         260,
@@ -1690,7 +1723,6 @@
         viewCenterX
       );
 
-      // Inner factory bays
       ctx.fillStyle = "#71827a";
       ctx.fillRect(285, 202, 1030, 226);
       ctx.fillStyle = "#3e5052";
@@ -1700,7 +1732,6 @@
       ctx.fillStyle = "#31484d";
       ctx.fillRect(285, 422, 1030, 16);
 
-      // Animated overhead crane trolley on the factory roof beam
       const trolleyX = 800 + Math.sin(time * 0.7) * 420;
       draw3DBlock(
         ctx,
@@ -1719,13 +1750,11 @@
       ctx.textAlign = "center";
       ctx.fillText("SKYCRATE WORKS", 800, 234);
 
-      // 4. 3D Extruded Shipping Containers in their exact non-overlapping positions
       draw3DBlock(ctx, 74, 536, 250, 145, 18, 14, { top: "#eb8b73", front: "#d46f55", side: "#9c4935" }, viewCenterX);
       draw3DBlock(ctx, 368, 592, 255, 110, 16, 12, { top: "#6db0ba", front: "#4f8e98", side: "#34646c" }, viewCenterX);
       draw3DBlock(ctx, 1025, 535, 250, 145, 18, 14, { top: "#ecc474", front: "#d7aa55", side: "#9e7731" }, viewCenterX);
       draw3DBlock(ctx, 1320, 590, 200, 115, 16, 12, { top: "#829ad1", front: "#637bb0", side: "#425580" }, viewCenterX);
 
-      // Rotating 3D Plasma Crystal hovering cleanly above the center aisle (835, 488)
       draw3DRotatingCrystal(
         ctx,
         835,
@@ -1751,7 +1780,7 @@
       drawCrystalCover(ctx, 730, 585);
       drawCrystalCover(ctx, 935, 620);
     } else {
-      // Sunset Ridge / Solstice Bellspire — Clean 3D Low-Poly Mountains, Sky Islands & Solar Core
+      // Sunset Ridge / Solstice Bellspire — Seamless 3D Mountain Ranges & Floating Sky Islands
       const sunsetGrad = ctx.createLinearGradient(0, 0, 0, WORLD.height);
       sunsetGrad.addColorStop(0, "#df797c");
       sunsetGrad.addColorStop(0.52, "#f2ad77");
@@ -1762,7 +1791,6 @@
       const sunX = 1295 + parallaxShift(1295, 0.02, viewCenterX);
       const sunY = 148;
 
-      // Rotating sunbeams
       ctx.save();
       ctx.translate(sunX, sunY);
       ctx.rotate(time * 0.08);
@@ -1782,7 +1810,6 @@
       }
       ctx.restore();
 
-      // Pulsing 3D Solar Core & Orbital Ring
       const pulseRadius = 115 + Math.sin(time * 1.8) * 10;
       const sun = ctx.createRadialGradient(sunX, sunY, 15, sunX, sunY, pulseRadius);
       sun.addColorStop(0, "rgb(255 252 210 / 98%)");
@@ -1804,15 +1831,15 @@
 
       drawSkyAtmosphere(ctx, time, "rgb(255 236 218 / 26%)", "rgb(98 54 68 / 46%)", viewCenterX);
 
-      // 1. Far 3D Low-Poly Faceted Mountains (baseY: 575, peaks at y: 245, 195, 235)
+      // 1. Far 3D Low-Poly Mountains (deep base reaches behind near mountains)
       draw3DMountainRange(
         ctx,
         [
-          [220, 245, 260],
-          [700, 195, 290],
-          [1240, 235, 275],
+          [220, 245, 310],
+          [700, 195, 350],
+          [1240, 235, 325],
         ],
-        575,
+        580,
         "#cf887e",
         "#9f6166",
         "#f7be9c",
@@ -1820,7 +1847,7 @@
         viewCenterX
       );
 
-      // 2. Two compact 3D Floating Sky Islands cleanly in upper sky gaps (455, 155) & (975, 145)
+      // 2. Two detailed 3D Floating Sky Islands with foliage, crystal & waterfall
       const sunsetIslandPalette = {
         rockLeft: "#9c626c",
         rockCenter: "#784956",
@@ -1830,16 +1857,16 @@
         spireLight: "#fff3b8",
         spireDark: "#e09f48",
       };
-      draw3DFloatingIsland(ctx, 455, 155, 84, 20, 50, time, sunsetIslandPalette, viewCenterX);
-      draw3DFloatingIsland(ctx, 975, 145, 90, 21, 54, time + 1.9, sunsetIslandPalette, viewCenterX);
+      draw3DFloatingIsland(ctx, 455, 165, 86, 22, 54, time, sunsetIslandPalette, viewCenterX);
+      draw3DFloatingIsland(ctx, 975, 155, 92, 24, 58, time + 1.9, sunsetIslandPalette, viewCenterX);
 
       // 3. Drifting valley mist between far and near mountains
       for (let m = 0; m < 4; m++) {
         const mx = ((m * 430 + time * (22 + m * 6)) % (WORLD.width + 500)) - 250;
-        const my = 445 + m * 36 + Math.sin(time * 1.1 + m) * 6;
+        const my = 455 + m * 36 + Math.sin(time * 1.1 + m) * 6;
         const mistGrad = ctx.createLinearGradient(mx - 180, my, mx + 180, my);
         mistGrad.addColorStop(0, "rgb(255 236 214 / 0%)");
-        mistGrad.addColorStop(0.5, "rgb(255 236 214 / 26%)");
+        mistGrad.addColorStop(0.5, "rgb(255 236 214 / 28%)");
         mistGrad.addColorStop(1, "rgb(255 236 214 / 0%)");
         ctx.fillStyle = mistGrad;
         ctx.beginPath();
@@ -1847,15 +1874,15 @@
         ctx.fill();
       }
 
-      // 4. Near 3D Low-Poly Mountains (baseY: 710, peaks at y: 465, 445, 465)
+      // 4. Near 3D Low-Poly Mountains (deep base sinks smoothly BEHIND the golden terrain!)
       draw3DMountainRange(
         ctx,
         [
-          [285, 465, 270],
-          [735, 445, 285],
-          [1240, 465, 275],
+          [285, 465, 330],
+          [735, 445, 350],
+          [1240, 465, 335],
         ],
-        710,
+        750,
         "#9e737c",
         "#73505c",
         "#d49b96",
@@ -1863,7 +1890,7 @@
         viewCenterX
       );
 
-      // 5. Golden foreground ridge terrain (y: 745..1000)
+      // 5. Golden foreground ridge terrain drawn OVER mountain bases so zero gap ever appears
       ctx.fillStyle = "#d7b979";
       ctx.beginPath();
       ctx.moveTo(0, 755);
@@ -1873,9 +1900,18 @@
       ctx.lineTo(0, 1000);
       ctx.closePath();
       ctx.fill();
-      draw3DPerspectiveGrid(ctx, 735, 1000, "rgb(168 124 58 / 24%)", viewCenterX);
 
-      // Floating sakura & golden petals
+      // Sunlit rim highlight along the golden hill crest
+      ctx.strokeStyle = "rgb(255 243 196 / 65%)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, 755);
+      ctx.quadraticCurveTo(360, 665, 700, 795);
+      ctx.quadraticCurveTo(1090, 935, 1600, 750);
+      ctx.stroke();
+
+      draw3DPerspectiveGrid(ctx, 735, 1000, "rgb(168 124 58 / 22%)", viewCenterX);
+
       for (let p = 0; p < 20; p++) {
         const px = ((p * 89 + time * (34 + (p % 4) * 9)) % (WORLD.width + 80)) - 40;
         const py = ((p * 67 + time * (16 + (p % 3) * 6) + Math.sin(time * 2 + p) * 18) % 860) + 40;
@@ -1890,12 +1926,11 @@
       }
     }
 
-    // Ambient energy motes across all zones
     for (let index = 0; index < 22; index++) {
       const x = (index * 97 + time * (14 + (index % 6) * 4) + Math.sin(time * 1.4 + index) * 14) % WORLD.width;
       const y = 90 + ((index * 67 + Math.cos(time * 1.2 + index) * 20) % 740);
       const alpha = 0.25 + Math.abs(Math.sin(time * 2.2 + index)) * 0.42;
-      ctx.fillStyle = index % 3 === 0 ? `rgb(255 154 208 / ${Math.round(alpha * 100)}%)` : `rgb(255 255 240 / ${Math.round(alpha * 100)}%)`;
+      ctx.fillStyle = index % 3 === 0 ? "rgb(255 154 208 / " + Math.round(alpha * 100) + "%)" : "rgb(255 255 240 / " + Math.round(alpha * 100) + "%)";
       ctx.beginPath();
       ctx.arc(x, y, 2 + (index % 3) * 1, 0, Math.PI * 2);
       ctx.fill();
@@ -2814,17 +2849,23 @@
     ctx.moveTo(4, -2);
     ctx.lineTo(32, -13);
     ctx.stroke();
-    // Glowing 4-point star tip on the wand
+    // Large radiant Starlight Wand head & halo ring
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(38, -14, 9.5, 0, Math.PI * 2);
+    ctx.stroke();
+
     ctx.fillStyle = trim;
     ctx.beginPath();
-    ctx.moveTo(36, -15);
-    ctx.lineTo(39, -20);
-    ctx.lineTo(41, -14);
-    ctx.lineTo(46, -12);
-    ctx.lineTo(40, -10);
-    ctx.lineTo(38, -5);
-    ctx.lineTo(36, -11);
-    ctx.lineTo(31, -13);
+    for (let sp = 0; sp < 10; sp++) {
+      const r = sp % 2 === 0 ? 10 : 4.2;
+      const a = (sp * Math.PI) / 5 - Math.PI / 2;
+      const sx = 38 + Math.cos(a) * r;
+      const sy = -14 + Math.sin(a) * r;
+      if (sp === 0) ctx.moveTo(sx, sy);
+      else ctx.lineTo(sx, sy);
+    }
     ctx.closePath();
     ctx.fill();
     ctx.shadowBlur = 0;
@@ -3074,7 +3115,7 @@
     ctx.fill();
 
     // Heroic scale & dynamic forward lean
-    const heroScale = 1.18;
+    const heroScale = 1.26;
     ctx.scale(squashX * heroScale, squashY * heroScale);
     ctx.scale(facingSign, 1);
     if (moving || dashActive) {
