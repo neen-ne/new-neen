@@ -11,6 +11,7 @@ final class OwnerDashboard
     {
         $from = gmdate('Y-m-d 00:00:00', time() - 29 * 86400);
         $today = gmdate('Y-m-d 23:59:59');
+        $now = gmdate('Y-m-d H:i:s');
         $counts = [
             'users_total' => $this->count('SELECT COUNT(*) FROM users'),
             'users_new_30d' => $this->count('SELECT COUNT(*) FROM users WHERE created_at >= :from', ['from' => $from]),
@@ -31,8 +32,11 @@ final class OwnerDashboard
             ),
             'events_active' => $this->count(
                 "SELECT COUNT(*) FROM community_events
-                 WHERE status = 'published' AND starts_at <= :now AND ends_at > :now",
-                ['now' => gmdate('Y-m-d H:i:s')],
+                 WHERE status = 'published' AND starts_at <= :starts_at AND ends_at > :ends_at",
+                [
+                    'starts_at' => $now,
+                    'ends_at' => $now,
+                ],
             ),
             'events_total' => $this->count('SELECT COUNT(*) FROM community_events'),
             'event_votes_total' => $this->count('SELECT COUNT(*) FROM community_event_votes'),
