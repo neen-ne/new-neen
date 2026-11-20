@@ -211,23 +211,18 @@ abstract class ChallengeGame
     protected function transaction(callable $operation): mixed
     {
         $startedHere = !$this->db->inTransaction();
-        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
         if ($startedHere) {
-            $driver === 'sqlite' ? $this->db->exec('BEGIN IMMEDIATE') : $this->db->beginTransaction();
+            $this->db->beginTransaction();
         }
         try {
             $result = $operation();
             if ($startedHere) {
-                $driver === 'sqlite' ? $this->db->exec('COMMIT') : $this->db->commit();
+                $this->db->commit();
             }
             return $result;
         } catch (Throwable $exception) {
-            if ($startedHere) {
-                if ($driver === 'sqlite') {
-                    $this->db->exec('ROLLBACK');
-                } elseif ($this->db->inTransaction()) {
-                    $this->db->rollBack();
-                }
+            if ($startedHere && $this->db->inTransaction()) {
+                $this->db->rollBack();
             }
             throw $exception;
         }

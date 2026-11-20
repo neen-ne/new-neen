@@ -1,8 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/src/EnvLoader.php';
-EnvLoader::load(dirname(__DIR__) . '/.env');
+require_once __DIR__ . '/bootstrap.php';
 
 require_once __DIR__ . '/src/ApiException.php';
 require_once __DIR__ . '/src/Database.php';

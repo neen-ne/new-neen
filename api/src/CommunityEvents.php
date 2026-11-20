@@ -714,24 +714,18 @@ final class CommunityEvents
     private function transaction(callable $operation): mixed
     {
         $startedHere = !$this->db->inTransaction();
-        if ($startedHere && $this->driver() === 'sqlite') {
-            $this->db->exec('BEGIN IMMEDIATE');
-        } elseif ($startedHere) {
+        if ($startedHere) {
             $this->db->beginTransaction();
         }
         try {
             $result = $operation();
             if ($startedHere) {
-                $this->driver() === 'sqlite' ? $this->db->exec('COMMIT') : $this->db->commit();
+                $this->db->commit();
             }
             return $result;
         } catch (Throwable $exception) {
-            if ($startedHere) {
-                if ($this->driver() === 'sqlite') {
-                    $this->db->exec('ROLLBACK');
-                } elseif ($this->db->inTransaction()) {
-                    $this->db->rollBack();
-                }
+            if ($startedHere && $this->db->inTransaction()) {
+                $this->db->rollBack();
             }
             throw $exception;
         }

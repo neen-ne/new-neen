@@ -3,10 +3,62 @@ declare(strict_types=1);
 
 final class EnvLoader
 {
+    public static function loadForProject(string $projectRoot): void
+    {
+        $resolvedProjectRoot = realpath($projectRoot);
+        if ($resolvedProjectRoot === false) {
+            throw new RuntimeException('Application directory could not be resolved.');
+        }
+
+        $publicDirectory = dirname($resolvedProjectRoot);
+        $isCpanelDocumentRoot = strtolower(basename($publicDirectory)) === 'public_html';
+        if ($isCpanelDocumentRoot) {
+            $externalEnvironmentFile = dirname($publicDirectory)
+                . DIRECTORY_SEPARATOR
+                . basename($resolvedProjectRoot)
+                . DIRECTORY_SEPARATOR
+                . '.env';
+            if (file_exists($externalEnvironmentFile) || is_link($externalEnvironmentFile)) {
+                $resolvedEnvironmentFile = realpath($externalEnvironmentFile);
+                if (
+                    $resolvedEnvironmentFile !== false
+                    && str_starts_with(
+                        $resolvedEnvironmentFile,
+                        $resolvedProjectRoot . DIRECTORY_SEPARATOR,
+                    )
+                ) {
+                    throw new RuntimeException('External environment file must be outside the public directory.');
+                }
+
+                self::load($externalEnvironmentFile);
+                return;
+            }
+        }
+
+        if ($isCpanelDocumentRoot || self::isProductionEnvironment()) {
+            return;
+        }
+
+        self::load($resolvedProjectRoot . DIRECTORY_SEPARATOR . '.env');
+    }
+
+    private static function isProductionEnvironment(): bool
+    {
+        $environment = getenv('APP_ENV');
+        if ($environment === false) {
+            $environment = $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? null;
+        }
+
+        return is_string($environment) && strtolower(trim($environment)) === 'production';
+    }
+
     public static function load(string $path): void
     {
-        if (!is_file($path) || !is_readable($path)) {
+        if (!file_exists($path)) {
             return;
+        }
+        if (!is_file($path) || !is_readable($path)) {
+            throw new RuntimeException('Environment file is not a readable regular file.');
         }
 
         $lines = file($path, FILE_IGNORE_NEW_LINES);

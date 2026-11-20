@@ -11,7 +11,7 @@ This phase establishes the production-ready database and hosting configuration r
 
 ## Deployment configuration
 
-Copy `.env.example` to `.env` and provide the actual values for the hosting environment. Do not commit `.env` or any production secrets.
+For local development, copy `.env.example` to the project root as `.env`. On cPanel, select PHP 8.3 in MultiPHP Manager and place the configured `.env` outside the document root. For a document root of `~/public_html/neeng.cc/`, the loader checks `~/neeng.cc/.env` first and only uses the project-root `.env` as a local fallback. Restrict the external file to the hosting account owner (for example, mode `600` where supported). Never commit `.env` or production secrets.
 
 Required variables:
 

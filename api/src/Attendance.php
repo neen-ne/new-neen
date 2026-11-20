@@ -250,29 +250,17 @@ final class Attendance
     {
         $startedHere = !$this->db->inTransaction();
         if ($startedHere) {
-            if ($this->driver() === 'sqlite') {
-                $this->db->exec('BEGIN IMMEDIATE');
-            } else {
-                $this->db->beginTransaction();
-            }
+            $this->db->beginTransaction();
         }
         try {
             $result = $operation();
             if ($startedHere) {
-                if ($this->driver() === 'sqlite') {
-                    $this->db->exec('COMMIT');
-                } else {
-                    $this->db->commit();
-                }
+                $this->db->commit();
             }
             return $result;
         } catch (Throwable $exception) {
-            if ($startedHere) {
-                if ($this->driver() === 'sqlite') {
-                    $this->db->exec('ROLLBACK');
-                } elseif ($this->db->inTransaction()) {
-                    $this->db->rollBack();
-                }
+            if ($startedHere && $this->db->inTransaction()) {
+                $this->db->rollBack();
             }
             throw $exception;
         }

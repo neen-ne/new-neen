@@ -11,6 +11,10 @@ Options -Indexes
     Require all denied
 </Files>
 
+<Files "bootstrap.php">
+    Require all denied
+</Files>
+
 <FilesMatch "(?i)\.(?:sql|ini|log)$">
     Require all denied
 </FilesMatch>
