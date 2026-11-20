@@ -751,6 +751,10 @@ const arabicTranslations = {
   "Welcome to Sunny Island. Explore freely or start today's adventure.": "مرحبًا بك في جزيرة صني. استكشف بحرية أو ابدأ مغامرة اليوم.",
   "Start a game": "ابدأ اللعبة",
   "Game in progress": "اللعبة جارية",
+  "/ ACCOUNT": "/ الحساب",
+  "YOUR NEEN": "مركز",
+  "PLAYER HUB.": "اللاعب.",
+  "Sign in or create an account to track your games, player profile, and Coins wallet.": "سجّل الدخول أو أنشئ حسابًا لمتابعة ألعابك وملفك الشخصي ومحفظة الكوينز.",
 };
 
 const englishToArabic = new Map(Object.entries(arabicTranslations));

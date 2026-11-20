@@ -1,5 +1,11 @@
 .account-page {
-  padding-block: 42px 100px;
+  padding-block: clamp(118px, 13vw, 136px) 100px;
+}
+
+@media (max-width: 760px) {
+  .account-page {
+    padding-block: 98px 76px;
+  }
 }
 
 .account-intro {
