@@ -45,24 +45,28 @@
     sunset_ridge: "Solstice Bellspire",
   };
   const PORTALS = {
-    neon_pier: [{ x: 1490, y: 520, zone: "palm_grove", label: "Follow the boardwalk to Crownleaf Manor" }],
+    neon_pier: [
+      { x: 1475, y: 565, zone: "palm_grove", label: "Follow the boardwalk to Crownleaf Manor" },
+    ],
     palm_grove: [
-      { x: 85, y: 520, zone: "neon_pier", label: "Return to Moonlit Stilt Bay" },
-      { x: 1510, y: 510, zone: "loot_canyon", label: "Take the foundry road" },
+      { x: 115, y: 785, zone: "neon_pier", label: "Return to Moonlit Stilt Bay" },
+      { x: 1480, y: 665, zone: "loot_canyon", label: "Take the foundry road" },
     ],
     loot_canyon: [
-      { x: 85, y: 510, zone: "palm_grove", label: "Return to Crownleaf Manor" },
-      { x: 1510, y: 500, zone: "sunset_ridge", label: "Climb to Solstice Bellspire" },
+      { x: 115, y: 815, zone: "palm_grove", label: "Return to Crownleaf Manor" },
+      { x: 1480, y: 815, zone: "sunset_ridge", label: "Climb to Solstice Bellspire" },
     ],
-    sunset_ridge: [{ x: 85, y: 500, zone: "loot_canyon", label: "Descend to Skycrate Foundry" }],
+    sunset_ridge: [
+      { x: 140, y: 815, zone: "loot_canyon", label: "Descend to Skycrate Foundry" },
+    ],
   };
   const GUARDIANS = [
     {
       id: "guardian_pier",
       zone: "neon_pier",
       portalZone: "palm_grove",
-      x: 1355,
-      y: 525,
+      x: 1365,
+      y: 565,
       maxHp: 4,
       name: "Tideclaw Guardian",
       theme: "aqua",
@@ -74,8 +78,8 @@
       id: "guardian_grove",
       zone: "palm_grove",
       portalZone: "loot_canyon",
-      x: 1375,
-      y: 515,
+      x: 1370,
+      y: 665,
       maxHp: 4,
       name: "Stonebark Sentinel",
       theme: "forest",
@@ -87,8 +91,8 @@
       id: "guardian_canyon",
       zone: "loot_canyon",
       portalZone: "sunset_ridge",
-      x: 1375,
-      y: 505,
+      x: 1370,
+      y: 815,
       maxHp: 4,
       name: "Prism Crystal Titan",
       theme: "crystal",
@@ -99,9 +103,9 @@
     {
       id: "guardian_ridge",
       zone: "sunset_ridge",
-      portalZone: null,
-      x: 960,
-      y: 690,
+      portalZone: "loot_canyon",
+      x: 255,
+      y: 815,
       maxHp: 4,
       name: "Solstice Ember Boss",
       theme: "solar",
@@ -717,7 +721,12 @@
   };
 
   const enterZone = async (zone) => {
-    const entrance = { x: 790, y: 510 };
+    const entrance = {
+      neon_pier: { x: 240, y: 565 },
+      palm_grove: { x: 260, y: 785 },
+      loot_canyon: { x: 260, y: 815 },
+      sunset_ridge: { x: 780, y: 825 },
+    }[zone] || { x: 760, y: 780 };
     state.position = { zone, ...entrance };
     state.facing = zone === "neon_pier" ? { x: -1, y: 0 } : { x: 1, y: 0 };
     state.progress.discovered_zones = [...new Set([...state.progress.discovered_zones, zone])];
@@ -2108,36 +2117,57 @@
     const locked = Boolean(guardianBlockingPortal(state.position.zone, portal.zone));
     ctx.save();
     ctx.translate(portal.x, portal.y);
-    ctx.strokeStyle = locked ? "#ff6b9d" : "#fff1bd";
-    ctx.lineWidth = 7;
+
+    // Grounded 3D stone pedestal & shadow under the portal arch
+    ctx.fillStyle = "rgb(24 20 38 / 28%)";
     ctx.beginPath();
-    ctx.ellipse(0, -23, 36 + Math.sin(time * 2) * 2, 48, 0, Math.PI, Math.PI * 2);
-    ctx.lineTo(36, 0);
+    ctx.ellipse(0, 12, 54, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    drawRoundRect(ctx, -46, -2, 92, 16, 6, "#8c7a6b", "#3d3338");
+    drawRoundRect(ctx, -40, -6, 80, 10, 4, "#cbb799", "#5c4d49");
+
+    // Portal stone & energy arch
+    ctx.strokeStyle = locked ? "#ff6b9d" : "#fff1bd";
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(-36, -4);
+    ctx.lineTo(-36, -34);
+    ctx.ellipse(0, -34, 36 + Math.sin(time * 2) * 1.5, 46, 0, Math.PI, Math.PI * 2);
+    ctx.lineTo(36, -4);
     ctx.stroke();
 
-    ctx.fillStyle = locked ? "rgb(255 79 140 / 34%)" : "rgb(116 245 235 / 48%)";
+    // Inner swirling portal energy
+    ctx.fillStyle = locked ? "rgb(255 79 140 / 38%)" : "rgb(116 245 235 / 52%)";
     ctx.beginPath();
-    ctx.ellipse(0, -27, 25, 34, 0, Math.PI, Math.PI * 2);
+    ctx.moveTo(-27, -4);
+    ctx.lineTo(-27, -34);
+    ctx.ellipse(0, -34, 27, 36, 0, Math.PI, Math.PI * 2);
+    ctx.lineTo(27, -4);
+    ctx.closePath();
     ctx.fill();
 
     if (locked) {
-      ctx.strokeStyle = "rgb(255 175 205 / 85%)";
-      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = "rgb(255 185 212 / 90%)";
+      ctx.lineWidth = 2.4;
       ctx.setLineDash([6, 5]);
       ctx.lineDashOffset = -time * 18;
       ctx.beginPath();
-      ctx.ellipse(0, -27, 29, 39, 0, Math.PI, Math.PI * 2);
+      ctx.ellipse(0, -34, 30, 40, 0, Math.PI, Math.PI * 2);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = "#ffe3ee";
+
+      drawRoundRect(ctx, -30, -98, 60, 18, 9, "rgb(34 18 36 / 84%)", "#ff6b9d");
+      ctx.fillStyle = "#ffd6e7";
       ctx.font = "800 10px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("SEALED", 0, -68);
+      ctx.fillText("SEALED", 0, -86);
     } else {
+      drawRoundRect(ctx, -26, -98, 52, 18, 9, "rgb(18 44 48 / 84%)", "#80f8ff");
       ctx.fillStyle = "#eafffb";
       ctx.font = "800 10px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("OPEN", 0, -68);
+      ctx.fillText("OPEN", 0, -86);
     }
     ctx.restore();
   };
