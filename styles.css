@@ -8992,3 +8992,30 @@ body.home-page .home-site-shell {
   flex-shrink: 0;
   vertical-align: middle;
 }
+
+
+/* === WORDMARK LETTER SPACING FIX === */
+.site-header .wordmark,
+.wordmark-lockup {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0 !important;
+  direction: ltr;
+}
+
+.wordmark-lockup > a,
+.wordmark-lockup > span:not(.palestine-flag-badge) {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.palestine-flag-badge {
+  margin-left: 10px !important;
+  margin-right: 0 !important;
+}
+
+@media (max-width: 760px) {
+  .palestine-flag-badge {
+    margin-left: 8px !important;
+  }
+}
