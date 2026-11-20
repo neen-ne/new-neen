@@ -56,6 +56,83 @@
     ],
     sunset_ridge: [{ x: 85, y: 500, zone: "loot_canyon", label: "Descend to Skycrate Foundry" }],
   };
+  const GUARDIANS = [
+    {
+      id: "guardian_pier",
+      zone: "neon_pier",
+      portalZone: "palm_grove",
+      x: 1355,
+      y: 525,
+      maxHp: 4,
+      name: "Tideclaw Guardian",
+      theme: "aqua",
+      primary: "#1e6f7d",
+      secondary: "#5ff5ff",
+      eye: "#ff5a8a",
+    },
+    {
+      id: "guardian_grove",
+      zone: "palm_grove",
+      portalZone: "loot_canyon",
+      x: 1375,
+      y: 515,
+      maxHp: 4,
+      name: "Stonebark Sentinel",
+      theme: "forest",
+      primary: "#556b4f",
+      secondary: "#9dff8c",
+      eye: "#ffb84d",
+    },
+    {
+      id: "guardian_canyon",
+      zone: "loot_canyon",
+      portalZone: "sunset_ridge",
+      x: 1375,
+      y: 505,
+      maxHp: 4,
+      name: "Prism Crystal Titan",
+      theme: "crystal",
+      primary: "#4a386b",
+      secondary: "#d28cff",
+      eye: "#ff4fa3",
+    },
+    {
+      id: "guardian_ridge",
+      zone: "sunset_ridge",
+      portalZone: null,
+      x: 1185,
+      y: 455,
+      maxHp: 4,
+      name: "Solstice Ember Boss",
+      theme: "solar",
+      primary: "#6e2c3b",
+      secondary: "#ffbe55",
+      eye: "#fff3a8",
+    },
+  ];
+
+  const getGuardianState = (guardian) => {
+    if (!state.guardianStates[guardian.id]) {
+      state.guardianStates[guardian.id] = {
+        hp: guardian.maxHp,
+        hitFlashUntil: 0,
+        lastAttackAt: 0,
+        chargeUntil: 0,
+      };
+    }
+    return state.guardianStates[guardian.id];
+  };
+
+  const activeGuardiansInZone = (zone) =>
+    GUARDIANS.filter((g) => g.zone === zone && !state.defeatedGuardians.has(g.id));
+
+  const guardianBlockingPortal = (zone, targetZone) =>
+    GUARDIANS.find(
+      (g) =>
+        g.zone === zone &&
+        g.portalZone === targetZone &&
+        !state.defeatedGuardians.has(g.id)
+    ) || null;
   const PICKUPS = [
     { id: "snoop_badge", zone: "neon_pier", x: 390, y: 690, label: "Snoop Badge" },
     { id: "golden_compass", zone: "loot_canyon", x: 945, y: 515, label: "Golden Compass" },
@@ -153,6 +230,12 @@
     startedAt: performance.now(),
     lastDashHudUpdate: 0,
     floatingTexts: [],
+    beams: [],
+    enemyWaves: [],
+    defeatedGuardians: new Set(),
+    guardianStates: {},
+    lastBeamAt: 0,
+    playerHitUntil: 0,
   };
 
   const api = async (path, method = "GET", data = null) => {
@@ -699,6 +782,15 @@
         toast("This supply drop is empty. Check back when the next drop arrives.");
       }
     } else if (item.type === "portal") {
+      const blocker = guardianBlockingPortal(state.position.zone, item.zone);
+      if (blocker) {
+        const gState = getGuardianState(blocker);
+        gState.hitFlashUntil = performance.now() + 260;
+        spawnBurst(blocker.x, blocker.y - 35, "#ff5a8a", 12);
+        toast(`Defeat ${blocker.name} first! Press F or click to shoot.`, 2600);
+        addFloatingText(blocker.x, blocker.y - 96, "DEFEAT GUARDIAN FIRST!", "#ff9ec2");
+        return;
+      }
       await enterZone(item.zone);
     }
   };
@@ -720,6 +812,8 @@
       state.adventure.attempts_remaining_today = result.attempts_remaining_today;
       state.adventure.reward_amount_coins = result.reward_amount_coins;
       state.beaconActivations.clear();
+      state.defeatedGuardians.clear();
+      state.guardianStates = {};
       renderProgress();
       setStatus("Your three daily objectives are ready. Adventure on!");
       toast("Daily Adventure started!", 2500);
@@ -1598,18 +1692,40 @@
   };
 
   const drawPortal = (ctx, portal, time) => {
+    const locked = Boolean(guardianBlockingPortal(state.position.zone, portal.zone));
     ctx.save();
     ctx.translate(portal.x, portal.y);
-    ctx.strokeStyle = "#fff1bd";
+    ctx.strokeStyle = locked ? "#ff6b9d" : "#fff1bd";
     ctx.lineWidth = 7;
     ctx.beginPath();
     ctx.ellipse(0, -23, 36 + Math.sin(time * 2) * 2, 48, 0, Math.PI, Math.PI * 2);
     ctx.lineTo(36, 0);
     ctx.stroke();
-    ctx.fillStyle = "rgb(116 221 221 / 42%)";
+
+    ctx.fillStyle = locked ? "rgb(255 79 140 / 34%)" : "rgb(116 245 235 / 48%)";
     ctx.beginPath();
-    ctx.ellipse(0, -27, 24, 33, 0, Math.PI, Math.PI * 2);
+    ctx.ellipse(0, -27, 25, 34, 0, Math.PI, Math.PI * 2);
     ctx.fill();
+
+    if (locked) {
+      ctx.strokeStyle = "rgb(255 175 205 / 85%)";
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash([6, 5]);
+      ctx.lineDashOffset = -time * 18;
+      ctx.beginPath();
+      ctx.ellipse(0, -27, 29, 39, 0, Math.PI, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#ffe3ee";
+      ctx.font = "800 10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("SEALED", 0, -68);
+    } else {
+      ctx.fillStyle = "#eafffb";
+      ctx.font = "800 10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("OPEN", 0, -68);
+    }
     ctx.restore();
   };
 
@@ -1697,6 +1813,407 @@
       }
     }
     drawAmbientArt(ctx, zone, time);
+  };
+
+  const playCombatTone = (type) => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!playCombatTone.ctx) playCombatTone.ctx = new AudioCtx();
+      const actx = playCombatTone.ctx;
+      if (actx.state === "suspended") void actx.resume();
+      const now = actx.currentTime;
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      osc.connect(gain);
+      gain.connect(actx.destination);
+      if (type === "beam") {
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(920, now);
+        osc.frequency.exponentialRampToValueAtTime(340, now + 0.14);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.16);
+      } else if (type === "hit") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(260, now);
+        osc.frequency.exponentialRampToValueAtTime(520, now + 0.12);
+        gain.gain.setValueAtTime(0.11, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+        osc.start(now);
+        osc.stop(now + 0.14);
+      } else if (type === "defeat") {
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.setValueAtTime(554, now + 0.08);
+        osc.frequency.setValueAtTime(659, now + 0.16);
+        osc.frequency.setValueAtTime(880, now + 0.24);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+        osc.start(now);
+        osc.stop(now + 0.44);
+      }
+    } catch {
+      // Ignore audio errors if blocked by browser autoplay policy
+    }
+  };
+
+  const fireWandBeam = () => {
+    const now = performance.now();
+    if (now - state.lastBeamAt < 260) return;
+    state.lastBeamAt = now;
+
+    const look = AVATAR_LOOKS.find((item) => item.id === state.avatarId) || AVATAR_LOOKS[0];
+    const accent = look.accent || "#ff4fa3";
+    const trim = look.trim || "#f3b844";
+
+    let dirX = state.facing.x || 1;
+    let dirY = state.facing.y || 0;
+    const len = Math.hypot(dirX, dirY) || 1;
+    dirX /= len;
+    dirY /= len;
+
+    // Gentle auto-aim assist toward active guardian in front of player
+    const candidates = activeGuardiansInZone(state.position.zone);
+    let bestTarget = null;
+    let bestDist = 660;
+    for (const g of candidates) {
+      const dx = g.x - state.position.x;
+      const dy = (g.y - 32) - (state.position.y - 16);
+      const dist = Math.hypot(dx, dy);
+      if (dist < bestDist && (dx * dirX + dy * dirY) / (dist || 1) > 0.35) {
+        bestDist = dist;
+        bestTarget = { dx: dx / dist, dy: dy / dist };
+      }
+    }
+    if (bestTarget) {
+      dirX = dirX * 0.55 + bestTarget.dx * 0.45;
+      dirY = dirY * 0.55 + bestTarget.dy * 0.45;
+      const nLen = Math.hypot(dirX, dirY) || 1;
+      dirX /= nLen;
+      dirY /= nLen;
+    }
+
+    const startX = state.position.x + (dirX >= 0 ? 32 : -32);
+    const startY = state.position.y - 18;
+    const speed = 790;
+    state.beams.push({
+      zone: state.position.zone,
+      x: startX,
+      y: startY,
+      vx: dirX * speed,
+      vy: dirY * speed,
+      life: 0.95,
+      color: accent,
+      trim,
+    });
+    spawnBurst(startX, startY, trim, 6);
+    playCombatTone("beam");
+  };
+
+  const drawSingleGuardian = (ctx, guardian, time, now) => {
+    const gState = getGuardianState(guardian);
+    const hover = Math.sin(time * 2.6 + guardian.x * 0.01) * 6;
+    const charging = gState.chargeUntil > now;
+    const flashing = gState.hitFlashUntil > now;
+    const x = guardian.x;
+    const y = guardian.y + hover;
+
+    ctx.save();
+    ctx.translate(x, y);
+
+    // Threat aura on ground
+    const auraPulse = 1 + Math.sin(time * 4) * 0.08;
+    ctx.fillStyle = charging ? "rgb(255 82 128 / 34%)" : "rgb(35 28 54 / 28%)";
+    ctx.beginPath();
+    ctx.ellipse(0, 26 - hover * 0.5, 46 * auraPulse, 15 * auraPulse, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Floating Shoulder Crystal Wings
+    for (const side of [-1, 1]) {
+      const wingBob = Math.sin(time * 3.4 + side) * 5;
+      ctx.fillStyle = flashing ? "#ffffff" : guardian.secondary;
+      ctx.strokeStyle = "#1c182e";
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(side * 30, -56 + wingBob);
+      ctx.lineTo(side * 54, -76 + wingBob);
+      ctx.lineTo(side * 46, -34 + wingBob);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Heavy Armored Torso
+    ctx.fillStyle = flashing ? "#ffffff" : guardian.primary;
+    ctx.strokeStyle = "#1c182e";
+    ctx.lineWidth = 2.8;
+    ctx.beginPath();
+    ctx.moveTo(-28, -68);
+    ctx.lineTo(28, -68);
+    ctx.lineTo(36, -24);
+    ctx.lineTo(18, 6);
+    ctx.lineTo(-18, 6);
+    ctx.lineTo(-36, -24);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Armor trim plates
+    ctx.strokeStyle = guardian.secondary;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(-22, -52);
+    ctx.lineTo(0, -36);
+    ctx.lineTo(22, -52);
+    ctx.stroke();
+
+    // Glowing Power Core in chest
+    ctx.save();
+    ctx.shadowColor = charging ? "#ff477e" : guardian.secondary;
+    ctx.shadowBlur = charging ? 20 : 12;
+    ctx.fillStyle = charging ? "#ff477e" : guardian.secondary;
+    ctx.beginPath();
+    ctx.moveTo(0, -44);
+    ctx.lineTo(12, -30);
+    ctx.lineTo(0, -16);
+    ctx.lineTo(-12, -30);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Horned Boss Crown / Helmet
+    ctx.fillStyle = flashing ? "#ffffff" : guardian.primary;
+    ctx.beginPath();
+    ctx.arc(0, -76, 22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Horns
+    ctx.fillStyle = guardian.secondary;
+    ctx.beginPath();
+    ctx.moveTo(-16, -88);
+    ctx.lineTo(-30, -112);
+    ctx.lineTo(-8, -94);
+    ctx.closePath();
+    ctx.moveTo(16, -88);
+    ctx.lineTo(30, -112);
+    ctx.lineTo(8, -94);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Glowing Fierce Eyes
+    ctx.save();
+    ctx.shadowColor = guardian.eye;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = guardian.eye;
+    ctx.beginPath();
+    ctx.moveTo(-13, -78);
+    ctx.lineTo(-4, -74);
+    ctx.lineTo(-12, -71);
+    ctx.closePath();
+    ctx.moveTo(13, -78);
+    ctx.lineTo(4, -74);
+    ctx.lineTo(12, -71);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Floating Name & 4-Segment HP Bar above Guardian
+    ctx.fillStyle = "#fff8ee";
+    ctx.font = "800 11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(guardian.name.toUpperCase(), 0, -134);
+
+    const barW = 76;
+    const barH = 10;
+    const startX = -barW / 2;
+    const barY = -126;
+    drawRoundRect(ctx, startX - 3, barY - 3, barW + 6, barH + 6, 5, "rgb(20 18 36 / 82%)", "#ffffff");
+    const segW = (barW - 6) / guardian.maxHp;
+    for (let i = 0; i < guardian.maxHp; i++) {
+      const filled = i < gState.hp;
+      drawRoundRect(
+        ctx,
+        startX + i * (segW + 2),
+        barY,
+        segW,
+        barH,
+        2.5,
+        filled ? "#ff4fa3" : "rgb(255 255 255 / 16%)"
+      );
+    }
+
+    ctx.restore();
+  };
+
+  const drawGuardiansAndBeams = (ctx, time, now) => {
+    const zone = state.position.zone;
+    for (const guardian of activeGuardiansInZone(zone)) {
+      drawSingleGuardian(ctx, guardian, time, now);
+    }
+
+    // Draw Wand Starlight Beams
+    for (const beam of state.beams) {
+      if (beam.zone !== zone) continue;
+      const angle = Math.atan2(beam.vy, beam.vx);
+      ctx.save();
+      ctx.translate(beam.x, beam.y);
+      ctx.rotate(angle);
+      ctx.shadowColor = beam.color;
+      ctx.shadowBlur = 16;
+
+      // Outer neon laser lance
+      const grad = ctx.createLinearGradient(-46, 0, 18, 0);
+      grad.addColorStop(0, "rgb(255 79 163 / 0%)");
+      grad.addColorStop(0.55, beam.color);
+      grad.addColorStop(1, "#ffffff");
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 8;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(-46, 0);
+      ctx.lineTo(16, 0);
+      ctx.stroke();
+
+      // Inner white core
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-26, 0);
+      ctx.lineTo(16, 0);
+      ctx.stroke();
+
+      // Spinning star head
+      ctx.rotate(time * 14);
+      ctx.fillStyle = beam.trim;
+      ctx.beginPath();
+      for (let p = 0; p < 8; p++) {
+        const r = p % 2 === 0 ? 9 : 3.5;
+        const a = (p * Math.PI) / 4;
+        if (p === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+        else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Draw Guardian Shockwave Orbs
+    for (const wave of state.enemyWaves) {
+      if (wave.zone !== zone) continue;
+      ctx.save();
+      ctx.translate(wave.x, wave.y);
+      ctx.shadowColor = "#ff477e";
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = "#ff477e";
+      ctx.beginPath();
+      ctx.arc(0, 0, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#fff2b2";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 16 + Math.sin(time * 16) * 2, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
+
+  const updateCombat = (delta, now) => {
+    const zone = state.position.zone;
+    const guardians = activeGuardiansInZone(zone);
+
+    // 1. Update Wand Beams & check hits on Guardians
+    state.beams = state.beams.filter((beam) => beam.life > 0);
+    for (const beam of state.beams) {
+      beam.x += beam.vx * delta;
+      beam.y += beam.vy * delta;
+      beam.life -= delta;
+      if (beam.x < 0 || beam.x > WORLD.width || beam.y < 0 || beam.y > WORLD.height) {
+        beam.life = 0;
+        continue;
+      }
+      if (beam.zone !== zone) continue;
+      for (const guardian of guardians) {
+        const hitDist = Math.hypot(beam.x - guardian.x, beam.y - (guardian.y - 36));
+        if (hitDist < 58) {
+          beam.life = 0;
+          const gState = getGuardianState(guardian);
+          gState.hp = Math.max(0, gState.hp - 1);
+          gState.hitFlashUntil = now + 150;
+          spawnBurst(beam.x, beam.y, "#ff85be", 16);
+          spawnBurst(beam.x, beam.y, "#ffe078", 10);
+
+          if (gState.hp <= 0) {
+            state.defeatedGuardians.add(guardian.id);
+            playCombatTone("defeat");
+            spawnBurst(guardian.x, guardian.y - 36, "#ff4fa3", 32);
+            spawnBurst(guardian.x, guardian.y - 36, "#ffd866", 28);
+            addFloatingText(guardian.x, guardian.y - 75, "GUARDIAN DEFEATED! ★", "#fff5b8");
+            toast(`${guardian.name} defeated! The portal is now open!`, 3400);
+            updateInteraction();
+          } else {
+            playCombatTone("hit");
+            addFloatingText(
+              guardian.x,
+              guardian.y - 82,
+              `-1 ★ (${gState.hp}/${guardian.maxHp})`,
+              "#ffd1e6"
+            );
+          }
+          break;
+        }
+      }
+    }
+
+    // 2. Guardian Periodic Energy Wave Attack (dodgeable by Jump or Dash)
+    for (const guardian of guardians) {
+      const gState = getGuardianState(guardian);
+      const dx = state.position.x - guardian.x;
+      const dy = state.position.y - guardian.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 480 && now - gState.lastAttackAt > 3100) {
+        gState.lastAttackAt = now;
+        gState.chargeUntil = now + 380;
+        const n = dist || 1;
+        state.enemyWaves.push({
+          zone,
+          x: guardian.x + (dx / n) * 34,
+          y: guardian.y - 10,
+          vx: (dx / n) * 265,
+          vy: (dy / n) * 265,
+          life: 2.2,
+        });
+      }
+    }
+
+    state.enemyWaves = state.enemyWaves.filter((wave) => wave.life > 0);
+    const jumpProgress = state.jumpUntil > now ? 1 - (state.jumpUntil - now) / 560 : 0;
+    const jumpHeight = state.jumpUntil > now ? Math.sin(jumpProgress * Math.PI) * 52 : 0;
+    const dashActive = state.dashUntil > now;
+
+    for (const wave of state.enemyWaves) {
+      wave.x += wave.vx * delta;
+      wave.y += wave.vy * delta;
+      wave.life -= delta;
+      if (wave.zone !== zone) continue;
+      const distToPlayer = Math.hypot(wave.x - state.position.x, wave.y - state.position.y);
+      if (distToPlayer < 26) {
+        if (jumpHeight > 22 || dashActive) {
+          wave.life = 0;
+          addFloatingText(state.position.x, state.position.y - 54, "DODGED!", "#9ef6ff");
+        } else if (now > state.playerHitUntil) {
+          wave.life = 0;
+          state.playerHitUntil = now + 900;
+          const pushDir = Math.sign(wave.vx) || -1;
+          state.position.x = Math.min(WORLD.width - 40, Math.max(40, state.position.x + pushDir * 36));
+          spawnBurst(state.position.x, state.position.y - 16, "#ff6b9d", 10);
+          addFloatingText(state.position.x, state.position.y - 52, "JUMP OR DASH!", "#ffc2d9");
+        }
+      }
+    }
   };
 
   const drawNeenAvatar = (ctx, look, runCycle, time = 0, isMoving = false, isDash = false) => {
@@ -2258,6 +2775,7 @@
     context.translate(-cameraX, -cameraY);
     drawBackground(context, state.position.zone, time);
     drawWorldObjects(context, time);
+    drawGuardiansAndBeams(context, time, now);
     drawCharacter(context, time, now);
     drawParticles(context, delta);
     context.restore();
@@ -2270,6 +2788,7 @@
 
     updateInteraction();
     updateMovement(delta, now);
+    updateCombat(delta, now);
     updateDashStatus(now);
     if (state.dirty && now - state.lastPeriodicSync > 1800 && state.authenticated && !state.busy) {
       state.lastPeriodicSync = now;
@@ -2362,6 +2881,22 @@
   canvas.addEventListener("pointerdown", (event) => {
     if (event.pointerType === "touch") event.preventDefault();
     canvas.focus({ preventScroll: true });
+    if (event.button === 0) {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        const cameraX = Math.max(0, Math.min(WORLD.width - WORLD.viewWidth, state.position.x - WORLD.viewWidth / 2));
+        const cameraY = Math.max(0, Math.min(WORLD.height - WORLD.viewHeight, state.position.y - WORLD.viewHeight / 2));
+        const worldX = cameraX + ((event.clientX - rect.left) / rect.width) * WORLD.viewWidth;
+        const worldY = cameraY + ((event.clientY - rect.top) / rect.height) * WORLD.viewHeight;
+        const dx = worldX - state.position.x;
+        const dy = worldY - state.position.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 14) {
+          state.facing = { x: dx / dist, y: dy / dist };
+        }
+      }
+      fireWandBeam();
+    }
   });
   window.addEventListener("keydown", (event) => {
     if (codexDialog.open && event.key !== "Escape") return;
@@ -2379,6 +2914,10 @@
     }
     if (key === "shift" && !event.repeat) {
       dash();
+      return;
+    }
+    if ((key === "f" || key === "j") && !event.repeat) {
+      fireWandBeam();
       return;
     }
     if (key === "c" && !event.repeat) {
@@ -2409,6 +2948,8 @@
   bindPress(touchActionButton, () => void interact());
   bindPress(jumpButton, jump);
   bindPress(dashButton, dash);
+  const beamHudButton = document.querySelector("[data-beam-button]");
+  bindPress(beamHudButton, fireWandBeam);
   startButton.addEventListener("click", () => void startAdventure());
   completeButton.addEventListener("click", () => void completeAdventure());
 

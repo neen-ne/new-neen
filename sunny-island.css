@@ -1495,3 +1495,40 @@
     background: rgb(149 87 127 / 94%);
   }
 }
+
+
+/* === STARLIGHT WAND BEAM HUD BUTTON === */
+.sunny-beam-hud {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ff4fa3, #c93b8b);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  box-shadow:
+    0 10px 24px rgba(224, 62, 140, 0.42),
+    0 0 16px rgba(255, 79, 163, 0.45);
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.sunny-beam-hud:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow:
+    0 14px 28px rgba(224, 62, 140, 0.52),
+    0 0 22px rgba(255, 79, 163, 0.65);
+}
+
+.sunny-beam-hud:active {
+  transform: scale(0.96);
+}
