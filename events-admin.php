@@ -137,6 +137,7 @@ if ($hasPermission('manage_coin_packages') || $hasPermission('manage_coin_paymen
             <h1>Events &amp; Commerce Admin</h1>
           </div>
           <div class="admin-topbar-actions">
+            <button class="admin-language-toggle" type="button" data-language-toggle aria-label="Switch dashboard language">عربي</button>
             <?php if (in_array('owner', $admin['roles'], true)): ?>
               <a class="admin-owner-link" href="owner-dashboard.php">Owner Command Center ↗</a>
             <?php endif; ?>

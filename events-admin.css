@@ -806,6 +806,10 @@
     grid-template-columns: 220px minmax(0, 1fr);
   }
 
+  html[dir="rtl"] .admin-shell {
+    grid-template-columns: minmax(0, 1fr) 220px;
+  }
+
   .admin-content {
     padding: 28px;
   }
@@ -985,6 +989,25 @@
   white-space: nowrap;
 }
 
+.admin-language-toggle {
+  min-height: 34px;
+  min-width: 46px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--magenta);
+  cursor: pointer;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.admin-language-toggle:hover {
+  border-color: var(--pink-soft);
+  background: #fff7fb;
+}
+
 .admin-table {
   min-width: 720px;
 }
@@ -996,6 +1019,28 @@
 html[dir="rtl"] .admin-sidebar {
   border-right: 0;
   border-left: 1px solid var(--divider);
+}
+
+html[dir="rtl"] .admin-body {
+  font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+}
+
+html[dir="rtl"] .admin-shell {
+  grid-template-columns: minmax(0, 1fr) 258px;
+}
+
+html[dir="rtl"] .admin-sidebar {
+  grid-column: 2;
+  grid-row: 1;
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] .admin-main {
+  grid-column: 1;
+  grid-row: 1;
+  direction: rtl;
+  font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
 }
 
 html[dir="rtl"] .admin-nav-item,
@@ -1013,6 +1058,25 @@ html[dir="rtl"] .admin-order-search,
 html[dir="rtl"] .admin-review-actions,
 html[dir="rtl"] .admin-module-actions {
   direction: rtl;
+}
+
+html[dir="rtl"] .admin-body input:not([dir="ltr"]),
+html[dir="rtl"] .admin-body textarea:not([dir="ltr"]),
+html[dir="rtl"] .admin-body select:not([dir="ltr"]) {
+  direction: rtl;
+  text-align: right;
+  font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+}
+
+html[dir="rtl"] .admin-body [dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: isolate;
+}
+
+html[dir="rtl"] .admin-language-toggle,
+html[dir="rtl"] .admin-status-pill {
+  unicode-bidi: isolate;
 }
 
 .admin-toast {

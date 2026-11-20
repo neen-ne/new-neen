@@ -2,6 +2,505 @@
   const app = document.querySelector("#admin-app");
   if (!(app instanceof HTMLElement)) return;
 
+  const translations = new Map(Object.entries({
+    "NEEN Admin Dashboard": "لوحة إدارة NEEN",
+    "Administration navigation": "قائمة الإدارة",
+    "NEEN Events Hub": "مركز فعاليات NEEN",
+    "CONTROL ROOM": "غرفة التحكم",
+    "Dashboard sections": "أقسام لوحة التحكم",
+    "Permission required": "الصلاحية مطلوبة",
+    "LOCKED": "مقفل",
+    "SERVER-VERIFIED SESSION": "جلسة موثقة من الخادم",
+    "NEEN / EVENTS & COMMERCE OPS": "NEEN / إدارة الفعاليات والتجارة",
+    "Events & Commerce Admin": "إدارة الفعاليات والتجارة",
+    "Owner Command Center ↗": "مركز قيادة المالك ↗",
+    "Switch dashboard language": "تغيير لغة لوحة التحكم",
+    "Sign out": "تسجيل الخروج",
+    "Dashboard": "لوحة التحكم",
+    "Users": "المستخدمون",
+    "Coins & Wallet": "العملات والمحفظة",
+    "Coin Orders": "طلبات العملات",
+    "Games": "الألعاب",
+    "Attendance & Rewards": "الحضور والمكافآت",
+    "Admin Users & Permissions": "المشرفون والصلاحيات",
+    "Audit Log": "سجل التدقيق",
+    "Homepage Rewards": "مكافآت الصفحة الرئيسية",
+    "Community Events": "فعاليات المجتمع",
+    "Event Voting & Results": "تصويت الفعاليات ونتائجها",
+    "Event Suggestions": "اقتراحات الفعاليات",
+    "Diamond Packages": "باقات الجواهر",
+    "Diamond Recharge Orders": "طلبات شحن الجواهر",
+    "Coins setup": "إعداد العملات",
+    "OVERVIEW / 01": "نظرة عامة / 01",
+    "Live information from permission-checked NEEN services. Unsupported modules are clearly identified.": "معلومات مباشرة من خدمات NEEN المحمية بالصلاحيات. تظهر الوحدات غير المتاحة بوضوح.",
+    "Pending orders (latest 100)": "الطلبات المعلّقة (أحدث 100 طلب)",
+    "Community events": "فعاليات المجتمع",
+    "Pending event suggestions": "اقتراحات الفعاليات المعلّقة",
+    "Pending diamond orders": "طلبات الجواهر المعلّقة",
+    "Available game catalogs": "كتالوجات الألعاب المتاحة",
+    "Recent admin activity": "أحدث نشاط إداري",
+    "LATEST OPERATIONS": "أحدث العمليات",
+    "Recent activity": "النشاط الأخير",
+    "Open audit log": "فتح سجل التدقيق",
+    "Loading activity…": "جارٍ تحميل النشاط…",
+    "Audit activity is unavailable for this account.": "سجل نشاط التدقيق غير متاح لهذا الحساب.",
+    "ACCOUNTS / 02": "الحسابات / 02",
+    "Read-only account search. Account state changes are not exposed in this console.": "البحث في الحسابات للعرض فقط. لا يمكن تغيير حالة الحساب من لوحة التحكم هذه.",
+    "Search username or user ID": "ابحث باسم المستخدم أو رقم الحساب",
+    "Search": "بحث",
+    "Show latest": "عرض الأحدث",
+    "Search for a user to view account status and effective permissions.": "ابحث عن مستخدم لعرض حالة الحساب والصلاحيات الفعلية.",
+    "User directory permission required": "تتطلب قائمة المستخدمين صلاحية",
+    "This account does not have view_admin_users access. No account details are exposed.": "لا يملك هذا الحساب صلاحية view_admin_users. لن تظهر تفاصيل الحسابات.",
+    "FINANCE / 03": "المالية / 03",
+    "Read-only ledger reporting; no direct balance editing is available.": "تقارير سجل المعاملات للعرض فقط؛ لا يمكن تعديل الأرصدة مباشرة.",
+    "Search for an account to view its wallet balances.": "ابحث عن حساب لعرض أرصدة محفظته.",
+    "Select a wallet to view its recent ledger entries.": "اختر محفظة لعرض أحدث قيودها.",
+    "Wallet reporting permission required": "تتطلب تقارير المحافظ صلاحية",
+    "This account does not have view_all_wallets access. Direct balance editing remains unavailable.": "لا يملك هذا الحساب صلاحية view_all_wallets. يظل تعديل الأرصدة مباشرة غير متاح.",
+    "PURCHASE REVIEW / 04": "مراجعة المشتريات / 04",
+    "Approvals use the existing audited order-review service and may credit Purchased Coins. Verify the external payment before approving.": "تستخدم الموافقات خدمة مراجعة الطلبات المسجلة وقد تضيف عملات مشتراة. تحقق من الدفع الخارجي قبل الموافقة.",
+    "SERVER QUEUE": "قائمة انتظار الخادم",
+    "Awaiting review": "بانتظار المراجعة",
+    "Refresh": "تحديث",
+    "Select Coin Orders to load the permission-checked queue.": "اختر طلبات العملات لتحميل القائمة المحمية بالصلاحيات.",
+    "NEEN ORIGINALS / 05": "ألعاب NEEN الأصلية / 05",
+    "Read-only catalogs from the existing game services. This dashboard does not change game rules, attempts, or rewards.": "كتالوجات للعرض فقط من خدمات الألعاب الحالية. لا تغيّر هذه اللوحة قواعد الألعاب أو المحاولات أو المكافآت.",
+    "Loading game catalogs…": "جارٍ تحميل كتالوجات الألعاب…",
+    "RETENTION / 06": "الاستمرارية / 06",
+    "Administrative attendance reporting is not connected": "تقارير الحضور الإدارية غير متصلة",
+    "The available attendance endpoint shows only the current account's own cycle. Daily rewards and game rewards remain server-controlled; this console does not alter them.": "تعرض خدمة الحضور المتاحة دورة الحساب الحالي فقط. تظل المكافآت اليومية ومكافآت الألعاب تحت إدارة الخادم ولا تغيّرها هذه اللوحة.",
+    "REWARD RULES / 09": "قواعد المكافآت / 09",
+    "Claims are disabled until an authorized administrator configures the reward amount and claim window.": "تظل المطالبات معطّلة حتى يضبط مشرف مخوّل قيمة المكافأة ومدة المطالبة.",
+    "Loading homepage reward settings…": "جارٍ تحميل إعدادات مكافآت الصفحة الرئيسية…",
+    "Earned Coins per claim": "العملات المكتسبة لكل مطالبة",
+    "Claim window in seconds": "مدة المطالبة بالثواني",
+    "Enable reward claims": "تفعيل المطالبات بالمكافأة",
+    "Save reward settings": "حفظ إعدادات المكافأة",
+    "COMMUNITY / EVENTS": "المجتمع / الفعاليات",
+    "Create, publish, pause, or cancel polls. Voting windows and results are enforced by the API.": "أنشئ استطلاعات الرأي أو انشرها أو أوقفها أو ألغها. يفرض الخادم مواعيد التصويت والنتائج.",
+    "EVENT CATALOG": "كتالوج الفعاليات",
+    "Managed events": "الفعاليات المُدارة",
+    "Loading events…": "جارٍ تحميل الفعاليات…",
+    "NEW EVENT": "فعالية جديدة",
+    "Create a draft poll": "إنشاء استطلاع كمسودة",
+    "Event title": "عنوان الفعالية",
+    "Starts at (local time)": "تبدأ في (التوقيت المحلي)",
+    "Ends at (local time)": "تنتهي في (التوقيت المحلي)",
+    "Description": "الوصف",
+    "Poll options (one per line)": "خيارات الاستطلاع (خيار في كل سطر)",
+    "Create draft event": "إنشاء فعالية كمسودة",
+    "VOTING / RESULTS": "التصويت / النتائج",
+    "Voting is controlled by published event dates. Final results are server-calculated and require admin approval.": "يُحدد التصويت وفق مواعيد الفعالية المنشورة. يحسب الخادم النتائج النهائية وتتطلب اعتماد المشرف.",
+    "Loading event results…": "جارٍ تحميل نتائج الفعاليات…",
+    "COMMUNITY INPUT": "مساهمات المجتمع",
+    "Review and record a reason for accepting or rejecting each user suggestion.": "راجع اقتراحات المستخدمين وسجّل سبب قبول كل اقتراح أو رفضه.",
+    "Loading pending suggestions…": "جارٍ تحميل الاقتراحات المعلّقة…",
+    "TOP-UP CATALOG": "كتالوج الشحن",
+    "No package terms are preconfigured. New packages remain inactive until explicitly enabled.": "لا توجد شروط باقات مُعدة مسبقًا. تظل الباقات الجديدة غير نشطة حتى تفعيلها صراحةً.",
+    "Package name": "اسم الباقة",
+    "Diamond quantity": "عدد الجواهر",
+    "Price": "السعر",
+    "Currency code": "رمز العملة",
+    "Create inactive package": "إنشاء باقة غير نشطة",
+    "RECHARGE QUEUE": "قائمة طلبات الشحن",
+    "Payment and delivery remain manual until approved providers are configured. Every transition records its administrator and note.": "يظل الدفع والتسليم يدويين حتى إعداد مزودي خدمة معتمدين. يُسجل كل تغيير مع اسم المشرف وملاحظته.",
+    "Search order number or Player ID": "ابحث برقم الطلب أو رقم اللاعب",
+    "Show all": "عرض الكل",
+    "Loading recharge orders…": "جارٍ تحميل طلبات الشحن…",
+    "Select an order to view its audit history.": "اختر طلبًا لعرض سجل تدقيقه.",
+    "ACCESS CONTROL / 07": "التحكم في الوصول / 07",
+    "Admins & Permissions": "المشرفون والصلاحيات",
+    "Admin directory permission required": "تتطلب قائمة المشرفين صلاحية",
+    "This account does not have view_admin_users access. Role and permission assignment remains restricted to an authorized trusted workflow.": "لا يملك هذا الحساب صلاحية view_admin_users. يظل إسناد الأدوار والصلاحيات محصورًا بإجراء موثوق ومخوّل.",
+    "IMMUTABLE HISTORY / 08": "سجل غير قابل للتغيير / 08",
+    "Read-only latest 50 operations. Access requires the existing view_audit_logs permission.": "عرض أحدث 50 عملية فقط. يتطلب الوصول صلاحية view_audit_logs.",
+    "SERVER RECORDS": "سجلات الخادم",
+    "Administrative activity": "النشاط الإداري",
+    "Select Audit Log to load records.": "اختر سجل التدقيق لتحميل السجلات.",
+    "CONFIGURATION / 09": "الإعدادات / 09",
+    "Server-backed package and payment settings. New entries remain inactive unless you explicitly enable them.": "إعدادات الباقات والدفع محفوظة على الخادم. تظل العناصر الجديدة غير نشطة ما لم تفعّلها صراحةً.",
+    "PACKAGE CATALOG": "كتالوج الباقات",
+    "Coin packages": "باقات العملات",
+    "Loading configured packages…": "جارٍ تحميل الباقات المُعدة…",
+    "Coins": "العملات",
+    "Activate after saving": "تفعيل بعد الحفظ",
+    "Create package": "إنشاء باقة",
+    "PAYMENT CATALOG": "كتالوج وسائل الدفع",
+    "Payment methods": "وسائل الدفع",
+    "Loading configured payment methods…": "جارٍ تحميل وسائل الدفع المُعدة…",
+    "Method code": "رمز الوسيلة",
+    "Display name": "الاسم المعروض",
+    "Instructions": "التعليمات",
+    "Require payment proof": "طلب إثبات الدفع",
+    "Create payment method": "إنشاء وسيلة دفع",
+    "No audit entries are available.": "لا توجد سجلات تدقيق متاحة.",
+    "No event activity has been recorded.": "لم يُسجل أي نشاط لهذه الفعالية.",
+    "Actor": "المنفّذ",
+    "Action": "الإجراء",
+    "Time (UTC)": "الوقت (UTC)",
+    "Loading authorized audit entries…": "جارٍ تحميل سجلات التدقيق المصرح بها…",
+    "Audit log could not be loaded.": "تعذر تحميل سجل التدقيق.",
+    "SERVER CATALOG": "كتالوج الخادم",
+    "NEEN original game": "لعبة أصلية من NEEN",
+    "Catalog available": "الكتالوج متاح",
+    "reset": "إعادة الضبط",
+    "pairs": "أزواج",
+    "pieces": "قطع",
+    "Read from the public game catalogs": "مقروء من كتالوجات الألعاب العامة",
+    "The game catalog service returned an error": "حدث خطأ في خدمة كتالوج الألعاب",
+    "Required review reason": "سبب المراجعة مطلوب",
+    "Review reason for order": "سبب مراجعة الطلب",
+    "Approve": "موافقة",
+    "Reject": "رفض",
+    "Approve this order? The server will credit its configured Purchased Coins amount.": "هل تريد الموافقة على هذا الطلب؟ سيضيف الخادم عدد العملات المشتراة المحدد له.",
+    "No payment reference": "لا يوجد مرجع دفع",
+    "Payment evidence": "إثبات الدفع",
+    "Submitted": "تاريخ الإرسال",
+    "Review": "مراجعة",
+    "Name": "الاسم",
+    "Terms": "الشروط",
+    "Status": "الحالة",
+    "Active": "نشط",
+    "Inactive": "غير نشط",
+    "Deactivate": "إيقاف",
+    "Activate": "تفعيل",
+    "Proof required": "إثبات الدفع مطلوب",
+    "Proof optional": "إثبات الدفع اختياري",
+    "Package": "الباقة",
+    "Action": "الإجراء",
+    "No packages are configured.": "لا توجد باقات مُعدة.",
+    "No methods are configured.": "لا توجد وسائل دفع مُعدة.",
+    "Loading server catalog…": "جارٍ تحميل كتالوج الخادم…",
+    "Edit event details": "تعديل تفاصيل الفعالية",
+    "Publish voting": "نشر التصويت",
+    "Pause voting": "إيقاف التصويت مؤقتًا",
+    "Approve results": "اعتماد النتائج",
+    "Cancel event": "إلغاء الفعالية",
+    "Activity log": "سجل النشاط",
+    "Save event changes": "حفظ تغييرات الفعالية",
+    "Award an eligible participant": "منح مكافأة لمشارك مستحق",
+    "Participant user ID": "رقم حساب المشارك",
+    "Earned Coins": "العملات المكتسبة",
+    "Reason": "السبب",
+    "Issue reward": "إصدار المكافأة",
+    "Loading events from the database…": "جارٍ تحميل الفعاليات من قاعدة البيانات…",
+    "No community events have been created.": "لم يتم إنشاء فعاليات مجتمعية.",
+    "No voting events or results are available.": "لا توجد فعاليات تصويت أو نتائج متاحة.",
+    "Loading pending suggestions…": "جارٍ تحميل الاقتراحات المعلّقة…",
+    "There are no suggestions waiting for review.": "لا توجد اقتراحات بانتظار المراجعة.",
+    "Optional reviewer note": "ملاحظة اختيارية للمراجع",
+    "Accept": "قبول",
+    "Title": "العنوان",
+    "Edit event details": "تعديل تفاصيل الفعالية",
+    "Save event changes": "حفظ تغييرات الفعالية",
+    "Submitted by": "مقدّم من",
+    "vote(s)": "تصويت",
+    "Voting:": "التصويت:",
+    "Publish voting": "نشر التصويت",
+    "Pause voting": "إيقاف التصويت مؤقتًا",
+    "Approve results": "اعتماد النتائج",
+    "Cancel event": "إلغاء الفعالية",
+    "No matching diamond recharge orders.": "لا توجد طلبات شحن جواهر مطابقة.",
+    "Loading recharge orders…": "جارٍ تحميل طلبات الشحن…",
+    "History": "السجل",
+    "Order / Player": "الطلب / اللاعب",
+    "Admin action": "إجراء المشرف",
+    "Order": "الطلب",
+    "State": "الحالة",
+    "Activity": "النشاط",
+    "Actor / Note": "المنفّذ / الملاحظة",
+    "No activity has been recorded for this order.": "لم يُسجل أي نشاط لهذا الطلب.",
+    "No administrative accounts were found.": "لم يتم العثور على حسابات إدارية.",
+    "No users matched this search.": "لا يوجد مستخدمون يطابقون هذا البحث.",
+    "Account": "الحساب",
+    "Roles": "الأدوار",
+    "Effective permissions": "الصلاحيات الفعلية",
+    "No roles": "لا توجد أدوار",
+    "No permissions": "لا توجد صلاحيات",
+    "Other balances": "أرصدة أخرى",
+    "Ledger": "السجل",
+    "Transactions": "المعاملات",
+    "Operation": "العملية",
+    "Balance": "الرصيد",
+    "Reference": "المرجع",
+    "Recent ledger entries": "أحدث قيود السجل",
+    "Optional payment reference:": "مرجع الدفع (اختياري):",
+    "Enter an administrative note (required):": "أدخل ملاحظة إدارية (مطلوبة):",
+    "Approve and publish the server-calculated voting results?": "هل تريد اعتماد نتائج التصويت المحسوبة من الخادم ونشرها؟",
+    "Cancel this event? This cannot be undone.": "هل تريد إلغاء هذه الفعالية؟ لا يمكن التراجع عن ذلك.",
+    "Draft event created. Publish it when ready.": "تم إنشاء الفعالية كمسودة. انشرها عند الاستعداد.",
+    "Event details saved.": "تم حفظ تفاصيل الفعالية.",
+    "Event reward issued to the eligible participant.": "تم إصدار مكافأة الفعالية للمشارك المستحق.",
+    "Suggestion accepted.": "تم قبول الاقتراح.",
+    "Suggestion rejected.": "تم رفض الاقتراح.",
+    "Event results approved and published.": "تم اعتماد نتائج الفعالية ونشرها.",
+    "Diamond package status updated.": "تم تحديث حالة باقة الجواهر.",
+    "Diamond order state updated.": "تم تحديث حالة طلب الجواهر.",
+    "Inactive diamond package created.": "تم إنشاء باقة جواهر غير نشطة.",
+    "Homepage reward settings saved.": "تم حفظ إعدادات مكافآت الصفحة الرئيسية.",
+    "Package created. Review its server status before publishing.": "تم إنشاء الباقة. راجع حالتها على الخادم قبل نشرها.",
+    "Payment method created. Review its server status before publishing.": "تم إنشاء وسيلة الدفع. راجع حالتها على الخادم قبل نشرها.",
+    "Event details could not be saved.": "تعذر حفظ تفاصيل الفعالية.",
+    "Event reward could not be issued.": "تعذر إصدار مكافأة الفعالية.",
+    "The requested admin action failed.": "تعذر تنفيذ إجراء الإدارة المطلوب.",
+    "Sign out failed.": "تعذر تسجيل الخروج.",
+    "Order history could not be loaded.": "تعذر تحميل سجل الطلب.",
+    "Wallet transaction history could not be loaded.": "تعذر تحميل سجل معاملات المحفظة.",
+    "User directory could not be loaded.": "تعذر تحميل قائمة المستخدمين.",
+    "Wallet records could not be loaded.": "تعذر تحميل سجلات المحافظ.",
+    "Coin orders could not be loaded.": "تعذر تحميل طلبات العملات.",
+    "Suggestions could not be loaded.": "تعذر تحميل الاقتراحات.",
+    "Community events could not be loaded.": "تعذر تحميل فعاليات المجتمع.",
+    "Diamond orders could not be loaded.": "تعذر تحميل طلبات الجواهر.",
+    "Diamond packages could not be loaded.": "تعذر تحميل باقات الجواهر.",
+    "The protected order service returned an error": "أعادت خدمة الطلبات المحمية خطأً",
+    "The authorized audit service returned an error": "أعادت خدمة التدقيق المصرح بها خطأً",
+    "The authorized community-events service returned an error": "أعادت خدمة فعاليات المجتمع المصرح بها خطأً",
+    "The authorized suggestion service returned an error": "أعادت خدمة الاقتراحات المصرح بها خطأً",
+    "The authorized recharge service returned an error": "أعادت خدمة الشحن المصرح بها خطأً",
+    "No orders currently await review": "لا توجد طلبات بانتظار المراجعة حاليًا",
+    "Pending payment review in the latest 100 server results": "طلبات بانتظار مراجعة الدفع ضمن أحدث 100 نتيجة من الخادم",
+    "Pending submissions from the database": "اقتراحات معلّقة من قاعدة البيانات",
+    "No payment reference": "لا يوجد مرجع دفع",
+    "System": "النظام",
+    "User": "مستخدم",
+    "Loading the protected review queue…": "جارٍ تحميل قائمة المراجعة المحمية…",
+    "There are no Coin orders awaiting review.": "لا توجد طلبات عملات بانتظار المراجعة.",
+    "Loading server reward settings…": "جارٍ تحميل إعدادات المكافآت من الخادم…",
+    "Inactive: no homepage reward can currently be claimed.": "غير نشطة: لا يمكن المطالبة بمكافأة الصفحة الرئيسية حاليًا.",
+    "Loading events from the database…": "جارٍ تحميل الفعاليات من قاعدة البيانات…",
+    "No community events have been created.": "لم يتم إنشاء فعاليات مجتمعية.",
+    "No voting events or results are available.": "لا توجد فعاليات تصويت أو نتائج متاحة.",
+    "There are no suggestions waiting for review.": "لا توجد اقتراحات بانتظار المراجعة.",
+    "Loading diamond packages…": "جارٍ تحميل باقات الجواهر…",
+    "No diamond packages are configured.": "لا توجد باقات جواهر مُعدة.",
+    "No matching diamond recharge orders.": "لا توجد طلبات شحن جواهر مطابقة.",
+    "Loading order history…": "جارٍ تحميل سجل الطلب…",
+    "No activity has been recorded for this order.": "لم يُسجل أي نشاط لهذا الطلب.",
+    "Loading administrative accounts…": "جارٍ تحميل الحسابات الإدارية…",
+    "Searching account records…": "جارٍ البحث في سجلات الحسابات…",
+    "No administrative accounts were found.": "لم يتم العثور على حسابات إدارية.",
+    "No users matched this search.": "لا يوجد مستخدمون يطابقون هذا البحث.",
+    "Loading wallet records…": "جارٍ تحميل سجلات المحافظ…",
+    "No wallets matched this search.": "لا توجد محافظ تطابق هذا البحث.",
+    "Loading wallet ledger…": "جارٍ تحميل سجل المحفظة…",
+    "No Coins ledger entries are recorded for this account.": "لا توجد قيود عملات مسجلة لهذا الحساب.",
+    "Draft event created. Publish it when ready.": "تم إنشاء الفعالية كمسودة. انشرها عند الاستعداد.",
+    "Event details saved.": "تم حفظ تفاصيل الفعالية.",
+    "Event reward issued to the eligible participant.": "تم إصدار مكافأة الفعالية للمشارك المستحق.",
+    "Event results approved and published.": "تم اعتماد نتائج الفعالية ونشرها.",
+    "Diamond package status updated.": "تم تحديث حالة باقة الجواهر.",
+    "Diamond order state updated.": "تم تحديث حالة طلب الجواهر.",
+    "Inactive diamond package created.": "تم إنشاء باقة جواهر غير نشطة.",
+    "The order review failed.": "تعذرت مراجعة الطلب.",
+    "The catalog update failed.": "تعذر تحديث الكتالوج.",
+    "Catalog could not be loaded.": "تعذر تحميل الكتالوج.",
+    "Reward settings could not be loaded.": "تعذر تحميل إعدادات المكافآت.",
+    "Homepage reward settings could not be saved.": "تعذر حفظ إعدادات مكافآت الصفحة الرئيسية.",
+    "Community event could not be created.": "تعذر إنشاء فعالية المجتمع.",
+    "Suggestion review could not be saved.": "تعذر حفظ مراجعة الاقتراح.",
+    "Diamond package could not be created.": "تعذر إنشاء باقة الجواهر.",
+    "Loading game catalogs…": "جارٍ تحميل كتالوجات الألعاب…",
+    "No audit entries are available.": "لا توجد سجلات تدقيق متاحة.",
+    "The server returned an unreadable response. Please refresh and try again.": "أعاد الخادم استجابة غير قابلة للقراءة. حدّث الصفحة ثم حاول مجددًا.",
+    "The server did not provide a CSRF token. Please sign in again.": "لم يوفّر الخادم رمز CSRF. سجّل الدخول مجددًا.",
+    "Start payment review": "بدء مراجعة الدفع",
+    "Reject payment": "رفض الدفع",
+    "Mark paid": "تأكيد الدفع",
+    "Mark payment failed": "تسجيل فشل الدفع",
+    "Start delivery": "بدء التسليم",
+    "Refund": "استرداد المبلغ",
+    "Mark delivered": "تأكيد التسليم",
+    "Mark delivery failed": "تسجيل فشل التسليم",
+    "Review": "مراجعة",
+    "Order / Player": "الطلب / اللاعب",
+    "Admin action": "إجراء المشرف",
+    "Activity": "النشاط",
+    "State": "الحالة",
+    "Actor / Note": "المنفّذ / الملاحظة",
+    "Operation": "العملية",
+    "Balance": "الرصيد",
+    "Reference": "المرجع",
+    "Other balances": "أرصدة أخرى",
+    "Ledger": "السجل",
+    "Transactions": "المعاملات",
+    "Time (UTC)": "الوقت (UTC)",
+    "Account": "الحساب",
+    "Package": "الباقة",
+    "Payment": "الدفع",
+    "History": "السجل",
+    "Edit event details": "تعديل تفاصيل الفعالية",
+    "Save event changes": "حفظ تغييرات الفعالية",
+    "Title": "العنوان",
+    "Submitted by": "مقدّم من",
+    "Participant user ID": "رقم حساب المشارك",
+    "Award an eligible participant": "منح مكافأة لمشارك مستحق",
+    "Earned Coins": "العملات المكتسبة",
+    "Issue reward": "إصدار المكافأة",
+    "Optional reviewer note": "ملاحظة اختيارية للمراجع",
+    "Optional payment reference:": "مرجع الدفع (اختياري):",
+    "Enter an administrative note (required):": "أدخل ملاحظة إدارية (مطلوبة):",
+    "Approve and publish the server-calculated voting results?": "هل تريد اعتماد نتائج التصويت المحسوبة من الخادم ونشرها؟",
+    "Cancel this event? This cannot be undone.": "هل تريد إلغاء هذه الفعالية؟ لا يمكن التراجع عن ذلك.",
+    "draft": "مسودة",
+    "published": "منشورة",
+    "paused": "متوقفة مؤقتًا",
+    "cancelled": "ملغاة",
+    "results published": "نُشرت النتائج",
+    "pending": "قيد الانتظار",
+    "pending review": "بانتظار المراجعة",
+    "payment verification": "التحقق من الدفع",
+    "paid": "مدفوع",
+    "processing": "قيد المعالجة",
+    "delivered": "تم التسليم",
+    "failed": "فشل",
+    "rejected": "مرفوض",
+    "refunded": "مسترد",
+    "active": "نشط",
+    "suspended": "موقوف",
+    "deleted": "محذوف",
+    "pending verification": "بانتظار التحقق",
+    "earned": "مكتسبة",
+    "purchased": "مشتراة",
+  }));
+  const languagePreferenceKey = "neen_control_room_lang";
+  const originalTextNodes = new WeakMap();
+  const originalElementTexts = new WeakMap();
+  const originalAttributes = new WeakMap();
+  let language = "en";
+  const translate = (value) => {
+    if (typeof value !== "string") return value;
+    const exact = language === "ar" ? translations.get(value) ?? value : value;
+    if (exact !== value) return exact;
+    if (language === "ar") {
+      const dynamic = [
+        [/^(\d+) latest server records$/, "$1 أحدث سجلات الخادم"],
+        [/^(\d+) currently published$/, "$1 منشورة حاليًا"],
+        [/^(\d+) returned \(the API maximum is 100\)$/, "أُعيد $1 (الحد الأقصى لواجهة API هو 100)"],
+        [/^Voting: (.+) — (.+)$/, "التصويت: $1 — $2"],
+        [/^Submitted by (.+) \(user (.+)\) · (.+)$/, "قدّمه $1 (المستخدم $2) · $3"],
+        [/^User ID: (.+) · (.+) · Created (.+)$/, "رقم المستخدم: $1 · $2 · تاريخ الإنشاء $3"],
+        [/^User ID: (.+) · Updated (.+)$/, "رقم المستخدم: $1 · آخر تحديث $2"],
+        [/^(\d+) total Coins$/, "$1 عملة إجمالًا"],
+        [/^(\d+) Purchased · (\d+) Earned$/, "$1 مشتراة · $2 مكتسبة"],
+        [/^(\d+) diamonds · (.+) (.+)$/, "$1 جوهرة · $2 $3"],
+        [/^Payment: (.+) · Delivery: (.+)$/, "الدفع: $1 · التسليم: $2"],
+        [/^Payment: (.+)$/, "الدفع: $1"],
+        [/^(\d+) vote\(s\)$/, "$1 تصويت"],
+        [/^(\d+) pairs$/, "$1 أزواج"],
+        [/^(\d+) pieces$/, "$1 قطع"],
+        [/^(\d+) free starts \/ day$/, "$1 محاولات مجانية يوميًا"],
+        [/^(\d+) Coins \/ verified win$/, "$1 عملة لكل فوز موثّق"],
+        [/^Active: (.+) Earned Coins every (.+) seconds\.$/, "نشطة: $1 عملة مكتسبة كل $2 ثانية."],
+        [/^No (packages|payment methods) are configured\.$/, (_, type) => type === "packages" ? "لا توجد باقات مُعدة." : "لا توجد وسائل دفع مُعدة."],
+        [/^Package updated\.$/, "تم تحديث الباقة."],
+        [/^Payment method updated\.$/, "تم تحديث وسيلة الدفع."],
+        [/^Package created\. Review its server status before publishing\.$/, "تم إنشاء الباقة. راجع حالتها على الخادم قبل نشرها."],
+        [/^Payment method created\. Review its server status before publishing\.$/, "تم إنشاء وسيلة الدفع. راجع حالتها على الخادم قبل نشرها."],
+        [/^package could not be created\.$/i, "تعذر إنشاء العنصر."],
+        [/^Event (.+)\.$/, "الفعالية: $1."],
+        [/^Order #(.+) was (.+)\.$/, "تم تحديث الطلب رقم $1 إلى الحالة: $2."],
+        [/^Suggestion (accepted|rejected)\.$/, (_, decision) => `تم ${decision === "accepted" ? "قبول" : "رفض"} الاقتراح.`],
+      ];
+      for (const [pattern, replacement] of dynamic) {
+        const match = value.match(pattern);
+        if (match) {
+          return typeof replacement === "function"
+            ? replacement(...match)
+            : value.replace(pattern, replacement);
+        }
+      }
+    }
+    return exact;
+  };
+  const setLocalizedText = (element, value) => {
+    originalElementTexts.set(element, value);
+    element.textContent = translate(value);
+  };
+  const localizeAttributes = (element) => {
+    let attributes = originalAttributes.get(element);
+    if (!attributes) {
+      attributes = new Map();
+      originalAttributes.set(element, attributes);
+    }
+    for (const attribute of ["placeholder", "aria-label", "title"]) {
+      if (!attributes.has(attribute)) attributes.set(attribute, element.getAttribute(attribute));
+      const value = attributes.get(attribute);
+      if (value) element.setAttribute(attribute, translate(value));
+    }
+  };
+  const localizeNode = (node) => {
+    if (node instanceof Text) {
+      if (!originalTextNodes.has(node)) originalTextNodes.set(node, node.data);
+      const original = originalTextNodes.get(node);
+      const trimmed = original.trim();
+      const localized = translate(trimmed);
+      if (localized !== trimmed) node.data = original.replace(trimmed, localized);
+      else node.data = original;
+      return;
+    }
+    if (!(node instanceof Element)) return;
+    if (originalElementTexts.has(node)) {
+      node.textContent = translate(originalElementTexts.get(node));
+      return;
+    }
+    localizeAttributes(node);
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+    for (let child = walker.nextNode(); child; child = walker.nextNode()) {
+      if (child instanceof Text) localizeNode(child);
+      else if (child instanceof Element && originalElementTexts.has(child)) {
+        child.textContent = translate(originalElementTexts.get(child));
+      } else if (child instanceof Element) {
+        localizeAttributes(child);
+      }
+    }
+  };
+  const setLanguage = (nextLanguage, persist = true) => {
+    language = nextLanguage === "ar" ? "ar" : "en";
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
+    document.title = language === "ar" ? translations.get("NEEN Admin Dashboard") : "NEEN Admin Dashboard";
+    const toggle = document.querySelector("[data-language-toggle]");
+    if (toggle instanceof HTMLButtonElement) {
+      toggle.textContent = language === "ar" ? "EN" : "عربي";
+      toggle.setAttribute("aria-label", "Switch dashboard language");
+    }
+    if (persist) {
+      try {
+        window.localStorage.setItem(languagePreferenceKey, language);
+      } catch (error) {
+        console.warn("Admin dashboard language preference could not be saved.", error);
+      }
+    }
+    localizeNode(app);
+    const toast = document.querySelector("[data-toast]");
+    if (toast instanceof HTMLElement) localizeNode(toast);
+    if (toggle instanceof HTMLButtonElement) {
+      toggle.textContent = language === "ar" ? "EN" : "عربي";
+    }
+  };
+  const languageToggle = document.querySelector("[data-language-toggle]");
+  if (languageToggle instanceof HTMLButtonElement) {
+    languageToggle.addEventListener("click", () => {
+      setLanguage(language === "en" ? "ar" : "en");
+    });
+  }
+  const languageObserver = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      mutation.addedNodes.forEach(localizeNode);
+    }
+  });
+  languageObserver.observe(app, { childList: true, subtree: true });
+  try {
+    const savedLanguage = window.localStorage.getItem(languagePreferenceKey)
+      ?? window.localStorage.getItem("neen_owner_lang");
+    setLanguage(savedLanguage === "ar" ? "ar" : "en", false);
+  } catch (error) {
+    console.warn("Admin dashboard language preference could not be read.", error);
+    setLanguage("en", false);
+  }
+
   const permissions = new Set((app.dataset.permissions ?? "").split(/\s+/).filter(Boolean));
   const panels = [...document.querySelectorAll("[data-panel]")];
   const navItems = [...document.querySelectorAll("[data-section]")];
@@ -23,7 +522,7 @@
   const notify = (message, isError = false) => {
     if (!(toast instanceof HTMLElement)) return;
     window.clearTimeout(toastTimer);
-    toast.textContent = message;
+    setLocalizedText(toast, message);
     toast.classList.toggle("is-error", isError);
     toast.classList.add("is-visible");
     toastTimer = window.setTimeout(() => toast.classList.remove("is-visible"), 4200);
@@ -69,7 +568,7 @@
     const count = document.querySelector(selector);
     const note = document.querySelector(statusSelector);
     if (count) count.textContent = String(value);
-    if (note) note.textContent = status;
+    if (note) setLocalizedText(note, status);
   };
 
   const formatDate = (value) => {
@@ -198,7 +697,7 @@
       const decision = submitter.value;
       if (
         decision === "approved"
-        && !window.confirm("Approve this order? The server will credit its configured Purchased Coins amount.")
+        && !window.confirm(translate("Approve this order? The server will credit its configured Purchased Coins amount."))
       ) return;
       const buttons = [...form.querySelectorAll("button")];
       buttons.forEach((button) => { button.disabled = true; });
@@ -976,14 +1475,14 @@
           container.append(card);
         }
       } else if (adminAction === "approve-results") {
-        if (!window.confirm("Approve and publish the server-calculated voting results?")) return;
+        if (!window.confirm(translate("Approve and publish the server-calculated voting results?"))) return;
         await postAdminMutation(`/api/admin/events/${id}/results/approve`, "POST", {});
         notify("Event results approved and published.");
         loaded.delete("community-events");
         await loadCommunityEvents(true);
       } else if (adminAction === "publish" || adminAction === "paused" || adminAction === "cancelled") {
         const status = adminAction === "publish" ? "published" : adminAction;
-        if (status === "cancelled" && !window.confirm("Cancel this event? This cannot be undone.")) return;
+        if (status === "cancelled" && !window.confirm(translate("Cancel this event? This cannot be undone."))) return;
         await postAdminMutation(`/api/admin/events/${id}`, "PATCH", { status });
         notify(`Event ${status.replaceAll("_", " ")}.`);
         loaded.delete("community-events");
@@ -999,11 +1498,11 @@
         await loadWalletTransactions(id);
       } else if (adminAction === "diamond-order-action") {
         const transition = button.dataset.transition;
-        const note = window.prompt("Enter an administrative note (required):");
+        const note = window.prompt(translate("Enter an administrative note (required):"));
         if (note === null) return;
         const payload = { action: transition, note: note.trim() };
         if (transition === "mark_paid") {
-          const reference = window.prompt("Optional payment reference:");
+          const reference = window.prompt(translate("Optional payment reference:"));
           if (reference) payload.payment_reference = reference.trim();
         }
         await postAdminMutation(`/api/admin/diamonds/orders/${id}/actions`, "POST", payload);

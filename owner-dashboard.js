@@ -5,10 +5,12 @@
   const currentUserId = Number(app.dataset.currentUser);
   const panels = [...document.querySelectorAll("[data-panel]")];
   const navItems = [...document.querySelectorAll("[data-section]")];
-  const languagePreferenceKey = "neen_owner_lang";
+  const languagePreferenceKey = "neen_control_room_lang";
   const readLanguagePreference = () => {
     try {
-      return window.localStorage.getItem(languagePreferenceKey) === "ar" ? "ar" : "en";
+      const savedLanguage = window.localStorage.getItem(languagePreferenceKey)
+        ?? window.localStorage.getItem("neen_owner_lang");
+      return savedLanguage === "ar" ? "ar" : "en";
     } catch (error) {
       console.warn("Owner dashboard language preference could not be read.", error);
       return "en";

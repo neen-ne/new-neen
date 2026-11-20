@@ -15,7 +15,7 @@ A responsive, multi-page Free Fire creator website built with the project's exis
 - `gallery.html` — Eighteen original character images in a varied, uncropped layout with keyboard and touch navigation in the lightbox.
 - `diamonds.html` — Database-backed diamond package selection, Player ID validation, optional payment transaction reference, order submission, and authenticated order tracking. Payment and delivery are manual; no real provider is configured.
 - `events.html` — NEEN Events Hub backed by server-managed events, suggestions, votes, published results, and eligible rewards.
-- `events-admin.php` — Server-gated admin dashboard. `events-admin.html` is a content-free compatibility redirect; header access links go directly to the protected PHP page.
+- `events-admin.php` — Server-gated, bilingual (English/Arabic) admin dashboard with a shared language preference across the admin and Owner control rooms. `events-admin.html` is a content-free compatibility redirect; header access links go directly to the protected PHP page.
 - `owner-dashboard.php` — Separate Owner-only dashboard for live overview data, account/profile/role/status management, ledger-backed wallet adjustments, runtime-backed game settings, site settings, admin activity, and links to the existing admin modules.
 - `events-detail.html`, `events-votes.html`, `events-suggestions.html`, `events-profile.html`, `events-rewards.html`, `events-results.html` — Separate Events Hub views connected to server data and authenticated actions. `events-challenges.html` is the active daily challenge hub; `events-leaderboard.html` displays public profile-safe server rankings.
 
