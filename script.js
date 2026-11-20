@@ -1942,3 +1942,17 @@ if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
     if (!event.relatedTarget) customCursor.classList.remove("is-visible");
   }, { passive: true });
 }
+
+/* === PALESTINE FLAG HEADER INJECTION === */
+(() => {
+  const mountPalestineFlag = () => {
+    const wordmark = document.querySelector(".site-header .wordmark");
+    if (!wordmark || wordmark.querySelector(".palestine-flag-badge")) return;
+    wordmark.insertAdjacentHTML("beforeend", '<span class="palestine-flag-badge" title="فلسطين • Palestine" aria-label="علم فلسطين"><svg viewBox="0 0 36 24" width="32" height="21" aria-hidden="true"><rect width="36" height="8" y="0" fill="#111111"/><rect width="36" height="8" y="8" fill="#ffffff"/><rect width="36" height="8" y="16" fill="#149954"/><polygon points="0,0 16,12 0,24" fill="#e4312b"/></svg></span>');
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mountPalestineFlag);
+  } else {
+    mountPalestineFlag();
+  }
+})();

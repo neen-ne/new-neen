@@ -8980,3 +8980,15 @@ body.home-page .home-site-shell {
     border-radius: 4px;
   }
 }
+
+/* === PALESTINE FLAG HEADER ALIGNMENT === */
+.site-header .wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.palestine-flag-badge {
+  display: inline-flex !important;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
