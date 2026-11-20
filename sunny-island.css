@@ -1550,24 +1550,52 @@
   margin-inline: auto;
 }
 
+html[dir="rtl"] .sunny-intro h1 {
+  line-height: 1.18;
+}
+
 .sunny-topbar {
-  flex-wrap: wrap;
-  gap: 12px 16px;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.sunny-player-card {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.sunny-player-progress {
+  width: clamp(115px, 13vw, 170px);
 }
 
 .sunny-wallet {
   margin-left: 0;
   margin-inline-start: auto;
+  flex: 0 0 auto;
+  padding: 6px 10px;
+}
+
+.sunny-avatar-picker {
+  min-width: 132px;
+  flex: 0 1 148px;
 }
 
 .sunny-actions-top {
-  flex-wrap: wrap;
+  display: flex;
+  flex-wrap: nowrap;
+  flex: 0 0 auto;
+  gap: 7px;
 }
 
 .sunny-quiet-button,
 .sunny-main-button,
 .sunny-complete-button {
+  min-height: 38px;
   white-space: nowrap;
+  padding-inline: 12px;
+  font-size: 10.5px;
 }
 
 .sunny-dash-status {
@@ -1595,7 +1623,7 @@
 
 .sunny-quest-heading h2 {
   font-size: clamp(22px, 2vw, 28px);
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .sunny-objective strong,
@@ -1614,14 +1642,20 @@ html[dir="rtl"] .sunny-avatar-picker select {
   padding: 0 10px 0 30px;
 }
 
-@media (max-width: 1050px) {
-  .sunny-play-area {
-    grid-template-columns: minmax(0, 1fr) 250px;
+@media (max-width: 1120px) {
+  .sunny-topbar {
+    flex-wrap: wrap;
+    gap: 8px 10px;
   }
   .sunny-wallet,
   .sunny-actions-top {
-    margin-left: 0;
     margin-inline-start: auto;
+  }
+}
+
+@media (max-width: 1050px) {
+  .sunny-play-area {
+    grid-template-columns: minmax(0, 1fr) 250px;
   }
 }
 
