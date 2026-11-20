@@ -303,6 +303,15 @@
         ? "Start a daily adventure to reveal your three island objectives."
         : "Sign in to save discoveries and start a daily adventure.";
       objectivesNode.append(empty);
+      if (state.authenticated && state.adventure.attempts_remaining_today > 0) {
+        const quickStart = document.createElement("button");
+        quickStart.type = "button";
+        quickStart.className = "sunny-main-button";
+        quickStart.style.marginTop = "0.75rem";
+        quickStart.textContent = "Reveal Today's 3 Objectives";
+        quickStart.addEventListener("click", () => void startAdventure());
+        objectivesNode.append(quickStart);
+      }
       completeButton.hidden = true;
       return;
     }

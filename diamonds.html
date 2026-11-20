@@ -115,6 +115,54 @@
             </section>
           </div>
         </section>
+        <section class="diamonds-layout section-wrap" aria-label="NEEN Coins top-up request" id="coins-topup">
+          <aside class="setup-notice">
+            <span class="setup-notice-icon" aria-hidden="true">✦</span>
+            <div>
+              <p class="eyebrow">SITE CURRENCY</p>
+              <h2>NEEN Coins.<br />Play &amp; unlock.</h2>
+              <p>Purchase Purchased Coins to enter paid challenges and unlock site perks. Coins are credited after payment verification.</p>
+            </div>
+            <ul class="setup-checklist">
+              <li><span aria-hidden="true">—</span> Official NEEN site currency packages</li>
+              <li><span aria-hidden="true">—</span> Submit transfer reference directly here</li>
+              <li><span aria-hidden="true">—</span> Full ledger tracking inside your Account</li>
+            </ul>
+          </aside>
+          <div class="order-panel">
+            <div class="order-panel-heading">
+              <p class="eyebrow section-eyebrow">COINS ORDER <span> / SITE CURRENCY</span></p>
+              <span class="preview-badge">NEEN WALLET</span>
+            </div>
+            <form class="diamond-form" data-coin-topup-form autocomplete="off" novalidate>
+              <div class="form-field">
+                <label for="coin-topup-package">1. Choose a NEEN Coins package <span>Required</span></label>
+                <select id="coin-topup-package" data-coin-topup-package required disabled>
+                  <option value="">Loading Coin packages…</option>
+                </select>
+                <small data-coin-topup-status>Packages are loaded from the NEEN Coins catalog.</small>
+              </div>
+              <div class="form-field">
+                <label for="coin-topup-method">2. Payment method <span>Required</span></label>
+                <select id="coin-topup-method" data-coin-topup-method required disabled>
+                  <option value="">Loading payment methods…</option>
+                </select>
+                <small data-coin-topup-instructions>Select a payment method to view instructions.</small>
+              </div>
+              <div class="form-field">
+                <label for="coin-topup-ref">3. Transaction reference <span>Optional</span></label>
+                <input id="coin-topup-ref" data-coin-topup-ref type="text" maxlength="150" placeholder="Transfer reference number" />
+              </div>
+              <div class="form-field">
+                <label for="coin-topup-proof">4. Transfer note / sender details <span>Optional</span></label>
+                <input id="coin-topup-proof" data-coin-topup-proof type="text" maxlength="500" placeholder="Sender name, wallet number, or transfer time" />
+              </div>
+              <button class="button button-primary review-button" type="submit" disabled><span>Submit Coin order</span><span class="button-arrow" aria-hidden="true">↗</span></button>
+              <p class="form-error" data-coin-topup-error role="alert" hidden></p>
+              <p class="form-success" data-coin-topup-success role="status" hidden style="color:#1b7a46;font-weight:600;margin-top:.75rem;"></p>
+            </form>
+          </div>
+        </section>
         <section class="diamonds-safety diamonds-orders section-wrap" aria-labelledby="diamond-orders-title">
           <div class="order-panel-heading">
             <div><p class="eyebrow section-eyebrow">ACCOUNT ORDERS <span> / 03</span></p><h2 id="diamond-orders-title">YOUR RECHARGES</h2></div>

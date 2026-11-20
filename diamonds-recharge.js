@@ -244,6 +244,7 @@
     selectedSummary.price.textContent = formatPrice(item.price, item.currency_code);
     selectedSummary.player.textContent = playerInput.value;
     selectedSummary.reference.textContent = paymentReferenceInput.value.trim() || "Not provided";
+    submitButton.disabled = false;
     form.hidden = true;
     review.hidden = false;
     review.focus?.();
@@ -298,4 +299,121 @@
     }),
     loadOrders(),
   ]);
+
+  // --- NEEN Coins Top-Up Section ---
+  const coinForm = document.querySelector("[data-coin-topup-form]");
+  const coinPackageSelect = document.querySelector("[data-coin-topup-package]");
+  const coinMethodSelect = document.querySelector("[data-coin-topup-method]");
+  const coinInstructions = document.querySelector("[data-coin-topup-instructions]");
+  const coinStatus = document.querySelector("[data-coin-topup-status]");
+  const coinError = document.querySelector("[data-coin-topup-error]");
+  const coinSuccess = document.querySelector("[data-coin-topup-success]");
+  if (
+    coinForm instanceof HTMLFormElement
+    && coinPackageSelect instanceof HTMLSelectElement
+    && coinMethodSelect instanceof HTMLSelectElement
+  ) {
+    let coinPackages = [];
+    let coinMethods = [];
+    let coinInFlight = false;
+
+    const updateCoinMethodInfo = () => {
+      const m = coinMethods.find((item) => String(item.id) === coinMethodSelect.value);
+      if (coinInstructions) {
+        coinInstructions.textContent = m?.instructions || "Select a payment method to view transfer instructions.";
+      }
+    };
+    coinMethodSelect.addEventListener("change", updateCoinMethodInfo);
+
+    Promise.all([
+      request("/api/coins/packages"),
+      request("/api/coins/payment-methods"),
+    ]).then(([pkgData, methodData]) => {
+      coinPackages = Array.isArray(pkgData.packages) ? pkgData.packages : [];
+      coinMethods = Array.isArray(methodData.payment_methods) ? methodData.payment_methods : [];
+      coinPackageSelect.replaceChildren(new Option("Select a Coin package", ""));
+      for (const p of coinPackages) {
+        coinPackageSelect.add(new Option(`${p.name} · ${p.coin_amount} Coins · ${formatPrice(p.price, p.currency_code)}`, String(p.id)));
+      }
+      coinMethodSelect.replaceChildren(new Option("Select payment method", ""));
+      for (const m of coinMethods) {
+        coinMethodSelect.add(new Option(m.display_name, String(m.id)));
+      }
+      const ready = coinPackages.length > 0 && coinMethods.length > 0;
+      coinPackageSelect.disabled = !ready;
+      coinMethodSelect.disabled = !ready;
+      const submitBtn = coinForm.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = !ready;
+      if (coinStatus) {
+        coinStatus.textContent = ready
+          ? `${coinPackages.length} active Coin package(s) available.`
+          : "Coin packages or payment methods are not configured yet.";
+      }
+      updateCoinMethodInfo();
+    }).catch((err) => {
+      if (coinStatus) coinStatus.textContent = err instanceof Error ? err.message : "Could not load Coin packages.";
+    });
+
+    coinForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (coinInFlight) return;
+      if (coinError) { coinError.hidden = true; coinError.textContent = ""; }
+      if (coinSuccess) { coinSuccess.hidden = true; coinSuccess.textContent = ""; }
+      if (!isSignedIn) {
+        if (coinError) { coinError.textContent = "Sign in to your NEEN account before purchasing Coins."; coinError.hidden = false; }
+        return;
+      }
+      const pkgId = Number(coinPackageSelect.value);
+      const methodId = Number(coinMethodSelect.value);
+      if (!pkgId || !methodId) {
+        if (coinError) { coinError.textContent = "Choose both a Coin package and a payment method."; coinError.hidden = false; }
+        return;
+      }
+      const refInput = coinForm.querySelector("[data-coin-topup-ref]");
+      const proofInput = coinForm.querySelector("[data-coin-topup-proof]");
+      const paymentRef = refInput ? refInput.value.trim() : "";
+      const proofDetails = proofInput ? proofInput.value.trim() : "";
+      coinInFlight = true;
+      const btn = coinForm.querySelector('button[type="submit"]');
+      if (btn) btn.disabled = true;
+      try {
+        const csrf = await request("/api/auth/csrf");
+        const orderRes = await request("/api/coins/orders", {
+          method: "POST",
+          headers: { "X-CSRF-Token": csrf.csrf_token },
+          body: JSON.stringify({
+            package_id: pkgId,
+            payment_method_id: methodId,
+            idempotency_key: crypto.randomUUID(),
+          }),
+        });
+        const orderId = orderRes.order?.id;
+        if (orderId && (paymentRef || proofDetails)) {
+          await request(`/api/coins/orders/${orderId}/evidence`, {
+            method: "POST",
+            headers: { "X-CSRF-Token": csrf.csrf_token },
+            body: JSON.stringify({
+              payment_reference: paymentRef || null,
+              proof_details: proofDetails || null,
+              idempotency_key: crypto.randomUUID(),
+            }),
+          });
+        }
+        coinForm.reset();
+        updateCoinMethodInfo();
+        if (coinSuccess) {
+          coinSuccess.textContent = `Coin order #${orderId} submitted! Track status in your Account page.`;
+          coinSuccess.hidden = false;
+        }
+      } catch (err) {
+        if (coinError) {
+          coinError.textContent = err instanceof Error ? err.message : "Could not submit Coin purchase order.";
+          coinError.hidden = false;
+        }
+      } finally {
+        coinInFlight = false;
+        if (btn) btn.disabled = false;
+      }
+    });
+  }
 })();

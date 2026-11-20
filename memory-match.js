@@ -219,7 +219,7 @@
         "POST",
         { card_index: index },
       );
-      renderSession(data.session);
+      renderSession(data.session, data.reward || null);
     } catch (error) {
       if (error.status === 401) {
         signIn.hidden = false;
