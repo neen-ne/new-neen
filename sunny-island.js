@@ -1883,92 +1883,102 @@
     drawRoundRect(ctx, 9, -66, 11, 10, 4, jacket, outline);
     drawRoundRect(ctx, 11, -64, 7, 3, 1.5, trim);
 
-    // 7. Signature Ears with Neon Tips
+    // 7. Signature Ears anchored to circular head
     ctx.fillStyle = "#e3ebf3";
     ctx.strokeStyle = outline;
     ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.moveTo(-10, -88);
-    ctx.lineTo(-22, -114);
-    ctx.quadraticCurveTo(-7, -109, -1, -95);
+    ctx.moveTo(-11, -91);
+    ctx.lineTo(-21, -113);
+    ctx.quadraticCurveTo(-7, -109, -2, -96);
     ctx.closePath();
-    ctx.moveTo(10, -88);
-    ctx.lineTo(22, -114);
-    ctx.quadraticCurveTo(7, -109, 1, -95);
+    ctx.moveTo(11, -91);
+    ctx.lineTo(21, -113);
+    ctx.quadraticCurveTo(7, -109, 2, -96);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = accent;
     ctx.beginPath();
-    ctx.moveTo(-12, -93);
-    ctx.lineTo(-18, -108);
+    ctx.moveTo(-12, -94);
+    ctx.lineTo(-17, -107);
     ctx.lineTo(-5, -97);
     ctx.closePath();
-    ctx.moveTo(12, -93);
-    ctx.lineTo(18, -108);
+    ctx.moveTo(12, -94);
+    ctx.lineTo(17, -107);
     ctx.lineTo(5, -97);
     ctx.closePath();
     ctx.fill();
 
-    // 8. Head, Hair & Glowing Cyber Visor
+    // 8. True Circular Head, Rounded Hair & Curved Neon Visor
     ctx.fillStyle = "#f0cbb5";
     ctx.strokeStyle = outline;
     ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.ellipse(0, -78, 14.5, 18.5, 0, 0, Math.PI * 2);
+    ctx.arc(0, -80, 16.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = "#e6ecf3";
+    // Soft cheek glow to emphasize circular face contour
+    ctx.fillStyle = "rgb(255 126 179 / 28%)";
     ctx.beginPath();
-    ctx.moveTo(-15, -82);
-    ctx.quadraticCurveTo(-19, -98, -8, -101);
-    ctx.quadraticCurveTo(-2, -107, 2, -100);
-    ctx.quadraticCurveTo(10, -105, 17, -97);
-    ctx.lineTo(14, -83);
-    ctx.quadraticCurveTo(5, -90, 0, -87);
-    ctx.quadraticCurveTo(-6, -93, -15, -82);
+    ctx.ellipse(-9.5, -73.5, 3.2, 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(9.5, -73.5, 3.2, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Rounded hair crown & curved bangs (no boxy vertical sidebars)
+    ctx.fillStyle = "#e6ecf3";
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 2.1;
+    ctx.beginPath();
+    ctx.arc(0, -81, 17, Math.PI * 1.04, Math.PI * 1.96);
+    ctx.quadraticCurveTo(11, -86, 5, -89);
+    ctx.quadraticCurveTo(0, -85, -5, -89);
+    ctx.quadraticCurveTo(-11, -86, -17, -81);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
+    // Short rounded side tufts hugging the circular cheeks
     ctx.fillStyle = "#d1dce7";
     ctx.beginPath();
-    ctx.moveTo(-14, -83);
-    ctx.quadraticCurveTo(-20, -73, -16, -58);
-    ctx.quadraticCurveTo(-9, -65, -8, -79);
-    ctx.moveTo(13, -84);
-    ctx.quadraticCurveTo(19, -72, 15, -57);
-    ctx.quadraticCurveTo(8, -65, 8, -79);
+    ctx.arc(-15.5, -79, 4.2, Math.PI * 0.45, Math.PI * 1.45);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Glowing Cyber Visor
-    drawRoundRect(ctx, -14, -84, 28, 9, 4, "#0d1426", outline);
+    ctx.beginPath();
+    ctx.arc(15.5, -79, 4.2, -Math.PI * 0.45, Math.PI * 0.55);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Sleek curved cyber visor fitted inside the circular face
+    drawRoundRect(ctx, -11.5, -83.5, 23, 7.5, 3.8, "#0d1426", outline);
     ctx.save();
     ctx.shadowColor = accent;
     ctx.shadowBlur = 10;
     ctx.strokeStyle = accent;
-    ctx.lineWidth = 2.4;
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.moveTo(-10, -79.5);
-    ctx.lineTo(10, -79.5);
+    ctx.moveTo(-8, -79.8);
+    ctx.quadraticCurveTo(0, -78.5, 8, -79.8);
     ctx.stroke();
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(-7, -79.5);
-    ctx.lineTo(7, -79.5);
+    ctx.moveTo(-5.5, -79.8);
+    ctx.quadraticCurveTo(0, -78.8, 5.5, -79.8);
     ctx.stroke();
     ctx.restore();
 
+    // Confident smile on the round chin
     ctx.strokeStyle = "#9d5e59";
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(-4, -64);
-    ctx.quadraticCurveTo(0, -61, 4, -64);
+    ctx.moveTo(-3.8, -69.5);
+    ctx.quadraticCurveTo(0, -66.8, 3.8, -69.5);
     ctx.stroke();
 
     // 9. Glowing Royal Crown & Floating Gem
@@ -1978,20 +1988,20 @@
     ctx.strokeStyle = trim;
     ctx.lineWidth = 3.2;
     ctx.beginPath();
-    ctx.moveTo(-9, -97);
-    ctx.lineTo(-4.5, -101);
-    ctx.lineTo(0, -97);
-    ctx.lineTo(4.5, -101);
-    ctx.lineTo(9, -97);
+    ctx.moveTo(-9, -97.5);
+    ctx.lineTo(-4.5, -101.5);
+    ctx.lineTo(0, -97.5);
+    ctx.lineTo(4.5, -101.5);
+    ctx.lineTo(9, -97.5);
     ctx.stroke();
     ctx.fillStyle = accent;
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 1.3;
     ctx.beginPath();
-    ctx.moveTo(0, -104);
-    ctx.lineTo(4.5, -99);
-    ctx.lineTo(0, -94);
-    ctx.lineTo(-4.5, -99);
+    ctx.moveTo(0, -104.5);
+    ctx.lineTo(4.5, -99.5);
+    ctx.lineTo(0, -94.5);
+    ctx.lineTo(-4.5, -99.5);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
