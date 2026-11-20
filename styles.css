@@ -8875,3 +8875,108 @@ body.home-page .home-site-shell {
     animation: none;
   }
 }
+
+
+/* === PALESTINE FLAG HEADER EMBLEM WITH LOOPING LIGHT SHEEN === */
+.wordmark-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.palestine-flag-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 21px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1.5px solid #ffffff;
+  border-radius: 5px;
+  background: #111111;
+  box-shadow:
+    0 2px 8px rgb(24 44 58 / 18%),
+    0 0 12px rgb(20 153 84 / 24%);
+  animation: palestineAuraLoop 3.2s ease-in-out infinite;
+  transform: translateZ(0);
+}
+
+.palestine-flag-badge svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Subtle glossy glass highlight on top edge */
+.palestine-flag-badge::before {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 34%) 0%,
+    rgb(255 255 255 / 6%) 48%,
+    rgb(0 0 0 / 10%) 100%
+  );
+  content: "";
+  pointer-events: none;
+}
+
+/* Looping diagonal light sweep across the flag */
+.palestine-flag-badge::after {
+  position: absolute;
+  top: -35%;
+  left: -130%;
+  z-index: 2;
+  width: 75%;
+  height: 170%;
+  background: linear-gradient(
+    105deg,
+    rgb(255 255 255 / 0%) 15%,
+    rgb(255 255 255 / 88%) 50%,
+    rgb(255 250 220 / 95%) 54%,
+    rgb(255 255 255 / 0%) 85%
+  );
+  transform: skewX(-22deg);
+  animation: palestineLightLoop 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  content: "";
+  pointer-events: none;
+}
+
+@keyframes palestineLightLoop {
+  0% {
+    left: -130%;
+  }
+  58%,
+  100% {
+    left: 165%;
+  }
+}
+
+@keyframes palestineAuraLoop {
+  0%,
+  100% {
+    box-shadow:
+      0 2px 8px rgb(24 44 58 / 18%),
+      0 0 10px rgb(228 49 43 / 24%);
+  }
+  50% {
+    box-shadow:
+      0 3px 12px rgb(24 44 58 / 24%),
+      0 0 16px rgb(20 153 84 / 42%),
+      0 0 6px rgb(255 255 255 / 75%);
+  }
+}
+
+@media (max-width: 760px) {
+  .wordmark-lockup {
+    gap: 7px;
+  }
+  .palestine-flag-badge {
+    width: 28px;
+    height: 18px;
+    border-radius: 4px;
+  }
+}
