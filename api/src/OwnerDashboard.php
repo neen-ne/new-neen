@@ -555,6 +555,148 @@ final class OwnerDashboard
         return $after;
     }
 
+
+    public static function allowedMediaKeys(): array
+    {
+        $keys = [
+            'media_home_hero',
+            'media_about_portrait',
+            'media_default_avatar',
+            'media_coin_icon',
+            'media_events_banner_1',
+            'media_events_banner_2',
+            'media_game_sunny_island',
+            'media_game_vault_cracker',
+            'media_game_loot_sequence',
+            'media_game_memory_match',
+            'media_game_picture_jigsaw',
+            'media_video_poster_1',
+            'media_video_poster_2',
+            'media_video_poster_3',
+        ];
+        for ($i = 1; $i <= 18; $i++) {
+            $keys[] = sprintf('media_gallery_%02d', $i);
+        }
+        return $keys;
+    }
+
+    public function uploadSiteMedia(int $actorId, string $settingKey, array $file, string $projectRoot): array
+    {
+        if (!in_array($settingKey, self::allowedMediaKeys(), true)) {
+            throw new ApiException('VALIDATION_ERROR', 'Invalid site media slot key.', 422);
+        }
+        $errorCode = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+        if ($errorCode !== UPLOAD_ERR_OK) {
+            throw new ApiException('VALIDATION_ERROR', 'Image upload failed or no file was selected.', 422);
+        }
+        $tmpName = (string) ($file['tmp_name'] ?? '');
+        if ($tmpName === '' || !is_uploaded_file($tmpName)) {
+            throw new ApiException('VALIDATION_ERROR', 'Uploaded file could not be verified.', 422);
+        }
+        $size = (int) ($file['size'] ?? 0);
+        if ($size < 1 || $size > 5 * 1024 * 1024) {
+            throw new ApiException('VALIDATION_ERROR', 'Image size must be 5 MB or less.', 422);
+        }
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = $finfo !== false ? (string) finfo_file($finfo, $tmpName) : '';
+        if ($finfo !== false) {
+            finfo_close($finfo);
+        }
+        $mimeToExt = [
+            'image/webp' => 'webp',
+            'image/png' => 'png',
+            'image/jpeg' => 'jpg',
+            'image/gif' => 'gif',
+        ];
+        if (!isset($mimeToExt[$mime]) || @getimagesize($tmpName) === false) {
+            throw new ApiException('VALIDATION_ERROR', 'Only valid WebP, PNG, JPG, or GIF images are allowed.', 422);
+        }
+
+        $uploadDir = rtrim($projectRoot, '/\\') . '/uploads/site';
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
+            throw new RuntimeException('Could not create uploads/site directory.');
+        }
+        $htaccessPath = $uploadDir . '/.htaccess';
+        if (!file_exists($htaccessPath)) {
+            @file_put_contents(
+                $htaccessPath,
+                "<FilesMatch \"\\.(php|phtml|php3|php4|php5|phar)$\">\n    Require all denied\n</FilesMatch>\nOptions -Indexes\n"
+            );
+        }
+
+        $filename = $settingKey . '_' . gmdate('YmdHis') . '_' . bin2hex(random_bytes(4)) . '.' . $mimeToExt[$mime];
+        $destination = $uploadDir . '/' . $filename;
+        if (!move_uploaded_file($tmpName, $destination)) {
+            throw new RuntimeException('Could not save uploaded image file.');
+        }
+
+        $before = $this->siteSettings();
+        $oldValue = $before[$settingKey]['value'] ?? null;
+        $newValue = 'uploads/site/' . $filename;
+
+        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $sql = $driver === 'mysql'
+            ? 'INSERT INTO site_settings (setting_key, setting_value, updated_by, updated_at)
+               VALUES (:setting_key, :setting_value, :updated_by, :updated_at)
+               ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value),
+                   updated_by = VALUES(updated_by), updated_at = VALUES(updated_at)'
+            : 'INSERT INTO site_settings (setting_key, setting_value, updated_by, updated_at)
+               VALUES (:setting_key, :setting_value, :updated_by, :updated_at)
+               ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value,
+                   updated_by = excluded.updated_by, updated_at = excluded.updated_at';
+        $statement = $this->db->prepare($sql);
+        $statement->execute([
+            'setting_key' => $settingKey,
+            'setting_value' => $newValue,
+            'updated_by' => $actorId,
+            'updated_at' => gmdate('Y-m-d H:i:s'),
+        ]);
+
+        if (is_string($oldValue) && str_starts_with($oldValue, 'uploads/site/')) {
+            $oldPath = rtrim($projectRoot, '/\\') . '/' . $oldValue;
+            if (is_file($oldPath)) {
+                @unlink($oldPath);
+            }
+        }
+
+        $this->audit($actorId, 'owner_site_settings_changed', 'site_settings', null, [
+            'setting_key' => $settingKey,
+            'before' => $oldValue,
+            'after' => $newValue,
+        ]);
+
+        return $this->siteSettings();
+    }
+
+    public function resetSiteMedia(int $actorId, string $settingKey, string $projectRoot): array
+    {
+        if (!in_array($settingKey, self::allowedMediaKeys(), true)) {
+            throw new ApiException('VALIDATION_ERROR', 'Invalid site media slot key.', 422);
+        }
+        $before = $this->siteSettings();
+        $oldValue = $before[$settingKey]['value'] ?? null;
+
+        $statement = $this->db->prepare('DELETE FROM site_settings WHERE setting_key = :setting_key');
+        $statement->execute(['setting_key' => $settingKey]);
+
+        if (is_string($oldValue) && str_starts_with($oldValue, 'uploads/site/')) {
+            $oldPath = rtrim($projectRoot, '/\\') . '/' . $oldValue;
+            if (is_file($oldPath)) {
+                @unlink($oldPath);
+            }
+        }
+
+        if ($oldValue !== null) {
+            $this->audit($actorId, 'owner_site_settings_changed', 'site_settings', null, [
+                'setting_key' => $settingKey,
+                'before' => $oldValue,
+                'after' => null,
+            ]);
+        }
+
+        return $this->siteSettings();
+    }
+
     private function lockedUser(int $userId): array
     {
         $lock = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';

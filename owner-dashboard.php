@@ -173,7 +173,7 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
             </article>
             <div class="owner-module-grid">
               <a class="owner-module-card" href="events-admin.php"><span>01</span><strong data-i18n="existingAdmin">Existing Admin Dashboard</strong><small data-i18n="existingAdminDesc">Games, rewards, attendance, community events, diamond packages and orders, Coins packages and orders.</small><b data-i18n="openConsole">Open console ↗</b></a>
-              <article class="owner-module-card owner-module-unavailable"><span>02</span><strong data-i18n="contentManagement">Content Management</strong><small data-i18n="notConnected">Videos, gallery assets, and page copy remain static files. No CMS editing controls are exposed.</small><b data-i18n="requiresIntegration">Requires a media workflow and public-page integration</b></article>
+              <button type="button" class="owner-module-card owner-module-action" data-open-section="activity"><span>02</span><strong data-i18n="contentManagement">Site Images &amp; Media</strong><small data-i18n="mediaCardDesc">Upload and replace hero banners, character gallery frames, game artwork, and icons across the live site.</small><b data-i18n="openMediaManager">Open media manager ↗</b></button>
               <article class="owner-module-card owner-module-unavailable"><span>03</span><strong data-i18n="charts">Extended reports</strong><small data-i18n="reportsScope">The Overview charts are real 30-day database series. Additional reporting dimensions are not yet implemented.</small><b data-i18n="notAvailable">Not available</b></article>
             </div>
           </section>
@@ -188,6 +188,23 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
                 <button class="admin-primary-button" type="submit" data-i18n="saveSettings">Save site settings</button>
               </form>
               <p class="admin-state" data-owner-settings-updated></p>
+            </article>
+            <article class="admin-panel" id="site-media-panel">
+              <div class="admin-panel-heading">
+                <div>
+                  <p class="admin-eyebrow" data-i18n="mediaManagerEyebrow">VISUAL ASSETS &amp; MEDIA</p>
+                  <h3 data-i18n="siteMediaTitle">Site Images &amp; Media Manager</h3>
+                </div>
+                <select class="owner-media-filter" data-owner-media-filter aria-label="Filter media category">
+                  <option value="all" data-i18n="mediaCatAll">All Sections (32)</option>
+                  <option value="hero" data-i18n="mediaCatHero">Hero &amp; Pages</option>
+                  <option value="games" data-i18n="mediaCatGames">Games Artwork</option>
+                  <option value="videos" data-i18n="mediaCatVideos">Video Posters</option>
+                  <option value="gallery" data-i18n="mediaCatGallery">Character Gallery (18)</option>
+                </select>
+              </div>
+              <p class="admin-module-description" data-i18n="siteMediaDesc">Upload a new image (WebP, PNG, JPG up to 5 MB) to replace any visual across the live site immediately, or reset it to the original artwork.</p>
+              <div class="owner-media-grid" data-owner-media-grid aria-live="polite"></div>
             </article>
             <div class="admin-panel">
               <form class="admin-order-search" data-owner-activity-search><label><span data-i18n="searchActivity">Search actor or action</span><input name="q" maxlength="100" dir="ltr" data-i18n-placeholder="searchPlaceholder" placeholder="Search..." /></label><button class="admin-secondary-button" type="submit" data-i18n="search">Search</button><button class="admin-secondary-button" type="button" data-owner-activity-refresh data-i18n="refresh">Refresh</button></form>

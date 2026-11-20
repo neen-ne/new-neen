@@ -29,7 +29,7 @@ final class Api
             $path = rtrim($path, '/') ?: '/';
             $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-            if (in_array($method, ['POST', 'PATCH', 'PUT', 'DELETE'], true)) {
+            if (in_array($method, ['POST', 'PATCH', 'PUT', 'DELETE'], true) && $path !== '/api/owner/site-media/upload') {
                 $this->body = $this->readJsonBody();
             }
 
@@ -63,6 +63,39 @@ final class Api
                     $auth['user_id'],
                     $this->body,
                 ));
+                $this->send(true, ['settings' => $settings]);
+            }
+
+            if ($path === '/api/owner/site-media/upload') {
+                $this->expectMethod($method, 'POST');
+                $auth = $this->requireAuth();
+                $this->requireOwner($auth['user_id']);
+                $this->requireCsrf($auth);
+                $settingKey = is_string($_POST['setting_key'] ?? null) ? trim($_POST['setting_key']) : '';
+                if ($settingKey === '' || !isset($_FILES['image']) || !is_array($_FILES['image'])) {
+                    throw new ApiException('VALIDATION_ERROR', 'Setting key and image file are required.', 422);
+                }
+                $settings = (new OwnerDashboard($this->db))->uploadSiteMedia(
+                    $auth['user_id'],
+                    $settingKey,
+                    $_FILES['image'],
+                    dirname(__DIR__, 2),
+                );
+                $this->send(true, ['settings' => $settings]);
+            }
+
+            if ($path === '/api/owner/site-media/reset') {
+                $this->expectMethod($method, 'POST');
+                $auth = $this->requireAuth();
+                $this->requireOwner($auth['user_id']);
+                $this->requireCsrf($auth);
+                $this->requireAllowedFields(['setting_key']);
+                $settingKey = $this->requiredString('setting_key', 5, 80);
+                $settings = (new OwnerDashboard($this->db))->resetSiteMedia(
+                    $auth['user_id'],
+                    trim($settingKey),
+                    dirname(__DIR__, 2),
+                );
                 $this->send(true, ['settings' => $settings]);
             }
 

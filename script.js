@@ -913,6 +913,65 @@ const translateSubtree = (root, language) => {
 const languageNavigation = document.querySelector(".site-navigation");
 let languageToggle = null;
 
+
+const SITE_MEDIA_SELECTORS = {
+  media_home_hero: [".home-hero .hero-art img"],
+  media_about_portrait: [".about-photo img", ".home-about-portrait img"],
+  media_coin_icon: ['img[src*="gold-coin.webp"]'],
+  media_events_banner_1: [".events-hero-media img:first-child"],
+  media_events_banner_2: [".events-hero-media img:last-child"],
+  media_game_sunny_island: [".arcade-spotlight-art img", 'a[href="sunny-island.html"] img'],
+  media_game_vault_cracker: ['a[href="vault-cracker.html"] img', 'img[src*="loot-crate.webp"]'],
+  media_game_loot_sequence: ['a[href="loot-sequence.html"] img', '.challenge-hub-card:nth-child(5) img'],
+  media_game_memory_match: ['a[href="memory-match.html"] img', 'img[src*="8.11.14%20PM%20(3).webp"]'],
+  media_game_picture_jigsaw: ['a[href="picture-jigsaw.html"] img', 'img[src*="8.29.09%20PM.webp"]'],
+  media_video_poster_1: [".home-video-card:nth-child(1) .home-video-poster"],
+  media_video_poster_2: [".home-video-card:nth-child(2) .home-video-poster"],
+  media_video_poster_3: [".home-video-card:nth-child(3) .home-video-poster"],
+  media_gallery_01: [".gallery-grid figure:nth-child(1) img", ".gallery-card:nth-child(1) img"],
+  media_gallery_02: [".gallery-grid figure:nth-child(2) img", ".gallery-card:nth-child(2) img"],
+  media_gallery_03: [".gallery-grid figure:nth-child(3) img", ".gallery-card:nth-child(3) img"],
+  media_gallery_04: [".gallery-grid figure:nth-child(4) img", ".gallery-card:nth-child(4) img"],
+  media_gallery_05: [".gallery-grid figure:nth-child(5) img", ".gallery-card:nth-child(5) img"],
+  media_gallery_06: [".gallery-grid figure:nth-child(6) img", ".gallery-card:nth-child(6) img"],
+  media_gallery_07: [".gallery-grid figure:nth-child(7) img", ".gallery-card:nth-child(7) img"],
+  media_gallery_08: [".gallery-grid figure:nth-child(8) img", ".gallery-card:nth-child(8) img", ".home-gallery-strip a:nth-child(1) img"],
+  media_gallery_09: [".gallery-grid figure:nth-child(9) img", ".gallery-card:nth-child(9) img", ".home-gallery-strip a:nth-child(2) img"],
+  media_gallery_10: [".gallery-grid figure:nth-child(10) img", ".gallery-card:nth-child(10) img", ".home-gallery-strip a:nth-child(3) img"],
+  media_gallery_11: [".gallery-grid figure:nth-child(11) img", ".gallery-card:nth-child(11) img", ".home-gallery-strip a:nth-child(4) img"],
+  media_gallery_12: [".gallery-grid figure:nth-child(12) img", ".gallery-card:nth-child(12) img"],
+  media_gallery_13: [".gallery-grid figure:nth-child(13) img", ".gallery-card:nth-child(13) img"],
+  media_gallery_14: [".gallery-grid figure:nth-child(14) img", ".gallery-card:nth-child(14) img"],
+  media_gallery_15: [".gallery-grid figure:nth-child(15) img", ".gallery-card:nth-child(15) img"],
+  media_gallery_16: [".gallery-grid figure:nth-child(16) img", ".gallery-card:nth-child(16) img"],
+  media_gallery_17: [".gallery-grid figure:nth-child(17) img", ".gallery-card:nth-child(17) img"],
+  media_gallery_18: [".gallery-grid figure:nth-child(18) img", ".gallery-card:nth-child(18) img"],
+};
+
+const applyPublicSiteMedia = (settings) => {
+  const defaultAvatarUrl = settings.media_default_avatar?.value;
+  if (typeof defaultAvatarUrl === "string" && /^(uploads\/site\/|https:\/\/)/.test(defaultAvatarUrl)) {
+    document.querySelectorAll('img[src="icone/snoop.webp"]').forEach((img) => {
+      img.setAttribute("src", defaultAvatarUrl);
+    });
+    document.querySelectorAll('[data-avatar-preset="icone/snoop.webp"]').forEach((btn) => {
+      btn.dataset.avatarPreset = defaultAvatarUrl;
+    });
+  }
+
+  for (const [key, selectors] of Object.entries(SITE_MEDIA_SELECTORS)) {
+    const url = settings[key]?.value;
+    if (typeof url !== "string" || !/^(uploads\/site\/|https:\/\/)/.test(url)) continue;
+    selectors.forEach((selector) => {
+      try {
+        document.querySelectorAll(selector).forEach((img) => {
+          if (img instanceof HTMLImageElement) img.src = url;
+        });
+      } catch {}
+    });
+  }
+};
+
 const updatePublicSiteSettings = async () => {
   try {
     const response = await fetch("/api/site-settings", {
@@ -936,6 +995,7 @@ const updatePublicSiteSettings = async () => {
     if (typeof description === "string" && descriptionMeta instanceof HTMLMetaElement) {
       descriptionMeta.content = description;
     }
+    applyPublicSiteMedia(settings);
   } catch (error) {
     console.error("NEEN public site settings could not be loaded.", error);
   }

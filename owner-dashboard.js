@@ -25,6 +25,8 @@
     activityQuery: "",
     selectedUser: null,
     games: [],
+    siteSettings: {},
+    mediaCategory: "all",
     language: readLanguagePreference(),
   };
   const translations = {
@@ -972,12 +974,163 @@
     }
   };
 
+
+  const SITE_MEDIA_CATALOG = [
+    { key: "media_home_hero", cat: "hero", en: "Home Hero Banner", ar: "صورة الواجهة الرئيسية", def: "neno/WhatsApp%20Image%202026-10-29%20at%203.08.15%20PM%20(1).webp" },
+    { key: "media_about_portrait", cat: "hero", en: "About NEEN Portrait", ar: "صورة صفحة عن نين", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.14%20PM.webp" },
+    { key: "media_default_avatar", cat: "hero", en: "Default Player Avatar", ar: "الصورة الرمزية الافتراضية", def: "icone/snoop.webp" },
+    { key: "media_coin_icon", cat: "hero", en: "NEEN Gold Coin Icon", ar: "أيقونة عملة NEEN Coins", def: "assets/hero-loot/gold-coin.webp" },
+    { key: "media_events_banner_1", cat: "hero", en: "Events Hub Frame 1", ar: "صورة مركز الفعاليات 1", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.15%20PM%20(1).webp" },
+    { key: "media_events_banner_2", cat: "hero", en: "Events Hub Frame 2", ar: "صورة مركز الفعاليات 2", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.17%20PM.webp" },
+    { key: "media_game_sunny_island", cat: "games", en: "Game: Sunny Island", ar: "لعبة: جزيرة صني", def: "assets/hero-loot/snoop-sticker-01.webp" },
+    { key: "media_game_vault_cracker", cat: "games", en: "Game: Vault Cracker", ar: "لعبة: كسر الخزنة", def: "assets/hero-loot/loot-crate.webp" },
+    { key: "media_game_loot_sequence", cat: "games", en: "Game: Loot Sequence", ar: "لعبة: تسلسل اللوت", def: "assets/hero-loot/snoop-sticker-06.webp" },
+    { key: "media_game_memory_match", cat: "games", en: "Game: Memory Match", ar: "لعبة: تطابق الذاكرة", def: "assets/hero-loot/Memory%20Match%20pic/WhatsApp%20Image%202026-11-07%20at%208.11.14%20PM%20(3).webp" },
+    { key: "media_game_picture_jigsaw", cat: "games", en: "Game: Picture Jigsaw", ar: "لعبة: تركيب الصورة", def: "assets/Picture%20Jigsaw%20pic/WhatsApp%20Image%202026-11-07%20at%208.29.09%20PM.webp" },
+    { key: "media_video_poster_1", cat: "videos", en: "Home Video Poster 1", ar: "غلاف الفيديو الرئيسي 1", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.15%20PM%20(1).webp" },
+    { key: "media_video_poster_2", cat: "videos", en: "Home Video Poster 2", ar: "غلاف الفيديو الرئيسي 2", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.15%20PM%20(2).webp" },
+    { key: "media_video_poster_3", cat: "videos", en: "Home Video Poster 3", ar: "غلاف الفيديو الرئيسي 3", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.16%20PM.webp" },
+    { key: "media_gallery_01", cat: "gallery", en: "Gallery 01 / Rose Garden", ar: "المعرض 01 / حديقة الورد", def: "neno/WhatsApp%20Image%202026-10-29%20at%203.08.14%20PM.webp" },
+    { key: "media_gallery_02", cat: "gallery", en: "Gallery 02 / Garden Swing", ar: "المعرض 02 / أرجوحة الحديقة", def: "neno/WhatsApp%20Image%202026-10-29%20at%203.08.14%20PM%20(1).webp" },
+    { key: "media_gallery_03", cat: "gallery", en: "Gallery 03 / Night Lights", ar: "المعرض 03 / أضواء الليل", def: "neno/WhatsApp%20Image%202026-10-29%20at%203.08.15%20PM.webp" },
+    { key: "media_gallery_04", cat: "gallery", en: "Gallery 04 / City Drive", ar: "المعرض 04 / جولة المدينة", def: "neno/WhatsApp%20Image%202026-10-29%20at%203.08.15%20PM%20(1).webp" },
+    { key: "media_gallery_05", cat: "gallery", en: "Gallery 05 / Moonlit Rooftop", ar: "المعرض 05 / سطح القمر", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.14%20PM.webp" },
+    { key: "media_gallery_06", cat: "gallery", en: "Gallery 06 / Neon Crown", ar: "المعرض 06 / تاج النيون", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.15%20PM%20(1).webp" },
+    { key: "media_gallery_07", cat: "gallery", en: "Gallery 07 / City Rooftop", ar: "المعرض 07 / سطح المدينة", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.15%20PM%20(2).webp" },
+    { key: "media_gallery_08", cat: "gallery", en: "Gallery 08 / Sakura Lights", ar: "المعرض 08 / أضواء الساكورا", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.15%20PM%20(3).webp" },
+    { key: "media_gallery_09", cat: "gallery", en: "Gallery 09 / Garden Heart", ar: "المعرض 09 / قلب الحديقة", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.15%20PM%20(4).webp" },
+    { key: "media_gallery_10", cat: "gallery", en: "Gallery 10 / Sunset Glow", ar: "المعرض 10 / وهج الغروب", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.15%20PM%20(5).webp" },
+    { key: "media_gallery_11", cat: "gallery", en: "Gallery 11 / Neon Profile", ar: "المعرض 11 / إطلالة النيون", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.15%20PM%20(6).webp" },
+    { key: "media_gallery_12", cat: "gallery", en: "Gallery 12 / Sunset Heart", ar: "المعرض 12 / قلب الغروب", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.15%20PM.webp" },
+    { key: "media_gallery_13", cat: "gallery", en: "Gallery 13 / Neon Wave", ar: "المعرض 13 / تحية النيون", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.16%20PM%20(1).webp" },
+    { key: "media_gallery_14", cat: "gallery", en: "Gallery 14 / Sakura Step", ar: "المعرض 14 / خطوة الساكورا", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.16%20PM%20(2).webp" },
+    { key: "media_gallery_15", cat: "gallery", en: "Gallery 15 / Violet Ride", ar: "المعرض 15 / جولة بنفسجية", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.16%20PM%20(3).webp" },
+    { key: "media_gallery_16", cat: "gallery", en: "Gallery 16 / Nightfall", ar: "المعرض 16 / حلول الليل", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.16%20PM%20(4).webp" },
+    { key: "media_gallery_17", cat: "gallery", en: "Gallery 17 / Hearts in Bloom", ar: "المعرض 17 / قلوب متفتحة", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.16%20PM.webp" },
+    { key: "media_gallery_18", cat: "gallery", en: "Gallery 18 / Sunset Stance", ar: "المعرض 18 / وقفة الغروب", def: "neno/WhatsApp%20Image%202026-10-29%20at%2011.23.17%20PM.webp" },
+  ];
+
+  const uploadMediaFile = async (settingKey, file) => {
+    const csrf = await apiRequest("/api/auth/csrf");
+    if (typeof csrf.csrf_token !== "string") throw new Error(t("csrfMissing"));
+    const body = new FormData();
+    body.append("setting_key", settingKey);
+    body.append("image", file);
+    const response = await fetch("/api/owner/site-media/upload", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        Accept: "application/json",
+        "X-CSRF-Token": csrf.csrf_token,
+      },
+      body,
+    });
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error(t("invalidResponse"));
+    }
+    if (!response.ok || result.success !== true) {
+      throw new Error(result.errors?.[0]?.message || (t("requestError") + " (" + response.status + ")"));
+    }
+    return result.data;
+  };
+
+  const renderSiteMedia = () => {
+    const grid = document.querySelector("[data-owner-media-grid]");
+    if (!(grid instanceof HTMLElement)) return;
+    const filter = state.mediaCategory || "all";
+    const items = filter === "all"
+      ? SITE_MEDIA_CATALOG
+      : SITE_MEDIA_CATALOG.filter((item) => item.cat === filter);
+
+    const cards = items.map((item) => {
+      const customUrl = state.siteSettings?.[item.key]?.value;
+      const isCustom = typeof customUrl === "string" && customUrl.trim() !== "";
+      const activeSrc = isCustom ? customUrl : item.def;
+
+      const card = make("article", "owner-media-card");
+      const thumb = make("div", "owner-media-thumb");
+      const img = document.createElement("img");
+      img.src = activeSrc;
+      img.alt = state.language === "ar" ? item.ar : item.en;
+      img.loading = "lazy";
+      const badge = make(
+        "span",
+        isCustom ? "owner-media-badge is-custom" : "owner-media-badge",
+        isCustom ? t("mediaBadgeCustom") : t("mediaBadgeOriginal")
+      );
+      thumb.append(img, badge);
+
+      const meta = make("div", "owner-media-meta");
+      meta.append(
+        make("strong", "", state.language === "ar" ? item.ar : item.en),
+        make("small", "", item.key)
+      );
+
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = "image/webp,image/png,image/jpeg,image/gif";
+      fileInput.hidden = true;
+
+      const changeBtn = make("button", "admin-primary-button", t("mediaChangeBtn"));
+      changeBtn.type = "button";
+      changeBtn.addEventListener("click", () => fileInput.click());
+
+      const resetBtn = make("button", "admin-secondary-button", t("mediaResetBtn"));
+      resetBtn.type = "button";
+      resetBtn.disabled = !isCustom;
+      resetBtn.addEventListener("click", async () => {
+        if (!window.confirm(t("confirmResetMedia"))) return;
+        resetBtn.disabled = true;
+        try {
+          const data = await mutate("/api/owner/site-media/reset", "POST", { setting_key: item.key });
+          state.siteSettings = data.settings || {};
+          renderSiteMedia();
+          toast(t("saved"));
+        } catch (error) {
+          toast(error instanceof Error ? error.message : t("failed"), true);
+          resetBtn.disabled = false;
+        }
+      });
+
+      fileInput.addEventListener("change", async () => {
+        const selected = fileInput.files?.[0];
+        if (!selected) return;
+        changeBtn.disabled = true;
+        changeBtn.textContent = t("mediaUploadingBtn");
+        try {
+          const data = await uploadMediaFile(item.key, selected);
+          state.siteSettings = data.settings || {};
+          renderSiteMedia();
+          toast(t("saved"));
+        } catch (error) {
+          toast(error instanceof Error ? error.message : t("failed"), true);
+        } finally {
+          fileInput.value = "";
+          changeBtn.disabled = false;
+          changeBtn.textContent = t("mediaChangeBtn");
+        }
+      });
+
+      const actions = make("div", "owner-media-actions");
+      actions.append(changeBtn, resetBtn, fileInput);
+      card.append(thumb, meta, actions);
+      return card;
+    });
+
+    grid.replaceChildren(...cards);
+  };
+
   const loadSiteSettings = async () => {
     const form = document.querySelector("[data-owner-site-settings]");
     const updated = document.querySelector("[data-owner-settings-updated]");
     if (!(form instanceof HTMLFormElement) || !(updated instanceof HTMLElement)) return;
     try {
       const { settings } = await apiRequest("/api/owner/site-settings");
+      state.siteSettings = settings || {};
+      renderSiteMedia();
       for (const key of ["tiktok_url", "site_description"]) {
         const field = form.elements.namedItem(key);
         if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
@@ -996,6 +1149,13 @@
     await selectUser(state.selectedUser.id, "users");
   };
 
+  const mediaFilter = document.querySelector("[data-owner-media-filter]");
+  if (mediaFilter instanceof HTMLSelectElement) {
+    mediaFilter.addEventListener("change", () => {
+      state.mediaCategory = mediaFilter.value || "all";
+      renderSiteMedia();
+    });
+  }
   navItems.forEach((item) => item.addEventListener("click", () => openSection(item.dataset.section)));
   document.querySelectorAll("[data-open-section]").forEach((button) => {
     button.addEventListener("click", () => openSection(button.dataset.openSection));
