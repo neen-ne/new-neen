@@ -389,7 +389,21 @@
     return { level: 100, currentXp: 180, requiredXp: 180 };
   };
 
+  const syncIslandBrandTitle = () => {
+    const ar = isArabic();
+    const h1 = document.getElementById("sunny-title");
+    if (h1) {
+      h1.innerHTML = ar ? "جزيرة <span>نينو</span>" : "NENO <span>LAND</span>";
+    }
+    const crumb = document.querySelector(".sunny-crumbs span:last-child");
+    if (crumb) {
+      crumb.textContent = ar ? "جزيرة نينو" : "NeNo Land";
+    }
+    document.title = ar ? "جزيرة نينو — NEEN" : "NeNo Land — NEEN";
+  };
+
   const renderProgress = () => {
+    syncIslandBrandTitle();
     const ar = isArabic();
     const lvlInfo = levelProgressFromXp(state.progress.xp);
     const level = Math.max(1, lvlInfo.level);
@@ -523,7 +537,7 @@
       node.classList.toggle("is-current", zone === state.position.zone);
       node.classList.toggle("is-discovered", state.progress.discovered_zones.includes(zone));
     });
-    const current = ZONES[state.position.zone] || "Sunny Island";
+    const current = ZONES[state.position.zone] || "NeNo Land";
     const miniLabel = document.querySelector("[data-minimap-coords]");
     if (miniLabel) miniLabel.textContent = current.toUpperCase();
     zoneNode.textContent = current;
@@ -623,7 +637,7 @@
         state.earnedCoins = null;
         renderProgress();
       });
-      setStatus(state.session ? "Your daily adventure is ready to continue." : "Welcome to Sunny Island. Explore freely or start today's adventure.");
+      setStatus(state.session ? "Your daily adventure is ready to continue." : "Welcome to NeNo Land. Explore freely or start today's adventure.");
       scheduleProgressSync(true);
     } catch (error) {
       state.authenticated = false;
