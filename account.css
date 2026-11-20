@@ -1465,3 +1465,58 @@
 .account-profile .account-text-button:hover {
   color: #773557;
 }
+
+.gamer-hero-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 18px;
+}
+
+.gamer-coin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 16px;
+  border: 1.5px solid #f0c96b;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #fffdf5 0%, #fff3cf 100%);
+  box-shadow: 0 10px 24px rgb(214 158 46 / 16%);
+  color: #5c3d08;
+  text-decoration: none;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.gamer-coin-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgb(214 158 46 / 24%);
+}
+
+.gamer-coin-badge img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 6px rgb(180 120 20 / 28%));
+  flex-shrink: 0;
+}
+
+.gamer-coin-badge-copy {
+  display: grid;
+  gap: 1px;
+}
+
+.gamer-coin-badge-copy small {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #9a6715;
+}
+
+.gamer-coin-badge-copy strong {
+  font-family: var(--display);
+  font-size: clamp(20px, 3vw, 25px);
+  line-height: 1.05;
+  color: #4a2f04;
+  font-variant-numeric: tabular-nums;
+}

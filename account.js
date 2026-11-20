@@ -342,6 +342,8 @@
     profilePanel.querySelector("[data-purchased-balance]").textContent = formatCoins(wallet.purchased_coin_balance);
     profilePanel.querySelector("[data-earned-balance]").textContent = formatCoins(wallet.earned_coin_balance);
     profilePanel.querySelector("[data-stat-earned-coins]").textContent = formatCoins(wallet.earned_coin_balance);
+    const heroCoins = profilePanel.querySelector("[data-hero-coin-balance]");
+    if (heroCoins) heroCoins.textContent = formatCoins(wallet.total_coin_balance);
 
     const ledger = profilePanel.querySelector("[data-coin-ledger]");
     ledger.replaceChildren();
