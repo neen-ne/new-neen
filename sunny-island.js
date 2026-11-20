@@ -1006,51 +1006,97 @@
     ctx.stroke();
   };
 
+  const drawSkyAtmosphere = (ctx, time, cloudColor = "rgb(255 255 255 / 26%)", birdColor = "rgb(62 49 78 / 42%)") => {
+    // Drifting multi-layer clouds
+    ctx.save();
+    for (let i = 0; i < 6; i++) {
+      const speed = 10 + (i % 3) * 6;
+      const cx = ((i * 310 + time * speed) % (WORLD.width + 360)) - 180;
+      const cy = 78 + (i % 4) * 52 + Math.sin(time * 0.7 + i) * 5;
+      const scale = 0.75 + (i % 3) * 0.25;
+      ctx.fillStyle = cloudColor;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 34 * scale, 0, Math.PI * 2);
+      ctx.arc(cx + 28 * scale, cy - 10 * scale, 42 * scale, 0, Math.PI * 2);
+      ctx.arc(cx + 64 * scale, cy - 4 * scale, 32 * scale, 0, Math.PI * 2);
+      ctx.arc(cx + 90 * scale, cy + 6 * scale, 24 * scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Soaring animated birds
+    ctx.strokeStyle = birdColor;
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = "round";
+    for (let b = 0; b < 5; b++) {
+      const bx = ((b * 350 + time * (26 + b * 4)) % (WORLD.width + 200)) - 100;
+      const by = 115 + (b % 3) * 48 + Math.sin(time * 1.8 + b * 2) * 14;
+      const flap = Math.sin(time * 7.5 + b * 1.7) * 7;
+      ctx.beginPath();
+      ctx.moveTo(bx - 11, by - flap);
+      ctx.quadraticCurveTo(bx - 5, by - 4, bx, by);
+      ctx.quadraticCurveTo(bx + 5, by - 4, bx + 11, by - flap);
+      ctx.stroke();
+    }
+    ctx.restore();
+  };
+
   const drawBackground = (ctx, zone, time) => {
     const sky = {
-      neon_pier: ["#5fcadd", "#b8f1e7"],
-      palm_grove: ["#8bcf9c", "#e0e9a2"],
-      loot_canyon: ["#9ab8bc", "#e2b678"],
-      sunset_ridge: ["#ed987b", "#f8d68b"],
+      neon_pier: ["#4fc2da", "#b8f1e7"],
+      palm_grove: ["#7ec996", "#e4eda6"],
+      loot_canyon: ["#8db1b8", "#e6b878"],
+      sunset_ridge: ["#e98979", "#f9d68b"],
     }[zone] || ["#78d8ea", "#d9f8f2"];
     const gradient = ctx.createLinearGradient(0, 0, 0, WORLD.height);
     gradient.addColorStop(0, sky[0]);
     gradient.addColorStop(1, sky[1]);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+
     if (zone === "neon_pier") {
       ctx.fillStyle = "#42bfd0";
       ctx.fillRect(0, 0, WORLD.width, WORLD.height);
-      ctx.fillStyle = "#45c8d4";
       for (let index = 0; index < 19; index++) {
         const y = 35 + index * 38;
-        ctx.globalAlpha = .24 + Math.sin(time * 2.4 + index) * .08;
+        ctx.globalAlpha = 0.26 + Math.sin(time * 2.6 + index) * 0.1;
         ctx.strokeStyle = index % 2 ? "#eafffc" : "#b6fbf1";
         ctx.lineWidth = 3;
         ctx.beginPath();
         for (let x = 0; x <= WORLD.width; x += 42) {
-          const waveY = y + Math.sin(x * .008 + time * 1.5 + index) * 6;
+          const waveY = y + Math.sin(x * 0.009 + time * 1.9 + index) * 7;
           if (x === 0) ctx.moveTo(x, waveY);
           else ctx.lineTo(x, waveY);
         }
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
+      drawSkyAtmosphere(ctx, time, "rgb(255 255 255 / 22%)", "rgb(27 78 84 / 45%)");
       ctx.fillStyle = "#276e70";
       ctx.beginPath();
-      ctx.ellipse(360, 248, 280, 96, -.05, 0, Math.PI * 2);
-      ctx.ellipse(1240, 220, 330, 110, .04, 0, Math.PI * 2);
+      ctx.ellipse(360, 248, 280, 96, -0.05, 0, Math.PI * 2);
+      ctx.ellipse(1240, 220, 330, 110, 0.04, 0, Math.PI * 2);
       ctx.fill();
-      drawBoat(ctx, 440, 335, .86, "#e47859");
-      drawBoat(ctx, 935, 305, 1.12, "#315d8a");
-      drawBoat(ctx, 1450, 372, .7, "#f2c96f");
+
+      // Bobbing boats on animated water
+      for (const [bx, by, bs, bc, phase] of [
+        [440, 335, 0.86, "#e47859", 0],
+        [935, 305, 1.12, "#315d8a", 1.7],
+        [1450, 372, 0.7, "#f2c96f", 3.1],
+      ]) {
+        ctx.save();
+        ctx.translate(bx, by + Math.sin(time * 2.3 + phase) * 5);
+        ctx.rotate(Math.sin(time * 1.9 + phase) * 0.035);
+        drawBoat(ctx, 0, 0, bs, bc);
+        ctx.restore();
+      }
+
       for (const postX of [120, 330, 550, 770, 990, 1210, 1430, 1570]) {
         ctx.fillStyle = "#684a3d";
         ctx.fillRect(postX - 7, 430, 14, 300);
       }
-      drawStiltHut(ctx, 245, 455, .9);
+      drawStiltHut(ctx, 245, 455, 0.9);
       drawStiltHut(ctx, 1135, 420, 1.08);
-      drawStiltHut(ctx, 690, 360, .68);
+      drawStiltHut(ctx, 690, 360, 0.68);
       ctx.fillStyle = "#a96849";
       ctx.fillRect(0, 475, WORLD.width, 195);
       ctx.fillStyle = "#d38d5f";
@@ -1062,12 +1108,16 @@
       ctx.fillStyle = "#dfc47f";
       ctx.fillRect(0, 760, WORLD.width, 240);
       for (const palmX of [65, 380, 745, 1115, 1510]) {
-        drawPalm(ctx, palmX, 895, .54, "#398b68");
+        ctx.save();
+        ctx.translate(palmX, 895);
+        ctx.rotate(Math.sin(time * 2.1 + palmX * 0.01) * 0.03);
+        drawPalm(ctx, 0, 0, 0.54, "#398b68");
+        ctx.restore();
       }
       ctx.save();
       ctx.setLineDash([17, 15]);
-      ctx.lineDashOffset = -time * 22;
-      ctx.strokeStyle = `rgb(120 251 255 / ${42 + Math.sin(time * 2) * 10}%)`;
+      ctx.lineDashOffset = -time * 28;
+      ctx.strokeStyle = `rgb(120 251 255 / ${48 + Math.sin(time * 2.4) * 14}%)`;
       ctx.lineWidth = 8;
       ctx.beginPath();
       ctx.ellipse(800, 510, 760, 455, 0, 0, Math.PI * 2);
@@ -1076,10 +1126,12 @@
     } else if (zone === "palm_grove") {
       ctx.fillStyle = "#74ba72";
       ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+      drawSkyAtmosphere(ctx, time, "rgb(255 255 240 / 24%)", "rgb(45 84 52 / 44%)");
       ctx.fillStyle = "#8dc778";
       for (let index = 0; index < 8; index++) {
+        const sway = Math.sin(time * 1.4 + index) * 8;
         ctx.beginPath();
-        ctx.ellipse(index * 230 + 30, 205 + (index % 2) * 38, 190, 115, 0, 0, Math.PI * 2);
+        ctx.ellipse(index * 230 + 30 + sway, 205 + (index % 2) * 38, 190, 115, 0, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.fillStyle = "#d1bb86";
@@ -1118,6 +1170,14 @@
         ctx.lineTo(archX + 36, 421);
         ctx.stroke();
       }
+      // Glowing ancient energy runes inside temple arches
+      for (const [idx, archX] of [670, 855, 1018].entries()) {
+        const pulse = 0.35 + Math.sin(time * 2.5 + idx * 1.4) * 0.2;
+        ctx.fillStyle = `rgb(142 255 214 / ${Math.round(pulse * 100)}%)`;
+        ctx.beginPath();
+        ctx.arc(archX, 365 + Math.sin(time * 2 + idx) * 6, 12, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.fillStyle = "#987b58";
       for (const block of [
         [457, 250, 66, 25], [540, 216, 118, 20], [735, 230, 56, 22],
@@ -1138,11 +1198,18 @@
         ctx.stroke();
       }
       for (let index = 0; index < 6; index++) {
-        drawPalm(ctx, 105 + index * 265, 910 - (index % 3) * 45, .43 + (index % 2) * .09, "#478656");
+        const px = 105 + index * 265;
+        const py = 910 - (index % 3) * 45;
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(Math.sin(time * 2.2 + index) * 0.035);
+        drawPalm(ctx, 0, 0, 0.43 + (index % 2) * 0.09, "#478656");
+        ctx.restore();
       }
     } else if (zone === "loot_canyon") {
       ctx.fillStyle = "#8a9b91";
       ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+      drawSkyAtmosphere(ctx, time, "rgb(255 248 232 / 22%)", "rgb(52 68 68 / 45%)");
       ctx.fillStyle = "#b8aa87";
       ctx.fillRect(0, 715, WORLD.width, 285);
       ctx.fillStyle = "#d0bd91";
@@ -1178,6 +1245,24 @@
         ctx.lineTo(x + 160, 200);
       }
       ctx.stroke();
+
+      // Animated overhead crane trolley & warning lights
+      const trolleyX = 800 + Math.sin(time * 0.7) * 420;
+      ctx.fillStyle = "#f3b844";
+      ctx.fillRect(trolleyX - 28, 186, 56, 22);
+      ctx.strokeStyle = "#2c3a3e";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(trolleyX, 208);
+      ctx.lineTo(trolleyX, 255 + Math.sin(time * 2.2) * 8);
+      ctx.stroke();
+      const beaconAlpha = 0.4 + Math.abs(Math.sin(time * 4)) * 0.6;
+      ctx.fillStyle = `rgb(255 88 114 / ${Math.round(beaconAlpha * 100)}%)`;
+      ctx.beginPath();
+      ctx.arc(310, 160, 9, 0, Math.PI * 2);
+      ctx.arc(1290, 160, 9, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.fillStyle = "#edf0d0";
       ctx.font = "900 23px sans-serif";
       ctx.textAlign = "center";
@@ -1204,8 +1289,51 @@
       ctx.ellipse(800, 860, 680, 44, 0, 0, Math.PI * 2);
       ctx.fill();
     } else {
-      ctx.fillStyle = "#eeae77";
+      // Sunset Ridge / Solstice Bellspire — rich animated sky, rotating sunbeams, drifting mist & petals
+      const sunsetGrad = ctx.createLinearGradient(0, 0, 0, WORLD.height);
+      sunsetGrad.addColorStop(0, "#e5837c");
+      sunsetGrad.addColorStop(0.55, "#f3b178");
+      sunsetGrad.addColorStop(1, "#f7d48b");
+      ctx.fillStyle = sunsetGrad;
       ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+
+      const sunX = 1295 + Math.sin(time * 0.25) * 14;
+      const sunY = 155 + Math.cos(time * 0.2) * 6;
+
+      // Rotating sunbeams / god rays
+      ctx.save();
+      ctx.translate(sunX, sunY);
+      ctx.rotate(time * 0.08);
+      for (let r = 0; r < 12; r++) {
+        ctx.rotate((Math.PI * 2) / 12);
+        const rayGrad = ctx.createLinearGradient(0, 0, 0, 680);
+        rayGrad.addColorStop(0, "rgb(255 244 185 / 24%)");
+        rayGrad.addColorStop(1, "rgb(255 210 130 / 0%)");
+        ctx.fillStyle = rayGrad;
+        ctx.beginPath();
+        ctx.moveTo(-18, 0);
+        ctx.lineTo(18, 0);
+        ctx.lineTo(68, 680);
+        ctx.lineTo(-68, 680);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Pulsing solar halo & core
+      const pulseRadius = 128 + Math.sin(time * 1.8) * 12;
+      const sun = ctx.createRadialGradient(sunX, sunY, 16, sunX, sunY, pulseRadius);
+      sun.addColorStop(0, "rgb(255 252 210 / 98%)");
+      sun.addColorStop(0.45, "rgb(255 224 140 / 55%)");
+      sun.addColorStop(1, "rgb(255 210 111 / 0%)");
+      ctx.fillStyle = sun;
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, pulseRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawSkyAtmosphere(ctx, time, "rgb(255 236 218 / 28%)", "rgb(98 54 68 / 48%)");
+
+      // Distant mountain peaks
       ctx.fillStyle = "#bd7b74";
       ctx.beginPath();
       ctx.moveTo(0, 580);
@@ -1219,6 +1347,22 @@
       ctx.lineTo(0, 760);
       ctx.closePath();
       ctx.fill();
+
+      // Animated drifting valley mist ribbons between back & front mountains
+      for (let m = 0; m < 4; m++) {
+        const mx = ((m * 430 + time * (22 + m * 6)) % (WORLD.width + 500)) - 250;
+        const my = 430 + m * 48 + Math.sin(time * 1.1 + m) * 8;
+        const mistGrad = ctx.createLinearGradient(mx - 180, my, mx + 180, my);
+        mistGrad.addColorStop(0, "rgb(255 236 214 / 0%)");
+        mistGrad.addColorStop(0.5, "rgb(255 236 214 / 26%)");
+        mistGrad.addColorStop(1, "rgb(255 236 214 / 0%)");
+        ctx.fillStyle = mistGrad;
+        ctx.beginPath();
+        ctx.ellipse(mx, my, 210, 26, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Foreground mountain ridge
       ctx.fillStyle = "#8d6772";
       ctx.beginPath();
       ctx.moveTo(0, 665);
@@ -1233,6 +1377,8 @@
       ctx.lineTo(0, 1000);
       ctx.closePath();
       ctx.fill();
+
+      // Golden ridge terrain
       ctx.fillStyle = "#d7b979";
       ctx.beginPath();
       ctx.moveTo(0, 770);
@@ -1242,31 +1388,44 @@
       ctx.lineTo(0, 1000);
       ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = "rgb(255 235 185 / 40%)";
+
+      // Animated wind & shimmer lines along the golden ground
+      ctx.strokeStyle = "rgb(255 242 204 / 52%)";
       ctx.lineWidth = 4;
-      for (let x = 80; x < WORLD.width; x += 95) {
+      for (let i = 0; i < 16; i++) {
+        const wx = ((i * 115 + time * 42) % (WORLD.width + 120)) - 60;
+        const wy = 805 + (i % 4) * 24;
         ctx.beginPath();
-        ctx.moveTo(x, 815 + (x % 3) * 9);
-        ctx.lineTo(x + 55, 815 + (x % 3) * 9);
+        ctx.moveTo(wx, wy);
+        ctx.lineTo(wx + 62, wy);
         ctx.stroke();
       }
-      ctx.fillStyle = "rgb(255 244 189 / 20%)";
+      ctx.fillStyle = "rgb(255 244 189 / 24%)";
       ctx.fillRect(0, 732, WORLD.width, 8);
-      const sunX = 1295 + Math.sin(time * .1) * 6;
-      const sun = ctx.createRadialGradient(sunX, 155, 15, sunX, 155, 115);
-      sun.addColorStop(0, "rgb(255 245 170 / 95%)");
-      sun.addColorStop(1, "rgb(255 210 111 / 0%)");
-      ctx.fillStyle = sun;
-      ctx.beginPath();
-      ctx.arc(sunX, 155, 115, 0, Math.PI * 2);
-      ctx.fill();
+
+      // Floating sakura & golden energy petals drifting diagonally
+      for (let p = 0; p < 22; p++) {
+        const px = ((p * 89 + time * (34 + (p % 4) * 9)) % (WORLD.width + 80)) - 40;
+        const py = ((p * 67 + time * (16 + (p % 3) * 6) + Math.sin(time * 2 + p) * 18) % 860) + 40;
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(time * 1.8 + p);
+        ctx.fillStyle = p % 2 === 0 ? "rgb(255 178 214 / 72%)" : "rgb(255 243 184 / 76%)";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 6, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
     }
-    ctx.fillStyle = "rgb(255 255 255 / 13%)";
-    for (let index = 0; index < 18; index++) {
-      const x = (index * 113 + time * (8 + index % 5)) % WORLD.width;
-      const y = 90 + (index * 71) % 740;
+
+    // Ambient glowing energy motes across all zones
+    for (let index = 0; index < 26; index++) {
+      const x = (index * 97 + time * (14 + (index % 6) * 4) + Math.sin(time * 1.4 + index) * 14) % WORLD.width;
+      const y = 75 + ((index * 67 + Math.cos(time * 1.2 + index) * 22) % 780);
+      const alpha = 0.25 + Math.abs(Math.sin(time * 2.2 + index)) * 0.45;
+      ctx.fillStyle = index % 3 === 0 ? `rgb(255 154 208 / ${Math.round(alpha * 100)}%)` : `rgb(255 255 240 / ${Math.round(alpha * 100)}%)`;
       ctx.beginPath();
-      ctx.arc(x, y, 2 + index % 3, 0, Math.PI * 2);
+      ctx.arc(x, y, 2.2 + (index % 3) * 1.1, 0, Math.PI * 2);
       ctx.fill();
     }
   };
@@ -1540,199 +1699,303 @@
     drawAmbientArt(ctx, zone, time);
   };
 
-  const drawNeenAvatar = (ctx, look, runCycle) => {
-    const outline = "#26304b";
-    const stride = runCycle * 3.5;
-
-    drawRoundRect(ctx, -19, -65, 13, 25, 5, look.jacket, outline);
-    drawRoundRect(ctx, -16, -62, 7, 18, 3, "#e5bf61");
-    drawRoundRect(ctx, -14, -59, 5, 14, 2, look.accent);
+  const drawNeenAvatar = (ctx, look, runCycle, time = 0, isMoving = false, isDash = false) => {
+    const outline = "#1e263d";
+    const accent = look.accent || "#ff4fa3";
+    const trim = look.trim || "#f3b844";
+    const jacket = look.jacket || "#2c3556";
+    const sleeve = look.sleeve || "#39446b";
+    const stride = runCycle * 4.2;
+    const capeWave = Math.sin(time * (isMoving ? 13 : 3.5)) * (isMoving ? 8 : 3.5);
+    const capeLift = isDash ? 16 : isMoving ? 9 : 2;
 
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.strokeStyle = outline;
-    ctx.lineWidth = 11;
-    ctx.beginPath();
-    ctx.moveTo(-6, -27);
-    ctx.lineTo(-7 - stride, -11);
-    ctx.moveTo(6, -27);
-    ctx.lineTo(7 + stride, -11);
-    ctx.stroke();
-    ctx.strokeStyle = "#f1cfb8";
-    ctx.lineWidth = 7;
-    ctx.stroke();
-    drawRoundRect(ctx, -14 - stride, -10, 16, 9, 4, "#edf3f7", outline);
-    drawRoundRect(ctx, -2 + stride, -10, 16, 9, 4, "#edf3f7", outline);
-    drawRoundRect(ctx, -14 - stride, -3, 16, 4, 2, look.accent);
-    drawRoundRect(ctx, -2 + stride, -3, 16, 4, 2, look.accent);
 
-    ctx.fillStyle = look.jacket;
+    // 1. Flowing Heroic Cape / Scarf behind character
+    ctx.save();
+    const capeGrad = ctx.createLinearGradient(-42, -66, 6, -12);
+    capeGrad.addColorStop(0, accent);
+    capeGrad.addColorStop(0.65, jacket);
+    capeGrad.addColorStop(1, trim);
+    ctx.fillStyle = capeGrad;
     ctx.strokeStyle = outline;
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.moveTo(-13, -37);
-    ctx.lineTo(-11, -28);
-    ctx.quadraticCurveTo(0, -23, 12, -28);
-    ctx.lineTo(14, -39);
+    ctx.moveTo(-8, -64);
+    ctx.quadraticCurveTo(-28 - capeLift, -56 + capeWave * 0.4, -38 - capeLift, -26 + capeWave);
+    ctx.quadraticCurveTo(-24 - capeLift * 0.6, -18 - capeWave * 0.5, -12, -24);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.strokeStyle = look.trim;
-    ctx.lineWidth = 1.7;
+
+    // Inner cape trim streak
+    ctx.strokeStyle = trim;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(-11, -30);
-    ctx.lineTo(11, -30);
+    ctx.moveTo(-12, -58);
+    ctx.quadraticCurveTo(-26 - capeLift * 0.8, -46 + capeWave * 0.4, -33 - capeLift * 0.9, -27 + capeWave);
     ctx.stroke();
+    ctx.restore();
+
+    // 2. Tactical Power Pack on back
+    drawRoundRect(ctx, -20, -66, 13, 26, 5, jacket, outline);
+    drawRoundRect(ctx, -17, -62, 7, 18, 3, trim);
+    drawRoundRect(ctx, -15, -59, 4, 12, 2, accent);
+
+    // 3. Legs & Armored Cyber-Greaves
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 11.5;
+    ctx.beginPath();
+    ctx.moveTo(-6, -27);
+    ctx.lineTo(-8 - stride, -10);
+    ctx.moveTo(6, -27);
+    ctx.lineTo(8 + stride, -10);
+    ctx.stroke();
+    ctx.strokeStyle = "#f1cfb8";
+    ctx.lineWidth = 7.2;
+    ctx.stroke();
+    // Knee armor guards
+    drawRoundRect(ctx, -12 - stride * 0.5, -22, 9, 7, 3, jacket, outline);
+    drawRoundRect(ctx, 3 + stride * 0.5, -22, 9, 7, 3, jacket, outline);
+    // Combat boots with neon soles
+    drawRoundRect(ctx, -15 - stride, -11, 17, 10, 4, "#edf3f7", outline);
+    drawRoundRect(ctx, -2 + stride, -11, 17, 10, 4, "#edf3f7", outline);
+    drawRoundRect(ctx, -15 - stride, -3, 17, 4, 2, accent);
+    drawRoundRect(ctx, -2 + stride, -3, 17, 4, 2, accent);
+
+    // 4. Armored Belt & Waistcoat
+    ctx.fillStyle = jacket;
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(-14, -38);
+    ctx.lineTo(-12, -27);
+    ctx.quadraticCurveTo(0, -22, 13, -27);
+    ctx.lineTo(15, -39);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = trim;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(-12, -31);
+    ctx.lineTo(12, -31);
+    ctx.stroke();
+    drawRoundRect(ctx, -4, -34, 8, 6, 2, accent, outline);
+
+    // 5. Back Arm & Neon Plasma Energy Blade
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 12;
+    ctx.beginPath();
+    ctx.moveTo(-13, -60);
+    ctx.quadraticCurveTo(-22 - stride, -54, -21 - stride, -42);
+    ctx.stroke();
+    ctx.strokeStyle = sleeve;
+    ctx.lineWidth = 8;
+    ctx.stroke();
+    ctx.fillStyle = "#f1cfb8";
+    ctx.beginPath();
+    ctx.arc(-21 - stride, -40, 4.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Front Arm + Glowing Energy Blade
+    const handX = 20 + stride;
+    const handY = -41;
+    ctx.save();
+    ctx.translate(handX, handY);
+    ctx.rotate(-0.38 + stride * 0.04);
+    // Blade glow
+    ctx.shadowColor = accent;
+    ctx.shadowBlur = isDash ? 18 : 11;
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 5.5;
+    ctx.beginPath();
+    ctx.moveTo(4, -2);
+    ctx.lineTo(42, -16);
+    ctx.stroke();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(6, -3);
+    ctx.lineTo(40, -15);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Hilt & crossguard
+    drawRoundRect(ctx, -5, -4, 11, 5, 2, trim, outline);
+    drawRoundRect(ctx, 3, -7, 4, 11, 2, jacket, outline);
+    ctx.restore();
 
     ctx.strokeStyle = outline;
     ctx.lineWidth = 12;
     ctx.beginPath();
-    ctx.moveTo(-12, -60);
-    ctx.quadraticCurveTo(-21 - stride, -55, -20 - stride, -43);
-    ctx.moveTo(12, -60);
-    ctx.quadraticCurveTo(21 + stride, -54, 19 + stride, -42);
+    ctx.moveTo(13, -60);
+    ctx.quadraticCurveTo(22 + stride, -54, handX, handY);
     ctx.stroke();
-    ctx.strokeStyle = look.sleeve;
+    ctx.strokeStyle = sleeve;
     ctx.lineWidth = 8;
-    ctx.stroke();
-    ctx.strokeStyle = look.accent;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-18 - stride, -51);
-    ctx.lineTo(-14 - stride, -46);
-    ctx.moveTo(17 + stride, -51);
-    ctx.lineTo(13 + stride, -46);
     ctx.stroke();
     ctx.fillStyle = "#f1cfb8";
     ctx.beginPath();
-    ctx.arc(-20 - stride, -41, 4, 0, Math.PI * 2);
-    ctx.arc(19 + stride, -40, 4, 0, Math.PI * 2);
+    ctx.arc(handX, handY, 4.2, 0, Math.PI * 2);
     ctx.fill();
 
+    // 6. Heroic Torso & Glowing Chest Core
     ctx.fillStyle = "#f0cbb5";
-    ctx.fillRect(-4, -67, 8, 8);
-    ctx.fillStyle = look.jacket;
+    ctx.fillRect(-4, -68, 8, 9);
+    ctx.fillStyle = jacket;
     ctx.strokeStyle = outline;
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2.6;
     ctx.beginPath();
-    ctx.moveTo(-13, -62);
-    ctx.quadraticCurveTo(-10, -68, -5, -67);
-    ctx.lineTo(7, -67);
-    ctx.quadraticCurveTo(13, -65, 14, -59);
-    ctx.lineTo(12, -37);
-    ctx.quadraticCurveTo(0, -32, -12, -37);
+    ctx.moveTo(-14, -62);
+    ctx.quadraticCurveTo(-10, -69, -5, -68);
+    ctx.lineTo(7, -68);
+    ctx.quadraticCurveTo(14, -66, 15, -59);
+    ctx.lineTo(13, -37);
+    ctx.quadraticCurveTo(0, -32, -13, -37);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.strokeStyle = look.accent;
-    ctx.lineWidth = 2;
+
+    // Neon chest lines & pulsing core
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.moveTo(0, -63);
-    ctx.lineTo(0, -40);
-    ctx.moveTo(-8, -53);
+    ctx.moveTo(0, -64);
+    ctx.lineTo(0, -39);
+    ctx.moveTo(-9, -54);
     ctx.lineTo(-4, -49);
-    ctx.lineTo(-8, -45);
-    ctx.moveTo(8, -53);
+    ctx.lineTo(-9, -44);
+    ctx.moveTo(9, -54);
     ctx.lineTo(4, -49);
-    ctx.lineTo(8, -45);
+    ctx.lineTo(9, -44);
     ctx.stroke();
-    drawRoundRect(ctx, -3, -45, 6, 6, 2, look.trim, outline);
 
-    ctx.fillStyle = "#dfe7ef";
+    ctx.save();
+    ctx.shadowColor = accent;
+    ctx.shadowBlur = 10;
+    drawRoundRect(ctx, -4, -52, 8, 8, 3, accent, "#ffffff");
+    ctx.restore();
+
+    // Armored Shoulder Pauldrons
+    drawRoundRect(ctx, -20, -66, 11, 10, 4, jacket, outline);
+    drawRoundRect(ctx, -18, -64, 7, 3, 1.5, trim);
+    drawRoundRect(ctx, 9, -66, 11, 10, 4, jacket, outline);
+    drawRoundRect(ctx, 11, -64, 7, 3, 1.5, trim);
+
+    // 7. Signature Ears with Neon Tips
+    ctx.fillStyle = "#e3ebf3";
     ctx.strokeStyle = outline;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.moveTo(-10, -87);
-    ctx.lineTo(-20, -111);
-    ctx.quadraticCurveTo(-7, -107, -1, -94);
+    ctx.moveTo(-10, -88);
+    ctx.lineTo(-22, -114);
+    ctx.quadraticCurveTo(-7, -109, -1, -95);
     ctx.closePath();
-    ctx.moveTo(10, -87);
-    ctx.lineTo(20, -111);
-    ctx.quadraticCurveTo(7, -107, 1, -94);
+    ctx.moveTo(10, -88);
+    ctx.lineTo(22, -114);
+    ctx.quadraticCurveTo(7, -109, 1, -95);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = "#8b9bad";
+
+    ctx.fillStyle = accent;
     ctx.beginPath();
-    ctx.moveTo(-11, -92);
-    ctx.lineTo(-16, -105);
-    ctx.lineTo(-5, -96);
+    ctx.moveTo(-12, -93);
+    ctx.lineTo(-18, -108);
+    ctx.lineTo(-5, -97);
     ctx.closePath();
-    ctx.moveTo(11, -92);
-    ctx.lineTo(16, -105);
-    ctx.lineTo(5, -96);
+    ctx.moveTo(12, -93);
+    ctx.lineTo(18, -108);
+    ctx.lineTo(5, -97);
     ctx.closePath();
     ctx.fill();
 
+    // 8. Head, Hair & Glowing Cyber Visor
     ctx.fillStyle = "#f0cbb5";
     ctx.strokeStyle = outline;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.ellipse(0, -77, 14, 18, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, -78, 14.5, 18.5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = "#e2e8ef";
+
+    ctx.fillStyle = "#e6ecf3";
     ctx.beginPath();
-    ctx.moveTo(-14, -81);
-    ctx.quadraticCurveTo(-18, -96, -8, -99);
-    ctx.quadraticCurveTo(-2, -105, 2, -98);
-    ctx.quadraticCurveTo(10, -103, 16, -96);
-    ctx.lineTo(13, -82);
-    ctx.quadraticCurveTo(5, -89, 0, -86);
-    ctx.quadraticCurveTo(-6, -92, -14, -81);
+    ctx.moveTo(-15, -82);
+    ctx.quadraticCurveTo(-19, -98, -8, -101);
+    ctx.quadraticCurveTo(-2, -107, 2, -100);
+    ctx.quadraticCurveTo(10, -105, 17, -97);
+    ctx.lineTo(14, -83);
+    ctx.quadraticCurveTo(5, -90, 0, -87);
+    ctx.quadraticCurveTo(-6, -93, -15, -82);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+
     ctx.fillStyle = "#d1dce7";
     ctx.beginPath();
-    ctx.moveTo(-13, -82);
-    ctx.quadraticCurveTo(-19, -73, -15, -59);
-    ctx.quadraticCurveTo(-9, -65, -8, -78);
-    ctx.moveTo(12, -83);
-    ctx.quadraticCurveTo(18, -72, 14, -58);
-    ctx.quadraticCurveTo(8, -65, 8, -78);
+    ctx.moveTo(-14, -83);
+    ctx.quadraticCurveTo(-20, -73, -16, -58);
+    ctx.quadraticCurveTo(-9, -65, -8, -79);
+    ctx.moveTo(13, -84);
+    ctx.quadraticCurveTo(19, -72, 15, -57);
+    ctx.quadraticCurveTo(8, -65, 8, -79);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    drawRoundRect(ctx, -13, -83, 26, 8, 3, "#111b31", outline);
-    ctx.strokeStyle = look.accent;
-    ctx.lineWidth = 1.8;
+    // Glowing Cyber Visor
+    drawRoundRect(ctx, -14, -84, 28, 9, 4, "#0d1426", outline);
+    ctx.save();
+    ctx.shadowColor = accent;
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.moveTo(-9, -79);
-    ctx.lineTo(9, -79);
+    ctx.moveTo(-10, -79.5);
+    ctx.lineTo(10, -79.5);
     ctx.stroke();
-    ctx.fillStyle = "#8a594e";
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(0, -68, 1.2, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(-7, -79.5);
+    ctx.lineTo(7, -79.5);
+    ctx.stroke();
+    ctx.restore();
+
     ctx.strokeStyle = "#9d5e59";
-    ctx.lineWidth = 1.4;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(-4, -64);
     ctx.quadraticCurveTo(0, -61, 4, -64);
     ctx.stroke();
 
-    ctx.strokeStyle = look.trim;
-    ctx.lineWidth = 3;
+    // 9. Glowing Royal Crown & Floating Gem
+    ctx.save();
+    ctx.shadowColor = trim;
+    ctx.shadowBlur = 8;
+    ctx.strokeStyle = trim;
+    ctx.lineWidth = 3.2;
     ctx.beginPath();
-    ctx.moveTo(-8, -96);
-    ctx.lineTo(-4, -99);
-    ctx.lineTo(0, -96);
-    ctx.lineTo(4, -99);
-    ctx.lineTo(8, -96);
+    ctx.moveTo(-9, -97);
+    ctx.lineTo(-4.5, -101);
+    ctx.lineTo(0, -97);
+    ctx.lineTo(4.5, -101);
+    ctx.lineTo(9, -97);
     ctx.stroke();
-    ctx.fillStyle = look.accent;
-    ctx.strokeStyle = look.trim;
-    ctx.lineWidth = 1.2;
+    ctx.fillStyle = accent;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.3;
     ctx.beginPath();
-    ctx.moveTo(0, -101);
-    ctx.lineTo(4, -97);
-    ctx.lineTo(0, -93);
-    ctx.lineTo(-4, -97);
+    ctx.moveTo(0, -104);
+    ctx.lineTo(4.5, -99);
+    ctx.lineTo(0, -94);
+    ctx.lineTo(-4.5, -99);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+    ctx.restore();
   };
 
   const drawAvatarPortrait = (look) => {
@@ -1741,42 +2004,100 @@
     if (!portrait) return;
     portrait.clearRect(0, 0, avatarPortrait.width, avatarPortrait.height);
     portrait.save();
-    portrait.translate(56, 109);
-    drawNeenAvatar(portrait, look, 0);
+    portrait.translate(56, 111);
+    portrait.scale(0.95, 0.95);
+    drawNeenAvatar(portrait, look, 0, 0, false, false);
     portrait.restore();
   };
 
   const drawCharacter = (ctx, time, now) => {
-    const moving = state.keys.size > 0 || Math.hypot(state.joystickVector.x, state.joystickVector.y) > .08;
+    const moving = state.keys.size > 0 || Math.hypot(state.joystickVector.x, state.joystickVector.y) > 0.08;
     const jumpProgress = state.jumpUntil > now ? 1 - (state.jumpUntil - now) / 560 : 0;
-    const jumpHeight = state.jumpUntil > now ? Math.sin(jumpProgress * Math.PI) * 47 : 0;
+    const jumpHeight = state.jumpUntil > now ? Math.sin(jumpProgress * Math.PI) * 52 : 0;
     const dashActive = state.dashUntil > now;
-    const runCycle = moving ? Math.sin(time * 14) : Math.sin(time * 2) * .15;
-    const bob = moving ? Math.sin(time * 14) * 2.5 : Math.sin(time * 2) * 2;
-    const squashX = state.jumpUntil > now && jumpProgress < .12 ? 1.13 : 1;
-    const squashY = state.jumpUntil > now && jumpProgress < .12 ? .82 : 1;
+    const runCycle = moving ? Math.sin(time * 14) : Math.sin(time * 2.2) * 0.14;
+    const bob = moving ? Math.sin(time * 14) * 2.8 : Math.sin(time * 2.2) * 2.2;
+    const squashX = state.jumpUntil > now && jumpProgress < 0.12 ? 1.14 : 1;
+    const squashY = state.jumpUntil > now && jumpProgress < 0.12 ? 0.82 : 1;
     const look = AVATAR_LOOKS.find((item) => item.id === state.avatarId) || AVATAR_LOOKS[0];
+    const accent = look.accent || "#ff4fa3";
+    const trim = look.trim || "#f3b844";
     const x = state.position.x;
     const y = state.position.y - jumpHeight + bob;
+    const facingSign = state.facing.x < -0.15 ? -1 : 1;
+
     ctx.save();
     ctx.translate(x, y);
-    ctx.fillStyle = "rgb(37 69 77 / 22%)";
+
+    // Pulsing Neon Power Aura Ring on the ground under character
+    const auraY = 27 + jumpHeight * 0.42;
+    const pulse = 1 + Math.sin(time * 4.5) * 0.08;
+    ctx.save();
+    ctx.translate(0, auraY);
+    const auraGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, 44 * pulse);
+    auraGrad.addColorStop(0, "rgb(255 255 255 / 38%)");
+    auraGrad.addColorStop(0.55, "rgb(255 79 163 / 24%)");
+    auraGrad.addColorStop(1, "rgb(255 79 163 / 0%)");
+    ctx.fillStyle = auraGrad;
     ctx.beginPath();
-    ctx.ellipse(0, 26 + jumpHeight * .42, 29 - jumpHeight * .15, 11 - jumpHeight * .04, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 44 * pulse, 16 * pulse, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.scale(squashX, squashY);
-    ctx.scale(state.facing.x < -.15 ? -1 : 1, 1);
+
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 2.2;
+    ctx.globalAlpha = 0.65;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 34 * pulse, 12 * pulse, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = trim;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([8, 6]);
+    ctx.lineDashOffset = -time * 24;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 40 * pulse, 14.5 * pulse, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    // Ground shadow
+    ctx.fillStyle = "rgb(28 36 58 / 26%)";
+    ctx.beginPath();
+    ctx.ellipse(0, auraY, 30 - jumpHeight * 0.14, 11 - jumpHeight * 0.04, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Heroic scale & dynamic forward lean
+    const heroScale = 1.18;
+    ctx.scale(squashX * heroScale, squashY * heroScale);
+    ctx.scale(facingSign, 1);
+    if (moving || dashActive) {
+      ctx.rotate(dashActive ? 0.14 : 0.06);
+    }
+
     if (dashActive) {
       for (let echo = 3; echo > 0; echo--) {
         ctx.save();
-        ctx.globalAlpha = .1 + (4 - echo) * .035;
-        ctx.translate(-echo * 15, 25);
-        drawNeenAvatar(ctx, look, runCycle);
+        ctx.globalAlpha = 0.14 + (4 - echo) * 0.045;
+        ctx.translate(-echo * 17, 25);
+        drawNeenAvatar(ctx, look, runCycle, time, moving, true);
         ctx.restore();
       }
     }
+
     ctx.translate(0, 25);
-    drawNeenAvatar(ctx, look, runCycle);
+    drawNeenAvatar(ctx, look, runCycle, time, moving, dashActive);
+
+    // Rising energy sparks around the hero
+    for (let s = 0; s < 4; s++) {
+      const angle = time * 3.2 + s * 1.57;
+      const sx = Math.cos(angle) * 24;
+      const sy = -22 - ((time * 36 + s * 24) % 78);
+      ctx.fillStyle = s % 2 === 0 ? accent : trim;
+      ctx.globalAlpha = 0.75;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     ctx.restore();
   };
 
