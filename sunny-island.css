@@ -1532,3 +1532,105 @@
 .sunny-beam-hud:active {
   transform: scale(0.96);
 }
+
+
+/* === STRICT BILINGUAL (AR/EN) & RTL DIMENSION LOCK === */
+.sunny-page,
+.sunny-page *,
+.sunny-page *::before,
+.sunny-page *::after {
+  box-sizing: border-box;
+}
+
+.sunny-intro,
+.sunny-game-shell,
+.sunny-feature-strip {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+}
+
+.sunny-topbar {
+  flex-wrap: wrap;
+  gap: 12px 16px;
+}
+
+.sunny-wallet {
+  margin-left: 0;
+  margin-inline-start: auto;
+}
+
+.sunny-actions-top {
+  flex-wrap: wrap;
+}
+
+.sunny-quiet-button,
+.sunny-main-button,
+.sunny-complete-button {
+  white-space: nowrap;
+}
+
+.sunny-dash-status {
+  text-align: end;
+}
+
+.sunny-play-area {
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) 286px;
+}
+
+.sunny-stage-wrap,
+.sunny-canvas-frame,
+.sunny-quest-panel,
+.sunny-objectives,
+.sunny-objective {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sunny-quest-panel {
+  width: 100%;
+  overflow: hidden;
+}
+
+.sunny-quest-heading h2 {
+  font-size: clamp(22px, 2vw, 28px);
+  line-height: 1.2;
+}
+
+.sunny-objective strong,
+.sunny-objective small,
+.sunny-empty-objectives {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+html[dir="rtl"] .sunny-quiet-button span {
+  margin-left: 0;
+  margin-right: 5px;
+}
+
+html[dir="rtl"] .sunny-avatar-picker select {
+  padding: 0 10px 0 30px;
+}
+
+@media (max-width: 1050px) {
+  .sunny-play-area {
+    grid-template-columns: minmax(0, 1fr) 250px;
+  }
+  .sunny-wallet,
+  .sunny-actions-top {
+    margin-left: 0;
+    margin-inline-start: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .sunny-play-area {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sunny-wallet,
+  .sunny-actions-top {
+    margin-inline-start: 0;
+  }
+}
