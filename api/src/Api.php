@@ -1273,7 +1273,7 @@ final class Api
     private function login(): never
     {
         $this->requireCsrf();
-        $this->requireAllowedFields(['identifier', 'email', 'password']);
+        $this->requireAllowedFields(['identifier', 'email', 'password', 'remember_me']);
         if (array_key_exists('identifier', $this->body) && array_key_exists('email', $this->body)) {
             throw new ApiException('VALIDATION_ERROR', 'Provide one email address or username.', 422);
         }
@@ -1327,8 +1327,12 @@ final class Api
         $userId = (int) $user['id'];
         $sessionToken = self::randomToken();
         $csrfToken = self::randomToken();
+        $rememberMe = $this->body['remember_me'] ?? false;
+        if (!is_bool($rememberMe)) {
+            throw new ApiException('VALIDATION_ERROR', 'Remember me must be true or false.', 422);
+        }
         $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-        $expires = $now->modify('+30 minutes');
+        $expires = $rememberMe ? $now->modify('+30 days') : $now->modify('+30 minutes');
         $this->transaction(function () use ($userId, $sessionToken, $csrfToken, $now, $expires): void {
             $statement = $this->db->prepare(
                 'INSERT INTO user_sessions

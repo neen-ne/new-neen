@@ -665,12 +665,32 @@
   document.querySelector("[data-show-forgot]").addEventListener("click", () => setMode("forgot"));
   document.querySelector("[data-show-login]").addEventListener("click", () => setMode("login"));
 
+  try {
+    const savedIdentifier = window.localStorage.getItem("neen_saved_identifier");
+    if (savedIdentifier && forms.login?.elements.identifier) {
+      forms.login.elements.identifier.value = savedIdentifier;
+    }
+  } catch {}
+
   forms.login.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!forms.login.reportValidity()) return;
-    const data = Object.fromEntries(new FormData(forms.login));
+    const identifier = String(forms.login.elements.identifier.value || "").trim();
+    const password = String(forms.login.elements.password.value || "");
+    const rememberMe = Boolean(forms.login.elements.remember_me?.checked);
     try {
-      const result = await api("auth/login", "POST", data);
+      const result = await api("auth/login", "POST", {
+        identifier,
+        password,
+        remember_me: rememberMe,
+      });
+      try {
+        if (rememberMe && identifier) {
+          window.localStorage.setItem("neen_saved_identifier", identifier);
+        } else {
+          window.localStorage.removeItem("neen_saved_identifier");
+        }
+      } catch {}
       csrfToken = result.csrf_token;
       window.dispatchEvent(new Event("neen:authchange"));
       await updateProfileView(result.user);

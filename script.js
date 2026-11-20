@@ -67,6 +67,7 @@ const arabicTranslations = {
   "Email not verified": "البريد الإلكتروني غير موثّق",
   "Email verified": "البريد الإلكتروني موثّق",
   "Sign in / Join": "تسجيل الدخول / إنشاء حساب",
+  "Remember me": "تذكرني",
   "Signed in": "تم تسجيل الدخول",
   "Accounts are not available.": "الحسابات غير متاحة حاليًا.",
   "ACTIVE & UPCOMING": "الفعاليات الجارية والقادمة",

@@ -1520,3 +1520,23 @@
   color: #4a2f04;
   font-variant-numeric: tabular-nums;
 }
+
+.account-remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  width: fit-content;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.account-remember input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--pink);
+  cursor: pointer;
+}
