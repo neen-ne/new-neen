@@ -1700,308 +1700,411 @@
   };
 
   const drawNeenAvatar = (ctx, look, runCycle, time = 0, isMoving = false, isDash = false) => {
-    const outline = "#1e263d";
+    const outline = "#2a1f3d";
     const accent = look.accent || "#ff4fa3";
     const trim = look.trim || "#f3b844";
-    const jacket = look.jacket || "#2c3556";
-    const sleeve = look.sleeve || "#39446b";
-    const stride = runCycle * 4.2;
-    const capeWave = Math.sin(time * (isMoving ? 13 : 3.5)) * (isMoving ? 8 : 3.5);
-    const capeLift = isDash ? 16 : isMoving ? 9 : 2;
+    const jacket = look.jacket || "#ff6fb5";
+    const sleeve = look.sleeve || "#ff94c8";
+    const stride = runCycle * 3.8;
+    const hairWave = Math.sin(time * (isMoving ? 13 : 3.2)) * (isMoving ? 7 : 3);
+    const windPull = isDash ? 14 : isMoving ? 7 : 1.5;
 
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
-    // 1. Flowing Heroic Cape / Scarf behind character
+    // 1. Long Flowing Back Hair (sways with movement & wind)
     ctx.save();
-    const capeGrad = ctx.createLinearGradient(-42, -66, 6, -12);
-    capeGrad.addColorStop(0, accent);
-    capeGrad.addColorStop(0.65, jacket);
-    capeGrad.addColorStop(1, trim);
-    ctx.fillStyle = capeGrad;
-    ctx.strokeStyle = outline;
-    ctx.lineWidth = 2.4;
-    ctx.beginPath();
-    ctx.moveTo(-8, -64);
-    ctx.quadraticCurveTo(-28 - capeLift, -56 + capeWave * 0.4, -38 - capeLift, -26 + capeWave);
-    ctx.quadraticCurveTo(-24 - capeLift * 0.6, -18 - capeWave * 0.5, -12, -24);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Inner cape trim streak
-    ctx.strokeStyle = trim;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-12, -58);
-    ctx.quadraticCurveTo(-26 - capeLift * 0.8, -46 + capeWave * 0.4, -33 - capeLift * 0.9, -27 + capeWave);
-    ctx.stroke();
-    ctx.restore();
-
-    // 2. Tactical Power Pack on back
-    drawRoundRect(ctx, -20, -66, 13, 26, 5, jacket, outline);
-    drawRoundRect(ctx, -17, -62, 7, 18, 3, trim);
-    drawRoundRect(ctx, -15, -59, 4, 12, 2, accent);
-
-    // 3. Legs & Armored Cyber-Greaves
-    ctx.strokeStyle = outline;
-    ctx.lineWidth = 11.5;
-    ctx.beginPath();
-    ctx.moveTo(-6, -27);
-    ctx.lineTo(-8 - stride, -10);
-    ctx.moveTo(6, -27);
-    ctx.lineTo(8 + stride, -10);
-    ctx.stroke();
-    ctx.strokeStyle = "#f1cfb8";
-    ctx.lineWidth = 7.2;
-    ctx.stroke();
-    // Knee armor guards
-    drawRoundRect(ctx, -12 - stride * 0.5, -22, 9, 7, 3, jacket, outline);
-    drawRoundRect(ctx, 3 + stride * 0.5, -22, 9, 7, 3, jacket, outline);
-    // Combat boots with neon soles
-    drawRoundRect(ctx, -15 - stride, -11, 17, 10, 4, "#edf3f7", outline);
-    drawRoundRect(ctx, -2 + stride, -11, 17, 10, 4, "#edf3f7", outline);
-    drawRoundRect(ctx, -15 - stride, -3, 17, 4, 2, accent);
-    drawRoundRect(ctx, -2 + stride, -3, 17, 4, 2, accent);
-
-    // 4. Armored Belt & Waistcoat
-    ctx.fillStyle = jacket;
-    ctx.strokeStyle = outline;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(-14, -38);
-    ctx.lineTo(-12, -27);
-    ctx.quadraticCurveTo(0, -22, 13, -27);
-    ctx.lineTo(15, -39);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.strokeStyle = trim;
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.moveTo(-12, -31);
-    ctx.lineTo(12, -31);
-    ctx.stroke();
-    drawRoundRect(ctx, -4, -34, 8, 6, 2, accent, outline);
-
-    // 5. Back Arm & Neon Plasma Energy Blade
-    ctx.strokeStyle = outline;
-    ctx.lineWidth = 12;
-    ctx.beginPath();
-    ctx.moveTo(-13, -60);
-    ctx.quadraticCurveTo(-22 - stride, -54, -21 - stride, -42);
-    ctx.stroke();
-    ctx.strokeStyle = sleeve;
-    ctx.lineWidth = 8;
-    ctx.stroke();
-    ctx.fillStyle = "#f1cfb8";
-    ctx.beginPath();
-    ctx.arc(-21 - stride, -40, 4.2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Front Arm + Glowing Energy Blade
-    const handX = 20 + stride;
-    const handY = -41;
-    ctx.save();
-    ctx.translate(handX, handY);
-    ctx.rotate(-0.38 + stride * 0.04);
-    // Blade glow
-    ctx.shadowColor = accent;
-    ctx.shadowBlur = isDash ? 18 : 11;
-    ctx.strokeStyle = accent;
-    ctx.lineWidth = 5.5;
-    ctx.beginPath();
-    ctx.moveTo(4, -2);
-    ctx.lineTo(42, -16);
-    ctx.stroke();
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.moveTo(6, -3);
-    ctx.lineTo(40, -15);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    // Hilt & crossguard
-    drawRoundRect(ctx, -5, -4, 11, 5, 2, trim, outline);
-    drawRoundRect(ctx, 3, -7, 4, 11, 2, jacket, outline);
-    ctx.restore();
-
-    ctx.strokeStyle = outline;
-    ctx.lineWidth = 12;
-    ctx.beginPath();
-    ctx.moveTo(13, -60);
-    ctx.quadraticCurveTo(22 + stride, -54, handX, handY);
-    ctx.stroke();
-    ctx.strokeStyle = sleeve;
-    ctx.lineWidth = 8;
-    ctx.stroke();
-    ctx.fillStyle = "#f1cfb8";
-    ctx.beginPath();
-    ctx.arc(handX, handY, 4.2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 6. Heroic Torso & Glowing Chest Core
-    ctx.fillStyle = "#f0cbb5";
-    ctx.fillRect(-4, -68, 8, 9);
-    ctx.fillStyle = jacket;
-    ctx.strokeStyle = outline;
-    ctx.lineWidth = 2.6;
-    ctx.beginPath();
-    ctx.moveTo(-14, -62);
-    ctx.quadraticCurveTo(-10, -69, -5, -68);
-    ctx.lineTo(7, -68);
-    ctx.quadraticCurveTo(14, -66, 15, -59);
-    ctx.lineTo(13, -37);
-    ctx.quadraticCurveTo(0, -32, -13, -37);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Neon chest lines & pulsing core
-    ctx.strokeStyle = accent;
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.moveTo(0, -64);
-    ctx.lineTo(0, -39);
-    ctx.moveTo(-9, -54);
-    ctx.lineTo(-4, -49);
-    ctx.lineTo(-9, -44);
-    ctx.moveTo(9, -54);
-    ctx.lineTo(4, -49);
-    ctx.lineTo(9, -44);
-    ctx.stroke();
-
-    ctx.save();
-    ctx.shadowColor = accent;
-    ctx.shadowBlur = 10;
-    drawRoundRect(ctx, -4, -52, 8, 8, 3, accent, "#ffffff");
-    ctx.restore();
-
-    // Armored Shoulder Pauldrons
-    drawRoundRect(ctx, -20, -66, 11, 10, 4, jacket, outline);
-    drawRoundRect(ctx, -18, -64, 7, 3, 1.5, trim);
-    drawRoundRect(ctx, 9, -66, 11, 10, 4, jacket, outline);
-    drawRoundRect(ctx, 11, -64, 7, 3, 1.5, trim);
-
-    // 7. Signature Ears anchored to circular head
-    ctx.fillStyle = "#e3ebf3";
-    ctx.strokeStyle = outline;
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.moveTo(-11, -91);
-    ctx.lineTo(-21, -113);
-    ctx.quadraticCurveTo(-7, -109, -2, -96);
-    ctx.closePath();
-    ctx.moveTo(11, -91);
-    ctx.lineTo(21, -113);
-    ctx.quadraticCurveTo(7, -109, 2, -96);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = accent;
-    ctx.beginPath();
-    ctx.moveTo(-12, -94);
-    ctx.lineTo(-17, -107);
-    ctx.lineTo(-5, -97);
-    ctx.closePath();
-    ctx.moveTo(12, -94);
-    ctx.lineTo(17, -107);
-    ctx.lineTo(5, -97);
-    ctx.closePath();
-    ctx.fill();
-
-    // 8. True Circular Head, Rounded Hair & Curved Neon Visor
-    ctx.fillStyle = "#f0cbb5";
-    ctx.strokeStyle = outline;
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.arc(0, -80, 16.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    // Soft cheek glow to emphasize circular face contour
-    ctx.fillStyle = "rgb(255 126 179 / 28%)";
-    ctx.beginPath();
-    ctx.ellipse(-9.5, -73.5, 3.2, 2, 0, 0, Math.PI * 2);
-    ctx.ellipse(9.5, -73.5, 3.2, 2, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Rounded hair crown & curved bangs (no boxy vertical sidebars)
-    ctx.fillStyle = "#e6ecf3";
+    const backHairGrad = ctx.createLinearGradient(0, -92, -10, -32);
+    backHairGrad.addColorStop(0, "#fff5fa");
+    backHairGrad.addColorStop(0.6, "#eadcf2");
+    backHairGrad.addColorStop(1, "#f7c6e0");
+    ctx.fillStyle = backHairGrad;
     ctx.strokeStyle = outline;
     ctx.lineWidth = 2.1;
     ctx.beginPath();
-    ctx.arc(0, -81, 17, Math.PI * 1.04, Math.PI * 1.96);
-    ctx.quadraticCurveTo(11, -86, 5, -89);
-    ctx.quadraticCurveTo(0, -85, -5, -89);
-    ctx.quadraticCurveTo(-11, -86, -17, -81);
+    ctx.moveTo(-14, -84);
+    ctx.quadraticCurveTo(-24 - windPull * 0.6, -62, -22 - windPull + hairWave * 0.5, -36);
+    ctx.quadraticCurveTo(-8, -32 + hairWave * 0.3, 0, -38);
+    ctx.quadraticCurveTo(8, -32 - hairWave * 0.3, 21 - windPull * 0.4 + hairWave * 0.5, -36);
+    ctx.quadraticCurveTo(23, -62, 14, -84);
     ctx.closePath();
     ctx.fill();
-    ctx.stroke();
-
-    // Short rounded side tufts hugging the circular cheeks
-    ctx.fillStyle = "#d1dce7";
-    ctx.beginPath();
-    ctx.arc(-15.5, -79, 4.2, Math.PI * 0.45, Math.PI * 1.45);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(15.5, -79, 4.2, -Math.PI * 0.45, Math.PI * 0.55);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Sleek curved cyber visor fitted inside the circular face
-    drawRoundRect(ctx, -11.5, -83.5, 23, 7.5, 3.8, "#0d1426", outline);
-    ctx.save();
-    ctx.shadowColor = accent;
-    ctx.shadowBlur = 10;
-    ctx.strokeStyle = accent;
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.moveTo(-8, -79.8);
-    ctx.quadraticCurveTo(0, -78.5, 8, -79.8);
-    ctx.stroke();
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(-5.5, -79.8);
-    ctx.quadraticCurveTo(0, -78.8, 5.5, -79.8);
     ctx.stroke();
     ctx.restore();
 
-    // Confident smile on the round chin
-    ctx.strokeStyle = "#9d5e59";
-    ctx.lineWidth = 1.6;
+    // 2. Sheer Neon Ribbon Wings / Cape behind shoulders
+    ctx.save();
+    const wingGrad = ctx.createLinearGradient(-36, -64, 12, -22);
+    wingGrad.addColorStop(0, accent);
+    wingGrad.addColorStop(0.55, "rgb(255 158 208 / 82%)");
+    wingGrad.addColorStop(1, trim);
+    ctx.fillStyle = wingGrad;
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 1.9;
     ctx.beginPath();
-    ctx.moveTo(-3.8, -69.5);
-    ctx.quadraticCurveTo(0, -66.8, 3.8, -69.5);
+    ctx.moveTo(-7, -61);
+    ctx.quadraticCurveTo(-28 - windPull, -56 + hairWave * 0.4, -35 - windPull, -31 + hairWave);
+    ctx.quadraticCurveTo(-21 - windPull * 0.5, -26 - hairWave * 0.3, -10, -34);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // 3. Legs, Thigh-High Stockings & Cute Platform Gamer Boots
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 9.5;
+    ctx.beginPath();
+    ctx.moveTo(-5.5, -26);
+    ctx.lineTo(-7 - stride, -10);
+    ctx.moveTo(5.5, -26);
+    ctx.lineTo(7 + stride, -10);
     ctx.stroke();
 
-    // 9. Glowing Royal Crown & Floating Gem
+    // Skin upper thigh
+    ctx.strokeStyle = "#f7d6c4";
+    ctx.lineWidth = 6;
+    ctx.stroke();
+
+    // White/pastel thigh-high stockings with neon top trim
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 6.2;
+    ctx.beginPath();
+    ctx.moveTo(-6 - stride * 0.35, -21);
+    ctx.lineTo(-7 - stride, -10);
+    ctx.moveTo(6 + stride * 0.35, -21);
+    ctx.lineTo(7 + stride, -10);
+    ctx.stroke();
+
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(-9 - stride * 0.35, -21);
+    ctx.lineTo(-3 - stride * 0.35, -21);
+    ctx.moveTo(3 + stride * 0.35, -21);
+    ctx.lineTo(9 + stride * 0.35, -21);
+    ctx.stroke();
+
+    // Cute platform girl boots with neon soles & mini bows
+    drawRoundRect(ctx, -13.5 - stride, -11, 14.5, 10, 4.5, "#ffffff", outline);
+    drawRoundRect(ctx, -1 + stride, -11, 14.5, 10, 4.5, "#ffffff", outline);
+    drawRoundRect(ctx, -13.5 - stride, -3.5, 14.5, 3.8, 2, accent);
+    drawRoundRect(ctx, -1 + stride, -3.5, 14.5, 3.8, 2, accent);
+    // Boot ribbon accents
+    ctx.fillStyle = trim;
+    ctx.beginPath();
+    ctx.arc(-6 - stride, -9.5, 2.2, 0, Math.PI * 2);
+    ctx.arc(6 + stride, -9.5, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 4. Flared Pleated Skater Skirt & Waist Ribbon Bow
+    const skirtGrad = ctx.createLinearGradient(0, -40, 0, -24);
+    skirtGrad.addColorStop(0, jacket);
+    skirtGrad.addColorStop(1, accent);
+    ctx.fillStyle = skirtGrad;
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(-10, -39);
+    ctx.lineTo(10, -39);
+    ctx.lineTo(17.5, -25);
+    ctx.quadraticCurveTo(9, -22.5, 0, -24.5);
+    ctx.quadraticCurveTo(-9, -22.5, -17.5, -25);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Skirt pleats & white hem lace
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-16, -26.5);
+    ctx.quadraticCurveTo(0, -23.5, 16, -26.5);
+    ctx.moveTo(-5, -38);
+    ctx.lineTo(-7.5, -25.5);
+    ctx.moveTo(0, -38);
+    ctx.lineTo(0, -25);
+    ctx.moveTo(5, -38);
+    ctx.lineTo(7.5, -25.5);
+    ctx.stroke();
+
+    // Waist belt & cute side bow
+    drawRoundRect(ctx, -10.5, -40.5, 21, 4.5, 2, "#ffffff", outline);
+    ctx.fillStyle = trim;
+    ctx.beginPath();
+    ctx.moveTo(0, -38.2);
+    ctx.lineTo(-5, -41);
+    ctx.lineTo(-5, -35.5);
+    ctx.closePath();
+    ctx.moveTo(0, -38.2);
+    ctx.lineTo(5, -41);
+    ctx.lineTo(5, -35.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, -38.2, 2.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 5. Back Arm
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 9.5;
+    ctx.beginPath();
+    ctx.moveTo(-10.5, -59);
+    ctx.quadraticCurveTo(-18 - stride * 0.8, -52, -17 - stride * 0.8, -42);
+    ctx.stroke();
+    ctx.strokeStyle = sleeve;
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    ctx.fillStyle = "#f7d6c4";
+    ctx.beginPath();
+    ctx.arc(-17 - stride * 0.8, -40.5, 3.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 6. Fitted Cropped Gamer Top / Bolero Jacket
+    ctx.fillStyle = "#f7d6c4";
+    ctx.fillRect(-3.5, -66, 7, 8);
+
+    ctx.fillStyle = jacket;
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(-11.5, -60);
+    ctx.quadraticCurveTo(-8, -65, -4, -64);
+    ctx.lineTo(4, -64);
+    ctx.quadraticCurveTo(8, -65, 11.5, -60);
+    ctx.lineTo(9.5, -40);
+    ctx.lineTo(-9.5, -40);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Inner white crop-top V-panel & glowing heart emblem
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.moveTo(-5.5, -62);
+    ctx.lineTo(5.5, -62);
+    ctx.lineTo(4, -41);
+    ctx.lineTo(-4, -41);
+    ctx.closePath();
+    ctx.fill();
+
+    // Glowing Heart Emblem on chest
+    ctx.save();
+    ctx.shadowColor = accent;
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.moveTo(0, -49.5);
+    ctx.bezierCurveTo(-4.5, -53.5, -6.5, -48.5, 0, -44.5);
+    ctx.bezierCurveTo(6.5, -48.5, 4.5, -53.5, 0, -49.5);
+    ctx.fill();
+    ctx.restore();
+
+    // 7. Front Arm + Glowing Starlight Neon Wand / Blade
+    const handX = 16.5 + stride * 0.8;
+    const handY = -41.5;
+    ctx.save();
+    ctx.translate(handX, handY);
+    ctx.rotate(-0.42 + stride * 0.04);
+    ctx.shadowColor = accent;
+    ctx.shadowBlur = isDash ? 16 : 10;
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 4.2;
+    ctx.beginPath();
+    ctx.moveTo(2, -1);
+    ctx.lineTo(34, -14);
+    ctx.stroke();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(4, -2);
+    ctx.lineTo(32, -13);
+    ctx.stroke();
+    // Glowing 4-point star tip on the wand
+    ctx.fillStyle = trim;
+    ctx.beginPath();
+    ctx.moveTo(36, -15);
+    ctx.lineTo(39, -20);
+    ctx.lineTo(41, -14);
+    ctx.lineTo(46, -12);
+    ctx.lineTo(40, -10);
+    ctx.lineTo(38, -5);
+    ctx.lineTo(36, -11);
+    ctx.lineTo(31, -13);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    drawRoundRect(ctx, -4, -3, 9, 4, 2, trim, outline);
+    ctx.restore();
+
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 9.5;
+    ctx.beginPath();
+    ctx.moveTo(10.5, -59);
+    ctx.quadraticCurveTo(18 + stride * 0.8, -52, handX, handY);
+    ctx.stroke();
+    ctx.strokeStyle = sleeve;
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    ctx.fillStyle = "#f7d6c4";
+    ctx.beginPath();
+    ctx.arc(handX, handY, 3.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 8. Cute Twin-Tails (Pigtails) & Ribbon Bows on sides of head
+    for (const side of [-1, 1]) {
+      const sway = hairWave * (side === -1 ? 0.8 : -0.5) - windPull * 0.45;
+      ctx.fillStyle = "#f5edf8";
+      ctx.strokeStyle = outline;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(side * 14, -85);
+      ctx.quadraticCurveTo(side * 26 + sway * 0.4, -76, side * 23 + sway, -53);
+      ctx.quadraticCurveTo(side * 16 + sway * 0.5, -56, side * 14, -74);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Side ribbon bow
+      ctx.fillStyle = accent;
+      ctx.beginPath();
+      ctx.moveTo(side * 15, -85);
+      ctx.lineTo(side * 20, -89);
+      ctx.lineTo(side * 19, -82);
+      ctx.closePath();
+      ctx.moveTo(side * 15, -85);
+      ctx.lineTo(side * 12, -89);
+      ctx.lineTo(side * 11, -83);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = trim;
+      ctx.beginPath();
+      ctx.arc(side * 15, -85, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 9. Cat-Ear Gamer Headset anchored to circular head
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 2.1;
+    ctx.beginPath();
+    ctx.moveTo(-10, -90);
+    ctx.lineTo(-19, -108);
+    ctx.quadraticCurveTo(-7, -105, -2, -94);
+    ctx.closePath();
+    ctx.moveTo(10, -90);
+    ctx.lineTo(19, -108);
+    ctx.quadraticCurveTo(7, -105, 2, -94);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.moveTo(-11, -93);
+    ctx.lineTo(-16, -103);
+    ctx.lineTo(-5, -96);
+    ctx.closePath();
+    ctx.moveTo(11, -93);
+    ctx.lineTo(16, -103);
+    ctx.lineTo(5, -96);
+    ctx.closePath();
+    ctx.fill();
+
+    // 10. True Circular Girl Face, Bangs & Big Expressive Anime Eyes
+    ctx.fillStyle = "#f7d6c4";
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 2.1;
+    ctx.beginPath();
+    ctx.arc(0, -79, 16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Soft rounded bangs hugging the top of the circle
+    ctx.fillStyle = "#fff4fa";
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, -80, 16.4, Math.PI * 1.05, Math.PI * 1.95);
+    ctx.quadraticCurveTo(10, -85, 5, -88);
+    ctx.quadraticCurveTo(0, -83, -5, -88);
+    ctx.quadraticCurveTo(-10, -85, -16.4, -80);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Big Expressive Anime Girl Eyes with Eyelashes & Starlight Sparkles
+    for (const side of [-1, 1]) {
+      const ex = side * 6.2;
+      const ey = -77.5;
+      // Eye white
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.ellipse(ex, ey, 3.6, 4.1, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Iris
+      ctx.fillStyle = accent;
+      ctx.beginPath();
+      ctx.ellipse(ex, ey + 0.4, 2.7, 3.3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Pupil
+      ctx.fillStyle = "#1c1430";
+      ctx.beginPath();
+      ctx.arc(ex, ey + 0.6, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      // Eye sparkles
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(ex - 0.9, ey - 1.1, 1.1, 0, Math.PI * 2);
+      ctx.arc(ex + 1, ey + 1.2, 0.55, 0, Math.PI * 2);
+      ctx.fill();
+      // Curved upper lash & wing lash
+      ctx.strokeStyle = outline;
+      ctx.lineWidth = 1.9;
+      ctx.beginPath();
+      ctx.arc(ex, ey - 0.3, 3.8, Math.PI * 1.12, Math.PI * 1.88);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(ex + side * 3.4, ey - 1.6);
+      ctx.lineTo(ex + side * 5.2, ey - 2.9);
+      ctx.stroke();
+    }
+
+    // Rosy cheek blush
+    ctx.fillStyle = "rgb(255 105 165 / 38%)";
+    ctx.beginPath();
+    ctx.ellipse(-9.8, -72.5, 3.1, 1.8, 0, 0, Math.PI * 2);
+    ctx.ellipse(9.8, -72.5, 3.1, 1.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cute sweet smile
+    ctx.strokeStyle = "#b85d6f";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-3.2, -69.5);
+    ctx.quadraticCurveTo(0, -66.8, 3.2, -69.5);
+    ctx.stroke();
+
+    // 11. Princess Tiara & Glowing Gem
     ctx.save();
     ctx.shadowColor = trim;
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 7;
     ctx.strokeStyle = trim;
-    ctx.lineWidth = 3.2;
+    ctx.lineWidth = 2.8;
     ctx.beginPath();
-    ctx.moveTo(-9, -97.5);
-    ctx.lineTo(-4.5, -101.5);
-    ctx.lineTo(0, -97.5);
-    ctx.lineTo(4.5, -101.5);
-    ctx.lineTo(9, -97.5);
+    ctx.moveTo(-8, -95.5);
+    ctx.lineTo(-4, -99.5);
+    ctx.lineTo(0, -95.5);
+    ctx.lineTo(4, -99.5);
+    ctx.lineTo(8, -95.5);
     ctx.stroke();
     ctx.fillStyle = accent;
     ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1.3;
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.moveTo(0, -104.5);
-    ctx.lineTo(4.5, -99.5);
-    ctx.lineTo(0, -94.5);
-    ctx.lineTo(-4.5, -99.5);
+    ctx.moveTo(0, -102.5);
+    ctx.lineTo(3.8, -98);
+    ctx.lineTo(0, -93.5);
+    ctx.lineTo(-3.8, -98);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
