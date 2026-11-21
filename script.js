@@ -1981,6 +1981,6 @@ if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
   } else {
     fixAccountNavDom();
   }
-  setTimeout(fixAccountNavDom, 500);
-  setTimeout(fixAccountNavDom, 1500);
+  
+  
 })();
