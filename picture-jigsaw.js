@@ -277,10 +277,16 @@
       const row = Math.floor(pieceIndex / BOARD_SIZE);
       piece.type = "button";
       piece.dataset.position = String(position);
+      const targetCol = position % BOARD_SIZE;
+      const targetRow = Math.floor(position / BOARD_SIZE);
+      piece.dataset.pieceIndex = String(pieceIndex);
+      piece.dataset.targetPosition = String(position);
       piece.style.setProperty("--piece-column", String(column));
       piece.style.setProperty("--piece-row", String(row));
       piece.style.setProperty("--piece-x", `${column * stepPct}%`);
       piece.style.setProperty("--piece-y", `${row * stepPct}%`);
+      piece.style.setProperty("--slot-x", `${targetCol * stepPct}%`);
+      piece.style.setProperty("--slot-y", `${targetRow * stepPct}%`);
       if (pieceIndex === position) piece.classList.add("is-correct");
 
       piece.addEventListener("pointerdown", (event) => {

@@ -478,3 +478,17 @@
   visibility: visible !important;
   opacity: 1 !important;
 }
+
+
+/* === SEAMLESS COMPLETED IMAGE & VISUAL SLOT ALIGNMENT === */
+[data-jigsaw-board].is-complete,
+.jigsaw-board.is-complete {
+  gap: 0 !important;
+  border-color: #22a06b;
+}
+
+.jigsaw-board.is-complete .jigsaw-piece {
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
