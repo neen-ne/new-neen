@@ -2013,3 +2013,48 @@ if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
   const obs = new MutationObserver(syncHudStrings);
   obs.observe(document.documentElement, { attributes: true, attributeFilter: ["dir", "lang"] });
 })();
+
+
+/* === SUBPAGES RTL & LABEL SYNC === */
+(() => {
+  const dict = {
+    "Open Challenges Hub": "فتح مركز التحديات",
+    "Launch Adventure": "بدء المغامرة",
+    "Launch Game": "بدء اللعبة",
+    "Top-Up Diamonds": "شحن الجواهر",
+    "View JOD Diamond Packages": "عرض باقات الجواهر (JOD)",
+    "Play & Earn Coins": "العب واكسب كوينز",
+    "Sign in": "تسجيل الدخول",
+    "Create account": "إنشاء حساب",
+    "TOTAL COINS": "إجمالي الكوينز",
+    "EARNED COINS": "الكوينز المكتسبة",
+    "FREE TODAY": "المتاح اليوم"
+  };
+
+  const syncSubpageLabels = () => {
+    const ar = document.documentElement.dir === "rtl" || (localStorage.getItem("neen_lang") === "ar");
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const parent = node.parentElement;
+      if (!parent || ["SCRIPT", "STYLE", "CODE", "PRE"].includes(parent.tagName)) continue;
+      const raw = node.nodeValue;
+      if (!raw) continue;
+      const trimmed = raw.trim();
+      if (ar && dict[trimmed]) {
+        if (!parent.dataset.origEnText) parent.dataset.origEnText = raw;
+        node.nodeValue = raw.replace(trimmed, dict[trimmed]);
+      } else if (!ar && parent.dataset.origEnText) {
+        node.nodeValue = parent.dataset.origEnText;
+      }
+    }
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", syncSubpageLabels);
+  } else {
+    syncSubpageLabels();
+  }
+  const obs = new MutationObserver(syncSubpageLabels);
+  obs.observe(document.documentElement, { attributes: true, attributeFilter: ["dir", "lang"] });
+})();
