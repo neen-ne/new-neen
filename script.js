@@ -2150,3 +2150,51 @@ if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
   const o = new MutationObserver(syncAccountLinkOnlyName);
   o.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
 })();
+
+
+(() => {
+  const applyOnlyUsername = () => {
+    const links = document.querySelectorAll('[data-account-link], a[href="account.html"]');
+    links.forEach((link) => {
+      const label = link.querySelector('[data-account-label]');
+      const statusEl = link.querySelector('[data-account-status]');
+      if (statusEl) {
+        const raw = (statusEl.textContent || '').trim();
+        const nameOnly = raw.replace(/^(?:account\s*)?(?:signed\s*in|تم\s*تسجيل\s*الدخول)\s*:?\s*/i, '').trim();
+        if (nameOnly && !/^(?:checking|loading|جار)/i.test(nameOnly)) {
+          if (label) {
+            label.textContent = '';
+            label.style.display = 'none';
+          }
+          statusEl.textContent = nameOnly;
+          statusEl.style.display = 'inline';
+        }
+      } else {
+        const text = (link.textContent || '').trim();
+        const m = text.match(/^(?:account\s*)?(?:signed\s*in|تم\s*تسجيل\s*الدخول)\s*:?\s*(.+)$/i);
+        if (m && m[1]) {
+          link.textContent = m[1].trim();
+        }
+      }
+    });
+  };
+
+  const schedule = () => {
+    applyOnlyUsername();
+    setTimeout(applyOnlyUsername, 150);
+    setTimeout(applyOnlyUsername, 600);
+    setTimeout(applyOnlyUsername, 1500);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', schedule);
+  } else {
+    schedule();
+  }
+
+  new MutationObserver(applyOnlyUsername).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  });
+})();
