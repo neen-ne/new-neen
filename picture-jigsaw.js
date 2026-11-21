@@ -1,4 +1,7 @@
 (() => {
+  const BOARD_SIZE = 4;
+  const PIECE_COUNT = BOARD_SIZE * BOARD_SIZE;
+
   const picker = document.querySelector("[data-jigsaw-picker]");
   const options = document.querySelector("[data-jigsaw-options]");
   const startButton = document.querySelector("[data-jigsaw-start]");
@@ -53,6 +56,28 @@
   let keyboardSelection = null;
   const imageChoices = new Map();
   const tiles = new Map();
+
+  const isPermutationSolved = (perm) =>
+    Array.isArray(perm) && perm.length > 0 && perm.every((piece, idx) => Number(piece) === idx);
+
+  const normalizeSession = (session, fallbackImage = selectedImage) => {
+    const boardSize = BOARD_SIZE;
+    const pieceCount = PIECE_COUNT;
+    let perm = Array.isArray(session?.permutation) ? session.permutation.map(Number) : [];
+    if (perm.length !== pieceCount) {
+      perm = shuffledPermutation(boardSize);
+    }
+    const solved = session?.status === "completed" || isPermutationSolved(perm);
+    return {
+      ...session,
+      image: session?.image || fallbackImage,
+      board_size: boardSize,
+      piece_count: pieceCount,
+      permutation: perm,
+      move_count: Number(session?.move_count || 0),
+      status: solved ? "completed" : (session?.status || "in_progress"),
+    };
+  };
 
   const api = async (path, method = "GET", data = null) => {
     const request = {
@@ -118,30 +143,27 @@
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-    if (arr.every((val, idx) => val === idx) && arr.length > 1) {
+    if (isPermutationSolved(arr) && arr.length > 1) {
       [arr[0], arr[1]] = [arr[1], arr[0]];
     }
     return arr;
   };
 
-  const createLocalSession = (image) => {
-    const boardSize = 3;
-    const pieceCount = boardSize * boardSize;
-    return {
-      id: "local-" + Date.now(),
-      image,
-      board_size: boardSize,
-      piece_count: pieceCount,
-      permutation: shuffledPermutation(boardSize),
-      move_count: 0,
-      status: "in_progress",
-      _local: true,
-    };
-  };
+  const createLocalSession = (image) => ({
+    id: "local-" + Date.now(),
+    image,
+    board_size: BOARD_SIZE,
+    piece_count: PIECE_COUNT,
+    permutation: shuffledPermutation(BOARD_SIZE),
+    move_count: 0,
+    status: "in_progress",
+    _local: true,
+  });
 
   const showPicker = () => {
     if (picker) picker.hidden = false;
     if (boardView) boardView.hidden = true;
+    if (completePanel) completePanel.hidden = true;
     currentSession = null;
     tiles.clear();
     if (board) board.replaceChildren();
@@ -163,8 +185,8 @@
       const locked = busy || !sessionActive;
       tile.disabled = locked;
       const perm = currentSession?.permutation || [];
-      const pieceNum = (perm[position] ?? position) + 1;
-      const isRight = perm[position] === position;
+      const pieceNum = Number(perm[position] ?? position) + 1;
+      const isRight = Number(perm[position]) === position;
       tile.setAttribute(
         "aria-label",
         `Piece ${pieceNum}, position ${position + 1}${isRight ? ", correct" : ""}`
@@ -197,7 +219,7 @@
 
       preview.addEventListener("error", () => {
         const fallbackSrc = FALLBACK_IMAGES[idx % FALLBACK_IMAGES.length].src;
-        if (preview.src !== window.location.origin + "/" + fallbackSrc && !preview.dataset.retried) {
+        if (!preview.dataset.retried) {
           preview.dataset.retried = "1";
           image.src = fallbackSrc;
           preview.src = fallbackSrc;
@@ -206,7 +228,6 @@
 
       button.append(preview, element("span", "", image.alt || `Picture ${idx + 1}`));
 
-      // Select AND immediately launch the picture board on click
       button.addEventListener("click", () => {
         selectedImage = image;
         imageChoices.forEach((choice, id) => {
@@ -222,16 +243,22 @@
     });
   };
 
-  const buildBoard = (session, reward = null) => {
+  const buildBoard = (rawSession, reward = null) => {
+    const session = normalizeSession(rawSession);
     currentSession = session;
     selectedImage = session.image;
+
     if (picker) picker.hidden = true;
     if (boardView) boardView.hidden = false;
     if (!board) return;
 
+    const gridSize = session.board_size || BOARD_SIZE;
+    const stepPct = gridSize > 1 ? 100 / (gridSize - 1) : 0;
+
     board.replaceChildren();
     tiles.clear();
     keyboardSelection = null;
+    board.style.setProperty("--jigsaw-grid-size", String(gridSize));
     board.style.setProperty("--jigsaw-image", `url("${session.image.src}")`);
     const aspect = session.image.width && session.image.height
       ? session.image.width / session.image.height
@@ -241,14 +268,14 @@
 
     session.permutation.forEach((pieceIndex, position) => {
       const piece = element("button", "jigsaw-piece");
-      const column = pieceIndex % session.board_size;
-      const row = Math.floor(pieceIndex / session.board_size);
+      const column = pieceIndex % gridSize;
+      const row = Math.floor(pieceIndex / gridSize);
       piece.type = "button";
       piece.dataset.position = String(position);
       piece.style.setProperty("--piece-column", String(column));
       piece.style.setProperty("--piece-row", String(row));
-      piece.style.setProperty("--piece-x", `${column * 50}%`);
-      piece.style.setProperty("--piece-y", `${row * 50}%`);
+      piece.style.setProperty("--piece-x", `${column * stepPct}%`);
+      piece.style.setProperty("--piece-y", `${row * stepPct}%`);
       if (pieceIndex === position) piece.classList.add("is-correct");
 
       piece.addEventListener("pointerdown", (event) => {
@@ -280,8 +307,13 @@
       (count, pieceIndex, position) => count + Number(pieceIndex === position),
       0,
     );
+    const isCompleted = session.status === "completed" || correctCount === session.piece_count;
     if (progress) progress.textContent = `${correctCount} / ${session.piece_count}`;
-    if (completePanel) completePanel.hidden = session.status !== "completed";
+
+    if (completePanel) {
+      completePanel.hidden = !isCompleted;
+      completePanel.style.display = isCompleted ? "" : "none";
+    }
     if (rewardMessage) {
       rewardMessage.hidden = !reward;
       if (reward) {
@@ -290,13 +322,19 @@
           earned_coin_balance: reward.earned_coin_balance,
         });
         rewardMessage.textContent = `+${reward.amount} Earned Coins credited. Earned balance: ${reward.earned_coin_balance}; total balance: ${reward.coin_balance}.`;
+      } else if (isCompleted) {
+        rewardMessage.hidden = false;
+        rewardMessage.textContent = `Picture completed in ${session.move_count} moves! Choose "Play again" or "Choose another picture".`;
       }
     }
-    if (playAgainButton) playAgainButton.hidden = session.status !== "completed";
+    if (playAgainButton) {
+      playAgainButton.hidden = !isCompleted;
+      playAgainButton.style.display = isCompleted ? "" : "none";
+    }
     if (chooseButton) chooseButton.hidden = false;
     if (hint) {
-      hint.textContent = session.status === "completed"
-        ? "Every piece is in its correct place."
+      hint.textContent = isCompleted
+        ? "Completed! Every one of the 16 pieces is in its place."
         : "Drag one piece onto another to swap them. On a keyboard, select a piece, then select its destination.";
     }
     board.setAttribute("aria-busy", "false");
@@ -318,23 +356,30 @@
     updateControls();
     setStatus("Saving your move…");
 
-    if (currentSession._local || offlineMode) {
+    const applyLocalSwap = (reasonMsg = "") => {
       const nextPerm = [...currentSession.permutation];
       [nextPerm[fromIndex], nextPerm[toIndex]] = [nextPerm[toIndex], nextPerm[fromIndex]];
-      const isSolved = nextPerm.every((piece, idx) => piece === idx);
+      const solved = isPermutationSolved(nextPerm);
       currentSession = {
         ...currentSession,
         permutation: nextPerm,
         move_count: (currentSession.move_count || 0) + 1,
-        status: isSolved ? "completed" : "in_progress",
+        status: solved ? "completed" : "in_progress",
+        _local: true,
       };
       busy = false;
       buildBoard(currentSession);
-      setStatus(
-        isSolved
-          ? "Picture completed! Every piece is in its correct position."
-          : `${progress?.textContent || ""} pieces in the correct position · ${currentSession.move_count} moves`
-      );
+      if (solved) {
+        setStatus("Picture completed! All 16 pieces are in place.");
+      } else {
+        setStatus(
+          reasonMsg || `${progress?.textContent || ""} pieces in the correct position · ${currentSession.move_count} moves`
+        );
+      }
+    };
+
+    if (currentSession._local || offlineMode) {
+      applyLocalSwap();
       return;
     }
 
@@ -344,31 +389,18 @@
         "POST",
         { from_index: fromIndex, to_index: toIndex },
       );
-      currentSession = data.session;
+      currentSession = normalizeSession(data.session, currentSession.image);
       busy = false;
       buildBoard(currentSession, data.reward || null);
       if (currentSession.status === "completed") {
         setStatus(data.reward
           ? `You won: ${data.reward.amount} Earned Coins were credited by the server.`
-          : "The server confirmed every piece is in place.");
+          : "Picture completed! Every piece is in place.");
       } else {
         setStatus(`${progress?.textContent || ""} pieces in the correct position · ${currentSession.move_count} moves`);
       }
     } catch (error) {
-      // Fallback smoothly to local swap so gameplay never gets stuck
-      const nextPerm = [...currentSession.permutation];
-      [nextPerm[fromIndex], nextPerm[toIndex]] = [nextPerm[toIndex], nextPerm[fromIndex]];
-      const isSolved = nextPerm.every((piece, idx) => piece === idx);
-      currentSession = {
-        ...currentSession,
-        permutation: nextPerm,
-        move_count: (currentSession.move_count || 0) + 1,
-        status: isSolved ? "completed" : "in_progress",
-        _local: true,
-      };
-      busy = false;
-      buildBoard(currentSession);
-      setStatus(error.message || "Move saved locally.");
+      applyLocalSwap(error.message || "");
     } finally {
       busy = false;
       updateControls();
@@ -382,13 +414,13 @@
     busy = true;
     if (startButton) startButton.setAttribute("aria-busy", "true");
     updateControls();
-    setStatus("Opening your picture…");
+    setStatus("Opening your 16-piece puzzle…");
 
     if (offlineMode) {
       busy = false;
       if (startButton) startButton.removeAttribute("aria-busy");
       buildBoard(createLocalSession(image));
-      setStatus("Your picture is ready. Swap pieces to rebuild the original.");
+      setStatus("Your 16-piece picture is ready. Swap pieces to rebuild the original.");
       return;
     }
 
@@ -403,22 +435,22 @@
         attempts.textContent = String(data.attempts_remaining_today);
       }
       if (signIn) signIn.hidden = true;
+      const normalized = normalizeSession(data.session, image);
       busy = false;
-      buildBoard(data.session);
+      buildBoard(normalized);
       setStatus(
-        data.session.status === "completed"
+        normalized.status === "completed"
           ? "This picture is already complete."
           : data.created
-            ? "Your picture is ready. Swap pieces to rebuild the original."
-            : "Resumed your saved server-side picture."
+            ? "Your 16-piece picture is ready. Swap pieces to rebuild the original."
+            : "Resumed your saved picture."
       );
     } catch (error) {
-      // Open board immediately even if unauthenticated (401) or API unreachable
       offlineMode = true;
       if (error.status === 401 && signIn) signIn.hidden = false;
       busy = false;
       buildBoard(createLocalSession(image));
-      setStatus("Picture opened! Swap pieces to rebuild the original.");
+      setStatus("Picture opened! Swap the 16 pieces to rebuild the original.");
     } finally {
       busy = false;
       if (startButton) startButton.removeAttribute("aria-busy");
@@ -488,19 +520,20 @@
         busy = false;
         updateControls();
         if (current.session) {
-          buildBoard(current.session);
-          setStatus(current.session.status === "completed"
-            ? "This completed server-side picture is saved."
-            : "Resumed your saved server-side picture.");
+          const normalized = normalizeSession(current.session);
+          buildBoard(normalized);
+          setStatus(normalized.status === "completed"
+            ? "This completed picture is saved."
+            : "Resumed your saved picture.");
         } else {
-          setStatus("Choose one of the three pictures to get started.");
+          setStatus("Choose one of the pictures to start the 16-piece puzzle.");
         }
         await refreshWallet();
       } catch (error) {
         if (error.status === 401 && signIn) signIn.hidden = false;
         busy = false;
         updateControls();
-        setStatus("Choose a picture to open the puzzle.");
+        setStatus("Choose a picture to open the 16-piece puzzle.");
       }
     } catch {
       offlineMode = true;
@@ -512,7 +545,7 @@
       if (earnedCoins && earnedCoins.textContent === "--") earnedCoins.textContent = "0";
       busy = false;
       updateControls();
-      setStatus("Choose one of the three pictures to open the puzzle.");
+      setStatus("Choose one of the pictures to start the 16-piece puzzle.");
     }
   };
 

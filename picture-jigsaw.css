@@ -449,3 +449,23 @@
     radial-gradient(circle at 50% 50%, rgb(200 200 237 / 24%), transparent 72%),
     linear-gradient(145deg, #fffdfb, #fff5fa);
 }
+
+
+/* === 4x4 (16-PIECE) JIGSAW GRID & COMPLETION DISPLAY === */
+[data-jigsaw-board],
+.jigsaw-board {
+  display: grid !important;
+  grid-template-columns: repeat(var(--jigsaw-grid-size, 4), minmax(0, 1fr)) !important;
+  grid-template-rows: repeat(var(--jigsaw-grid-size, 4), minmax(0, 1fr)) !important;
+  gap: 2px;
+}
+
+.jigsaw-piece {
+  background-image: var(--jigsaw-image) !important;
+  background-size: calc(var(--jigsaw-grid-size, 4) * 100%) calc(var(--jigsaw-grid-size, 4) * 100%) !important;
+  background-position: var(--piece-x, 0%) var(--piece-y, 0%) !important;
+}
+
+[data-jigsaw-complete]:not([hidden]) {
+  display: block !important;
+}
