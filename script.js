@@ -1059,7 +1059,7 @@ if (languageNavigation) {
       if (lookupId !== authLookupId) return;
       if (response.status === 401) {
         languageNavigation.querySelector("[data-owner-dashboard-link]")?.remove();
-        label.hidden = false; label.textContent = "Sign in / Join";
+        label.textContent = "Sign in / Join";
         status.hidden = true;
         username.hidden = true;
         accountLink.title = "Sign in or create an account";
@@ -1068,10 +1068,9 @@ if (languageNavigation) {
       if (!response.ok || result.success !== true || typeof result.data?.user?.username !== "string") {
         throw new Error("The account service could not verify the current session.");
       }
-      label.textContent = "";
-      label.hidden = true;
-      status.textContent = "";
-      status.hidden = true;
+      label.textContent = "Account";
+      status.textContent = "Signed in";
+      status.hidden = false;
       username.textContent = result.data.user.username;
       username.hidden = false;
       accountLink.title = `Signed in as ${result.data.user.username}`;
@@ -2058,172 +2057,4 @@ if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
   }
   const obs = new MutationObserver(syncSubpageLabels);
   obs.observe(document.documentElement, { attributes: true, attributeFilter: ["dir", "lang"] });
-})();
-
-
-/* === SHOW USERNAME ONLY WHEN SIGNED IN === */
-(() => {
-  const cleanAccountNavLabels = () => {
-    const ar = document.documentElement.dir === "rtl" || (localStorage.getItem("neen_lang") === "ar");
-    const links = document.querySelectorAll('header nav a[href*="account"], .site-header a[href*="account"], .mobile-nav a[href*="account"], .drawer a[href*="account"]');
-
-    links.forEach((link) => {
-      // Check nested badges/spans or full text
-      const spans = link.querySelectorAll("span, small, em, strong");
-      let matchedUser = "";
-
-      for (const sp of spans) {
-        const t = (sp.textContent || "").trim();
-        const m = t.match(/signeds*ins+(.+)/i);
-        if (m && m[1]) {
-          matchedUser = m[1].trim();
-          break;
-        }
-      }
-
-      if (!matchedUser) {
-        const full = (link.textContent || "").trim();
-        const m2 = full.match(/accounts+signeds*ins+(.+)/i);
-        if (m2 && m2[1]) {
-          matchedUser = m2[1].trim();
-        }
-      }
-
-      if (matchedUser) {
-        link.textContent = matchedUser;
-        link.setAttribute("title", matchedUser);
-      } else {
-        const current = (link.textContent || "").trim();
-        if (/^accounts+signeds*in$/i.test(current)) {
-          link.textContent = ar ? "حسابي" : "Account";
-        }
-      }
-    });
-  };
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => {
-      cleanAccountNavLabels();
-      setTimeout(cleanAccountNavLabels, 400);
-      setTimeout(cleanAccountNavLabels, 1200);
-    });
-  } else {
-    cleanAccountNavLabels();
-    setTimeout(cleanAccountNavLabels, 400);
-    setTimeout(cleanAccountNavLabels, 1200);
-  }
-
-  const obs = new MutationObserver(cleanAccountNavLabels);
-  obs.observe(document.body || document.documentElement, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-  });
-})();
-
-
-(() => {
-  const syncAccountLinkOnlyName = () => {
-    document.querySelectorAll("[data-account-link]").forEach((link) => {
-      const lbl = link.querySelector("[data-account-label]");
-      const st = link.querySelector("[data-account-status]");
-      if (!st) return;
-      const rawSt = (st.textContent || "").trim();
-      const cleaned = rawSt.replace(/^(?:signed\s*in|تم\s*تسجيل\s*الدخول)\s*:?\s*/i, "").trim();
-      if (cleaned && !/^(?:checking|loading|جار)/i.test(cleaned)) {
-        if (lbl) {
-          lbl.textContent = "";
-          lbl.hidden = true;
-        }
-        if (st.textContent.trim() !== cleaned) {
-          st.textContent = cleaned;
-        }
-      } else if (lbl) {
-        lbl.hidden = false;
-      }
-    });
-  };
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", syncAccountLinkOnlyName);
-  } else {
-    syncAccountLinkOnlyName();
-  }
-  const o = new MutationObserver(syncAccountLinkOnlyName);
-  o.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
-})();
-
-
-(() => {
-  const applyOnlyUsername = () => {
-    const links = document.querySelectorAll('[data-account-link], a[href="account.html"]');
-    links.forEach((link) => {
-      const label = link.querySelector('[data-account-label]');
-      const statusEl = link.querySelector('[data-account-status]');
-      if (statusEl) {
-        const raw = (statusEl.textContent || '').trim();
-        const nameOnly = raw.replace(/^(?:account\s*)?(?:signed\s*in|تم\s*تسجيل\s*الدخول)\s*:?\s*/i, '').trim();
-        if (nameOnly && !/^(?:checking|loading|جار)/i.test(nameOnly)) {
-          if (label) {
-            label.textContent = '';
-            label.style.display = 'none';
-          }
-          statusEl.textContent = nameOnly;
-          statusEl.style.display = 'inline';
-        }
-      } else {
-        const text = (link.textContent || '').trim();
-        const m = text.match(/^(?:account\s*)?(?:signed\s*in|تم\s*تسجيل\s*الدخول)\s*:?\s*(.+)$/i);
-        if (m && m[1]) {
-          link.textContent = m[1].trim();
-        }
-      }
-    });
-  };
-
-  const schedule = () => {
-    applyOnlyUsername();
-    setTimeout(applyOnlyUsername, 150);
-    setTimeout(applyOnlyUsername, 600);
-    setTimeout(applyOnlyUsername, 1500);
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', schedule);
-  } else {
-    schedule();
-  }
-
-  new MutationObserver(applyOnlyUsername).observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-  });
-})();
-
-
-(() => {
-  const syncOnlyAccountUsername = () => {
-    document.querySelectorAll("[data-account-link]").forEach((link) => {
-      const lbl = link.querySelector("[data-account-label]");
-      const st = link.querySelector("[data-account-status]");
-      const usr = link.querySelector("[data-account-username]");
-      if (usr && !usr.hidden && (usr.textContent || "").trim()) {
-        if (lbl) { lbl.textContent = ""; lbl.hidden = true; }
-        if (st) { st.textContent = ""; st.hidden = true; }
-      } else if (lbl) {
-        lbl.hidden = false;
-      }
-    });
-  };
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", syncOnlyAccountUsername);
-  } else {
-    syncOnlyAccountUsername();
-  }
-  new MutationObserver(syncOnlyAccountUsername).observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ["hidden"],
-  });
 })();
