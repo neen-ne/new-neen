@@ -1,0 +1,187 @@
+/* === NEEN ACCOUNT.HTML — LIGHT LUXURY SAKURA UI ONLY === */
+body:has(.account-page) {
+  background:
+    radial-gradient(circle at 10% 8%, rgba(235, 136, 180, 0.34) 0%, transparent 42%),
+    radial-gradient(circle at 90% 10%, rgba(168, 168, 232, 0.38) 0%, transparent 45%),
+    radial-gradient(circle at 50% 92%, rgba(214, 95, 150, 0.16) 0%, transparent 50%),
+    linear-gradient(180deg, #fcebf3 0%, #f6e9f8 50%, #fff4f9 100%) !important;
+  background-attachment: fixed;
+}
+
+/* Main Auth & Profile Glass Containers */
+.account-page .account-card,
+.account-page .account-profile {
+  background: rgba(255, 255, 255, 0.78) !important;
+  backdrop-filter: blur(22px) saturate(155%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(155%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+  border-radius: 28px !important;
+  box-shadow:
+    0 24px 60px rgba(155, 65, 120, 0.14),
+    0 6px 18px rgba(168, 168, 232, 0.22),
+    inset 0 1px 0 #ffffff !important;
+}
+
+/* Gamer Hero Banner */
+.account-page .gamer-hero {
+  position: relative !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 88% 15%, rgba(214, 95, 150, 0.24) 0%, transparent 46%),
+    radial-gradient(circle at 12% 88%, rgba(168, 168, 232, 0.32) 0%, transparent 48%),
+    linear-gradient(135deg, #ffffff 0%, #fff2f8 55%, #f5f1ff 100%) !important;
+  border: 1.5px solid rgba(214, 95, 150, 0.34) !important;
+  border-radius: 24px !important;
+  box-shadow:
+    0 18px 40px rgba(180, 79, 135, 0.14),
+    inset 0 2px 0 #ffffff !important;
+}
+
+.account-page .gamer-hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #d65f96, #eb88b4, #9b8cf2, #d65f96);
+}
+
+/* Glowing Sakura Avatar Ring */
+.account-page .gamer-avatar-frame {
+  padding: 5px !important;
+  background: linear-gradient(135deg, #d65f96 0%, #ff9ec7 48%, #8f84f0 100%) !important;
+  border-radius: 24px !important;
+  box-shadow:
+    0 12px 28px rgba(214, 95, 150, 0.32),
+    0 0 0 5px rgba(255, 255, 255, 0.92) !important;
+}
+
+.account-page .gamer-avatar-frame img {
+  border-radius: 19px !important;
+  display: block;
+}
+
+/* XP Progress Block */
+.account-page .gamer-xp-block {
+  background: rgba(255, 255, 255, 0.88) !important;
+  border: 1px solid rgba(214, 95, 150, 0.24) !important;
+  border-radius: 16px !important;
+  padding: 0.9rem 1.1rem !important;
+  box-shadow: 0 6px 18px rgba(180, 79, 135, 0.08) !important;
+}
+
+/* Floating Pill Tabs */
+.account-page .account-tabs,
+.account-page .profile-tablist {
+  background: rgba(255, 255, 255, 0.86) !important;
+  border: 1.5px solid rgba(214, 95, 150, 0.22) !important;
+  border-radius: 999px !important;
+  padding: 0.36rem !important;
+  box-shadow: 0 8px 22px rgba(180, 79, 135, 0.09) !important;
+}
+
+.account-page .account-tabs button,
+.account-page .profile-tablist button {
+  border-radius: 999px !important;
+  transition: all 0.22s ease !important;
+}
+
+.account-page .account-tabs button[aria-selected="true"],
+.account-page .account-tabs button.is-active,
+.account-page .profile-tablist button[aria-selected="true"],
+.account-page .profile-tablist button.is-active {
+  background: linear-gradient(135deg, #d65f96 0%, #9b4dca 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 20px rgba(180, 79, 135, 0.32) !important;
+}
+
+/* Stat Cards */
+.account-page .gamer-stat-card {
+  position: relative !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(214, 95, 150, 0.24) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 12px 26px rgba(180, 79, 135, 0.10) !important;
+  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease !important;
+}
+
+.account-page .gamer-stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #d65f96, #a89ef5);
+}
+
+.account-page .gamer-stat-card:hover {
+  transform: translateY(-4px) !important;
+  border-color: #d65f96 !important;
+  box-shadow: 0 18px 36px rgba(180, 79, 135, 0.18) !important;
+}
+
+/* Wallet, Attendance, Coins & Security Cards */
+.account-page .account-wallet,
+.account-page .attendance-section,
+.account-page .account-coins-section,
+.account-page .profile-security-card {
+  position: relative !important;
+  overflow: hidden !important;
+  background: linear-gradient(160deg, #ffffff 0%, #fff6fa 100%) !important;
+  border: 1.5px solid rgba(214, 95, 150, 0.24) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 14px 32px rgba(180, 79, 135, 0.10) !important;
+}
+
+.account-page .attendance-section::before,
+.account-page .account-wallet::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #d65f96, #eb88b4, #a89ef5);
+}
+
+/* Inputs & Primary Buttons */
+.account-page input[type="text"],
+.account-page input[type="email"],
+.account-page input[type="password"],
+.account-page input[type="url"],
+.account-page input[type="number"],
+.account-page select,
+.account-page textarea {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border: 1.5px solid rgba(214, 95, 150, 0.24) !important;
+  border-radius: 14px !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.account-page input:focus,
+.account-page select:focus,
+.account-page textarea:focus {
+  border-color: #d65f96 !important;
+  box-shadow: 0 0 0 4px rgba(214, 95, 150, 0.14) !important;
+  outline: none !important;
+}
+
+.account-page button[type="submit"],
+.account-page .attendance-section button {
+  background: linear-gradient(135deg, #d65f96 0%, #9b4dca 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 14px !important;
+  box-shadow: 0 10px 24px rgba(180, 79, 135, 0.30) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
+}
+
+.account-page button[type="submit"]:hover,
+.account-page .attendance-section button:hover {
+  transform: translateY(-2px) !important;
+  filter: brightness(1.07) !important;
+  box-shadow: 0 14px 30px rgba(180, 79, 135, 0.38) !important;
+}
