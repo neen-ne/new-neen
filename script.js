@@ -1068,11 +1068,14 @@ if (languageNavigation) {
       if (!response.ok || result.success !== true || typeof result.data?.user?.username !== "string") {
         throw new Error("The account service could not verify the current session.");
       }
-      label.textContent = "Account";
-      status.textContent = "Signed in";
-      status.hidden = false;
+      label.textContent = "";
+      label.hidden = true;
+      status.textContent = "";
+      status.hidden = true;
       username.textContent = result.data.user.username;
       username.hidden = false;
+      if (label) { label.textContent = ""; label.hidden = true; }
+      if (status) { status.textContent = ""; status.hidden = true; }
       accountLink.title = `Signed in as ${result.data.user.username}`;
       accountLink.setAttribute("aria-label", `Account, signed in as ${result.data.user.username}`);
       let ownerDashboardLink = languageNavigation.querySelector("[data-owner-dashboard-link]");
@@ -1958,103 +1961,3 @@ if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
 })();
 
 
-/* === HOMEPAGE ARABIC FOOTER & CARD SYNC === */
-(() => {
-  const applyHomePolish = () => {
-    const ar = document.documentElement.dir === "rtl" || (localStorage.getItem("neen_lang") === "ar");
-    const footerLinks = document.querySelectorAll(".site-footer > div a");
-    const arFooter = ["الألعاب", "الفيديوهات", "من أنا", "المعرض", "الأحداث", "الجواهر"];
-    const enFooter = ["ARCADE", "VIDEOS", "ABOUT", "GALLERY", "EVENTS", "DIAMONDS"];
-    footerLinks.forEach((a, idx) => {
-      if (ar && arFooter[idx]) a.textContent = arFooter[idx];
-      else if (!ar && enFooter[idx]) a.textContent = enFooter[idx];
-    });
-    const backTop = document.querySelector(".back-to-top");
-    if (backTop) {
-      backTop.innerHTML = ar
-        ? 'للأعلى <span aria-hidden="true">↑</span>'
-        : 'BACK TO TOP <span aria-hidden="true">↑</span>';
-    }
-  };
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", applyHomePolish);
-  } else {
-    applyHomePolish();
-  }
-  const obs = new MutationObserver(applyHomePolish);
-  obs.observe(document.documentElement, { attributes: true, attributeFilter: ["dir", "lang"] });
-})();
-
-
-/* === HOMEPAGE HUD & REWARD ARABIC SYNC === */
-(() => {
-  const syncHudStrings = () => {
-    const ar = document.documentElement.dir === "rtl" || (localStorage.getItem("neen_lang") === "ar");
-    const statusNodes = document.querySelectorAll('[role="status"]');
-    statusNodes.forEach((el) => {
-      const txt = (el.textContent || "").trim();
-      if (ar && txt.includes("Interactive 3D coin preview")) {
-        el.textContent = "معاينة تفاعلية ثلاثية الأبعاد متزامنة مع توقيت UTC؛ المكافآت الرسمية تُضاف عبر اللعب الموثّق.";
-      } else if (!ar && txt.includes("معاينة تفاعلية ثلاثية الأبعاد")) {
-        el.textContent = "Interactive 3D coin preview synced to device UTC clock. Official rewards are credited through verified gameplay.";
-      }
-      if (ar && txt.includes("Sign in to sync your verified Coin balance")) {
-        el.textContent = "سجّل الدخول لمزامنة رصيد الجواهر/الكوينز الموثّق والمكافآت اليومية.";
-      } else if (!ar && txt.includes("سجّل الدخول لمزامنة رصيد")) {
-        el.textContent = "Sign in to sync your verified Coin balance and daily rewards.";
-      }
-    });
-  };
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", syncHudStrings);
-  } else {
-    syncHudStrings();
-  }
-  const obs = new MutationObserver(syncHudStrings);
-  obs.observe(document.documentElement, { attributes: true, attributeFilter: ["dir", "lang"] });
-})();
-
-
-/* === SUBPAGES RTL & LABEL SYNC === */
-(() => {
-  const dict = {
-    "Open Challenges Hub": "فتح مركز التحديات",
-    "Launch Adventure": "بدء المغامرة",
-    "Launch Game": "بدء اللعبة",
-    "Top-Up Diamonds": "شحن الجواهر",
-    "View JOD Diamond Packages": "عرض باقات الجواهر (JOD)",
-    "Play & Earn Coins": "العب واكسب كوينز",
-    "Sign in": "تسجيل الدخول",
-    "Create account": "إنشاء حساب",
-    "TOTAL COINS": "إجمالي الكوينز",
-    "EARNED COINS": "الكوينز المكتسبة",
-    "FREE TODAY": "المتاح اليوم"
-  };
-
-  const syncSubpageLabels = () => {
-    const ar = document.documentElement.dir === "rtl" || (localStorage.getItem("neen_lang") === "ar");
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    let node;
-    while ((node = walker.nextNode())) {
-      const parent = node.parentElement;
-      if (!parent || ["SCRIPT", "STYLE", "CODE", "PRE"].includes(parent.tagName)) continue;
-      const raw = node.nodeValue;
-      if (!raw) continue;
-      const trimmed = raw.trim();
-      if (ar && dict[trimmed]) {
-        if (!parent.dataset.origEnText) parent.dataset.origEnText = raw;
-        node.nodeValue = raw.replace(trimmed, dict[trimmed]);
-      } else if (!ar && parent.dataset.origEnText) {
-        node.nodeValue = parent.dataset.origEnText;
-      }
-    }
-  };
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", syncSubpageLabels);
-  } else {
-    syncSubpageLabels();
-  }
-  const obs = new MutationObserver(syncSubpageLabels);
-  obs.observe(document.documentElement, { attributes: true, attributeFilter: ["dir", "lang"] });
-})();
