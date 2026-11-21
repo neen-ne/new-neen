@@ -1956,3 +1956,31 @@ if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
     mountPalestineFlag();
   }
 })();
+
+
+/* === HOMEPAGE ARABIC FOOTER & CARD SYNC === */
+(() => {
+  const applyHomePolish = () => {
+    const ar = document.documentElement.dir === "rtl" || (localStorage.getItem("neen_lang") === "ar");
+    const footerLinks = document.querySelectorAll(".site-footer > div a");
+    const arFooter = ["الألعاب", "الفيديوهات", "من أنا", "المعرض", "الأحداث", "الجواهر"];
+    const enFooter = ["ARCADE", "VIDEOS", "ABOUT", "GALLERY", "EVENTS", "DIAMONDS"];
+    footerLinks.forEach((a, idx) => {
+      if (ar && arFooter[idx]) a.textContent = arFooter[idx];
+      else if (!ar && enFooter[idx]) a.textContent = enFooter[idx];
+    });
+    const backTop = document.querySelector(".back-to-top");
+    if (backTop) {
+      backTop.innerHTML = ar
+        ? 'للأعلى <span aria-hidden="true">↑</span>'
+        : 'BACK TO TOP <span aria-hidden="true">↑</span>';
+    }
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", applyHomePolish);
+  } else {
+    applyHomePolish();
+  }
+  const obs = new MutationObserver(applyHomePolish);
+  obs.observe(document.documentElement, { attributes: true, attributeFilter: ["dir", "lang"] });
+})();

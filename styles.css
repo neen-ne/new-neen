@@ -9019,3 +9019,25 @@ body.home-page .home-site-shell {
     margin-left: 8px !important;
   }
 }
+
+
+/* === HOMEPAGE VISUAL & RTL POLISH === */
+.arcade-card img,
+.playbook-game-card img,
+.archive-grid img,
+.video-card img {
+  object-fit: cover;
+}
+
+html[dir="rtl"] .site-footer nav,
+html[dir="rtl"] .site-footer p,
+html[dir="rtl"] .back-to-top {
+  direction: rtl;
+}
+
+@media (max-width: 900px) {
+  .site-header nav {
+    gap: 10px;
+    font-size: 13px;
+  }
+}
