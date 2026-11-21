@@ -9071,3 +9071,12 @@ html[dir="rtl"] .back-to-top {
   aspect-ratio: 9 / 16;
   object-fit: cover;
 }
+
+
+/* === ACCOUNT LINK USERNAME ONLY === */
+[data-account-link] [hidden] {
+  display: none !important;
+}
+[data-account-link] [data-account-username]:not([hidden]) {
+  display: inline !important;
+}

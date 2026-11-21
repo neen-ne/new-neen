@@ -1961,3 +1961,26 @@ if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
 })();
 
 
+
+
+(() => {
+  const fixAccountNavDom = () => {
+    document.querySelectorAll("[data-account-link]").forEach((link) => {
+      const lbl = link.querySelector("[data-account-label]");
+      const st = link.querySelector("[data-account-status]");
+      const usr = link.querySelector("[data-account-username]");
+      if (usr && (usr.textContent || "").trim()) {
+        usr.hidden = false;
+        if (lbl) { lbl.textContent = ""; lbl.hidden = true; }
+        if (st) { st.textContent = ""; st.hidden = true; }
+      }
+    });
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", fixAccountNavDom);
+  } else {
+    fixAccountNavDom();
+  }
+  setTimeout(fixAccountNavDom, 500);
+  setTimeout(fixAccountNavDom, 1500);
+})();
