@@ -1,187 +1,169 @@
-/* === NEEN ACCOUNT.HTML — LIGHT LUXURY SAKURA UI ONLY === */
+/* === NEEN ACCOUNT.HTML — HIGH-CONTRAST LIGHT LUXURY SAKURA UI === */
 body {
   background:
-    radial-gradient(circle at 10% 8%, rgba(235, 136, 180, 0.34) 0%, transparent 42%),
-    radial-gradient(circle at 90% 10%, rgba(168, 168, 232, 0.38) 0%, transparent 45%),
-    radial-gradient(circle at 50% 92%, rgba(214, 95, 150, 0.16) 0%, transparent 50%),
-    linear-gradient(180deg, #fcebf3 0%, #f6e9f8 50%, #fff4f9 100%) !important;
-  background-attachment: fixed;
+    radial-gradient(circle at 12% 10%, rgba(235, 118, 175, 0.38) 0%, transparent 42%),
+    radial-gradient(circle at 88% 12%, rgba(145, 132, 238, 0.42) 0%, transparent 45%),
+    radial-gradient(circle at 50% 90%, rgba(214, 95, 150, 0.22) 0%, transparent 50%),
+    linear-gradient(180deg, #f7dce9 0%, #ede3f8 50%, #fae8f2 100%) !important;
+  background-attachment: fixed !important;
 }
 
-/* Main Auth & Profile Glass Containers */
-.account-card,
-.account-profile {
-  background: rgba(255, 255, 255, 0.78) !important;
-  backdrop-filter: blur(22px) saturate(155%) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(155%) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
-  border-radius: 28px !important;
+/* Main Profile Container */
+body .account-card,
+body .account-profile {
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(24px) saturate(165%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(165%) !important;
+  border: 2px solid rgba(255, 255, 255, 0.95) !important;
+  border-radius: 30px !important;
+  padding: 2rem !important;
   box-shadow:
-    0 24px 60px rgba(155, 65, 120, 0.14),
-    0 6px 18px rgba(168, 168, 232, 0.22),
-    inset 0 1px 0 #ffffff !important;
-}
-
-/* Gamer Hero Banner */
-.gamer-hero {
-  position: relative !important;
-  overflow: hidden !important;
-  background:
-    radial-gradient(circle at 88% 15%, rgba(214, 95, 150, 0.24) 0%, transparent 46%),
-    radial-gradient(circle at 12% 88%, rgba(168, 168, 232, 0.32) 0%, transparent 48%),
-    linear-gradient(135deg, #ffffff 0%, #fff2f8 55%, #f5f1ff 100%) !important;
-  border: 1.5px solid rgba(214, 95, 150, 0.34) !important;
-  border-radius: 24px !important;
-  box-shadow:
-    0 18px 40px rgba(180, 79, 135, 0.14),
+    0 28px 65px rgba(140, 52, 112, 0.18),
+    0 8px 20px rgba(145, 132, 238, 0.22),
     inset 0 2px 0 #ffffff !important;
 }
 
-.gamer-hero::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #d65f96, #eb88b4, #9b8cf2, #d65f96);
-}
-
-/* Glowing Sakura Avatar Ring */
-.gamer-avatar-frame {
-  padding: 5px !important;
-  background: linear-gradient(135deg, #d65f96 0%, #ff9ec7 48%, #8f84f0 100%) !important;
-  border-radius: 24px !important;
+/* Gamer Hero Banner */
+body .gamer-hero {
+  position: relative !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 90% 15%, rgba(214, 95, 150, 0.28) 0%, transparent 45%),
+    radial-gradient(circle at 10% 85%, rgba(145, 132, 238, 0.34) 0%, transparent 48%),
+    linear-gradient(135deg, #ffffff 0%, #fff0f7 52%, #efeaff 100%) !important;
+  border: 2px solid rgba(214, 95, 150, 0.42) !important;
+  border-radius: 26px !important;
+  padding: 1.75rem !important;
   box-shadow:
-    0 12px 28px rgba(214, 95, 150, 0.32),
-    0 0 0 5px rgba(255, 255, 255, 0.92) !important;
+    0 20px 44px rgba(165, 68, 128, 0.18),
+    inset 0 2px 0 #ffffff !important;
 }
 
-.gamer-avatar-frame img {
-  border-radius: 19px !important;
-  display: block;
+body .gamer-hero::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 5px !important;
+  background: linear-gradient(90deg, #d65f96, #ff85c0, #8a7cf0, #d65f96) !important;
 }
 
-/* XP Progress Block */
-.gamer-xp-block {
-  background: rgba(255, 255, 255, 0.88) !important;
-  border: 1px solid rgba(214, 95, 150, 0.24) !important;
-  border-radius: 16px !important;
-  padding: 0.9rem 1.1rem !important;
-  box-shadow: 0 6px 18px rgba(180, 79, 135, 0.08) !important;
+/* Glowing Sakura Avatar */
+body .gamer-avatar-frame {
+  padding: 5px !important;
+  background: linear-gradient(135deg, #d65f96 0%, #ff94c8 45%, #7f72f0 100%) !important;
+  border-radius: 26px !important;
+  box-shadow:
+    0 14px 32px rgba(214, 95, 150, 0.42),
+    0 0 0 5px rgba(255, 255, 255, 0.95) !important;
 }
 
-/* Floating Pill Tabs */
-.account-tabs,
-.profile-tablist {
-  background: rgba(255, 255, 255, 0.86) !important;
-  border: 1.5px solid rgba(214, 95, 150, 0.22) !important;
+body .gamer-avatar-frame img {
+  border-radius: 21px !important;
+}
+
+/* XP Block */
+body .gamer-xp-block {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1.5px solid rgba(214, 95, 150, 0.30) !important;
+  border-radius: 18px !important;
+  padding: 1rem 1.2rem !important;
+  box-shadow: 0 8px 20px rgba(165, 68, 128, 0.10) !important;
+}
+
+/* Floating Glass Pill Tabs */
+body .account-tabs,
+body .profile-tablist {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1.5px solid rgba(214, 95, 150, 0.30) !important;
   border-radius: 999px !important;
-  padding: 0.36rem !important;
-  box-shadow: 0 8px 22px rgba(180, 79, 135, 0.09) !important;
+  padding: 0.42rem !important;
+  gap: 0.35rem !important;
+  box-shadow: 0 10px 26px rgba(165, 68, 128, 0.12) !important;
 }
 
-.account-tabs button,
-.profile-tablist button {
+body .account-tabs button,
+body .profile-tablist button {
   border-radius: 999px !important;
+  font-weight: 700 !important;
   transition: all 0.22s ease !important;
 }
 
-.account-tabs button[aria-selected="true"],
-.account-tabs button.is-active,
-.profile-tablist button[aria-selected="true"],
-.profile-tablist button.is-active {
-  background: linear-gradient(135deg, #d65f96 0%, #9b4dca 100%) !important;
+body .account-tabs button[aria-selected="true"],
+body .account-tabs button.is-active,
+body .profile-tablist button[aria-selected="true"],
+body .profile-tablist button.is-active {
+  background: linear-gradient(135deg, #d65f96 0%, #8a4fd6 100%) !important;
   color: #ffffff !important;
-  box-shadow: 0 8px 20px rgba(180, 79, 135, 0.32) !important;
+  box-shadow: 0 8px 22px rgba(165, 68, 128, 0.38) !important;
 }
 
-/* Stat Cards */
-.gamer-stat-card {
+/* High-Contrast Pearl Stat Cards */
+body .gamer-stat-card {
   position: relative !important;
   overflow: hidden !important;
   background: #ffffff !important;
-  border: 1px solid rgba(214, 95, 150, 0.24) !important;
-  border-radius: 20px !important;
-  box-shadow: 0 12px 26px rgba(180, 79, 135, 0.10) !important;
+  border: 1.5px solid rgba(214, 95, 150, 0.28) !important;
+  border-radius: 22px !important;
+  padding: 1.25rem !important;
+  box-shadow: 0 14px 30px rgba(165, 68, 128, 0.12) !important;
   transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease !important;
 }
 
-.gamer-stat-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #d65f96, #a89ef5);
+body .gamer-stat-card::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 4px !important;
+  background: linear-gradient(90deg, #d65f96, #8a7cf0) !important;
 }
 
-.gamer-stat-card:hover {
-  transform: translateY(-4px) !important;
+body .gamer-stat-card:hover {
+  transform: translateY(-5px) !important;
   border-color: #d65f96 !important;
-  box-shadow: 0 18px 36px rgba(180, 79, 135, 0.18) !important;
+  box-shadow: 0 22px 42px rgba(165, 68, 128, 0.22) !important;
 }
 
 /* Wallet, Attendance, Coins & Security Cards */
-.account-wallet,
-.attendance-section,
-.account-coins-section,
-.profile-security-card {
+body .account-wallet,
+body .attendance-section,
+body .account-coins-section,
+body .profile-security-card {
   position: relative !important;
   overflow: hidden !important;
-  background: linear-gradient(160deg, #ffffff 0%, #fff6fa 100%) !important;
-  border: 1.5px solid rgba(214, 95, 150, 0.24) !important;
-  border-radius: 22px !important;
-  box-shadow: 0 14px 32px rgba(180, 79, 135, 0.10) !important;
+  background: linear-gradient(160deg, #ffffff 0%, #fff4fa 100%) !important;
+  border: 1.5px solid rgba(214, 95, 150, 0.30) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 16px 34px rgba(165, 68, 128, 0.12) !important;
 }
 
-.attendance-section::before,
-.account-wallet::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #d65f96, #eb88b4, #a89ef5);
+body .attendance-section::before,
+body .account-wallet::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 4px !important;
+  background: linear-gradient(90deg, #d65f96, #ff85c0, #8a7cf0) !important;
 }
 
-/* Inputs & Primary Buttons */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="url"],
-input[type="number"],
-select,
-textarea {
-  background: rgba(255, 255, 255, 0.94) !important;
-  border: 1.5px solid rgba(214, 95, 150, 0.24) !important;
-  border-radius: 14px !important;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: #d65f96 !important;
-  box-shadow: 0 0 0 4px rgba(214, 95, 150, 0.14) !important;
-  outline: none !important;
-}
-
-button[type="submit"],
-.attendance-section button {
-  background: linear-gradient(135deg, #d65f96 0%, #9b4dca 100%) !important;
+/* Vivid Sakura Buttons */
+body button[type="submit"],
+body .attendance-section button {
+  background: linear-gradient(135deg, #d65f96 0%, #8a4fd6 100%) !important;
   color: #ffffff !important;
   border: none !important;
   border-radius: 14px !important;
-  box-shadow: 0 10px 24px rgba(180, 79, 135, 0.30) !important;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
+  box-shadow: 0 10px 26px rgba(165, 68, 128, 0.34) !important;
+  transition: transform 0.2s ease, filter 0.2s ease !important;
 }
 
-button[type="submit"]:hover,
-.attendance-section button:hover {
+body button[type="submit"]:hover,
+body .attendance-section button:hover {
   transform: translateY(-2px) !important;
-  filter: brightness(1.07) !important;
-  box-shadow: 0 14px 30px rgba(180, 79, 135, 0.38) !important;
+  filter: brightness(1.08) !important;
 }
