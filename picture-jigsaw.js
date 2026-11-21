@@ -245,19 +245,23 @@
 
 
   const revealCompletionBanner = (session, reward = null) => {
-    const perm = session?.permutation || [];
-    const correctCount = perm.reduce((acc, val, idx) => acc + Number(Number(val) === idx), 0);
+    const perm = Array.isArray(session?.permutation) ? session.permutation : [];
     const total = session?.piece_count || perm.length || 16;
-    const done = session?.status === "completed" || (total > 0 && correctCount === total);
+    const correctCount = perm.reduce((acc, val, idx) => acc + Number(Number(val) === idx), 0);
+    const done = session?.status === "completed" || (perm.length === total && total > 0 && correctCount === total);
     if (!done) return;
 
-    if (progress) progress.textContent = `${total} / ${total}`;
+    if (progress) {
+      progress.setAttribute("dir", "ltr");
+      progress.textContent = `${total} / ${total}`;
+    }
     if (completePanel) {
       completePanel.hidden = false;
       completePanel.removeAttribute("hidden");
       completePanel.style.setProperty("display", "block", "important");
       completePanel.style.setProperty("visibility", "visible", "important");
       completePanel.style.setProperty("opacity", "1", "important");
+      completePanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
     if (rewardMessage) {
       rewardMessage.hidden = false;
@@ -269,10 +273,10 @@
           earned_coin_balance: reward.earned_coin_balance,
         });
         rewardMessage.textContent = `+${reward.amount} Earned Coins credited. Earned balance: ${reward.earned_coin_balance}; total balance: ${reward.coin_balance}.`;
-      } else if (!rewardMessage.textContent.trim()) {
+      } else {
         const curTotal = totalCoins?.textContent?.trim() || "0";
         const curEarned = earnedCoins?.textContent?.trim() || "0";
-        rewardMessage.textContent = `Picture completed! Earned balance: ${curEarned} · Total balance: ${curTotal}.`;
+        rewardMessage.textContent = `Picture completed (${total}/${total})! Earned balance: ${curEarned} · Total balance: ${curTotal}.`;
       }
     }
     if (playAgainButton) {
@@ -352,7 +356,7 @@
       0,
     );
     const isCompleted = session.status === "completed" || correctCount === session.piece_count;
-    if (progress) progress.textContent = `${correctCount} / ${session.piece_count}`;
+    if (progress) { progress.setAttribute("dir", "ltr"); progress.textContent = `${correctCount} / ${session.piece_count}`; }
 
     if (completePanel) {
       completePanel.hidden = !isCompleted;
