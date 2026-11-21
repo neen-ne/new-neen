@@ -2058,3 +2058,64 @@ if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
   const obs = new MutationObserver(syncSubpageLabels);
   obs.observe(document.documentElement, { attributes: true, attributeFilter: ["dir", "lang"] });
 })();
+
+
+/* === SHOW USERNAME ONLY WHEN SIGNED IN === */
+(() => {
+  const cleanAccountNavLabels = () => {
+    const ar = document.documentElement.dir === "rtl" || (localStorage.getItem("neen_lang") === "ar");
+    const links = document.querySelectorAll('header nav a[href*="account"], .site-header a[href*="account"], .mobile-nav a[href*="account"], .drawer a[href*="account"]');
+
+    links.forEach((link) => {
+      // Check nested badges/spans or full text
+      const spans = link.querySelectorAll("span, small, em, strong");
+      let matchedUser = "";
+
+      for (const sp of spans) {
+        const t = (sp.textContent || "").trim();
+        const m = t.match(/signeds*ins+(.+)/i);
+        if (m && m[1]) {
+          matchedUser = m[1].trim();
+          break;
+        }
+      }
+
+      if (!matchedUser) {
+        const full = (link.textContent || "").trim();
+        const m2 = full.match(/accounts+signeds*ins+(.+)/i);
+        if (m2 && m2[1]) {
+          matchedUser = m2[1].trim();
+        }
+      }
+
+      if (matchedUser) {
+        link.textContent = matchedUser;
+        link.setAttribute("title", matchedUser);
+      } else {
+        const current = (link.textContent || "").trim();
+        if (/^accounts+signeds*in$/i.test(current)) {
+          link.textContent = ar ? "حسابي" : "Account";
+        }
+      }
+    });
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      cleanAccountNavLabels();
+      setTimeout(cleanAccountNavLabels, 400);
+      setTimeout(cleanAccountNavLabels, 1200);
+    });
+  } else {
+    cleanAccountNavLabels();
+    setTimeout(cleanAccountNavLabels, 400);
+    setTimeout(cleanAccountNavLabels, 1200);
+  }
+
+  const obs = new MutationObserver(cleanAccountNavLabels);
+  obs.observe(document.body || document.documentElement, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  });
+})();
