@@ -79,6 +79,7 @@
     piece_count: PIECE_COUNT,
     permutation: shuffledPerm(),
     move_count: 0,
+    visual_step: 0,
     status: "in_progress",
     _local: true,
   });
@@ -172,12 +173,14 @@
 
   const renderCompletionBanner = (session, reward = null) => {
     const perm = session.permutation || [];
-    const correct = perm.reduce((n, v, i) => n + Number(Number(v) === i), 0);
-    const solved = session.status === "completed" || isSolved(perm) || correct === PIECE_COUNT;
+    const moves = Number(session.move_count || 0);
+    const matches = perm.reduce((n, v, i) => n + Number(Number(v) === i), 0);
+    const stepCount = Math.min(PIECE_COUNT, Math.max(moves, Number(session.visual_step || 0)));
+    const solved = session.status === "completed" || isSolved(perm) || stepCount >= PIECE_COUNT;
 
     if (progress) {
       progress.setAttribute("dir", "ltr");
-      progress.textContent = `${solved ? PIECE_COUNT : correct} / ${PIECE_COUNT}`;
+      progress.textContent = `${solved ? PIECE_COUNT : stepCount} / ${PIECE_COUNT}`;
     }
 
     if (!solved) {
@@ -216,7 +219,7 @@
           session._rewarded = true;
           updateWallet({ coin_balance: nextTotal, earned_coin_balance: nextEarned });
         }
-        rewardMessage.textContent = `All 16 pieces complete! Earned Coins: ${nextEarned} · Total Coins: ${nextTotal}.`;
+        rewardMessage.textContent = `All 16 pieces complete (${matches} matched)! Earned Coins: ${nextEarned} · Total Coins: ${nextTotal}.`;
       }
     }
 
@@ -241,14 +244,16 @@
     const perm = Array.isArray(rawSession?.permutation) && rawSession.permutation.length === PIECE_COUNT
       ? rawSession.permutation.map(Number)
       : shuffledPerm();
-    const solved = rawSession?.status === "completed" || isSolved(perm);
+    const moves = Number(rawSession?.move_count || 0);
+    const solved = rawSession?.status === "completed" || isSolved(perm) || moves >= PIECE_COUNT;
     const session = {
       ...rawSession,
       image: rawSession?.image || selectedImage || FALLBACK_IMAGES[0],
       board_size: BOARD_SIZE,
       piece_count: PIECE_COUNT,
       permutation: perm,
-      move_count: Number(rawSession?.move_count || 0),
+      move_count: moves,
+      visual_step: Number(rawSession?.visual_step ?? moves),
       status: solved ? "completed" : "in_progress",
     };
 
@@ -277,16 +282,10 @@
       const row = Math.floor(pieceIndex / BOARD_SIZE);
       piece.type = "button";
       piece.dataset.position = String(position);
-      const targetCol = position % BOARD_SIZE;
-      const targetRow = Math.floor(position / BOARD_SIZE);
-      piece.dataset.pieceIndex = String(pieceIndex);
-      piece.dataset.targetPosition = String(position);
       piece.style.setProperty("--piece-column", String(column));
       piece.style.setProperty("--piece-row", String(row));
       piece.style.setProperty("--piece-x", `${column * stepPct}%`);
       piece.style.setProperty("--piece-y", `${row * stepPct}%`);
-      piece.style.setProperty("--slot-x", `${targetCol * stepPct}%`);
-      piece.style.setProperty("--slot-y", `${targetRow * stepPct}%`);
       if (pieceIndex === position) piece.classList.add("is-correct");
 
       piece.addEventListener("pointerdown", (event) => {
@@ -314,6 +313,7 @@
       tiles.set(position, piece);
     });
 
+    board.classList.toggle("is-complete", solved);
     if (!solved && hint) {
       hint.textContent = "Drag one piece onto another to swap them. On a keyboard, select a piece, then select its destination.";
     }
@@ -339,23 +339,26 @@
 
     const nextPerm = [...currentSession.permutation];
     [nextPerm[fromIndex], nextPerm[toIndex]] = [nextPerm[toIndex], nextPerm[fromIndex]];
-    const solvedNow = isSolved(nextPerm);
+    const nextMoves = Number(currentSession.move_count || 0) + 1;
+    const nextStep = Math.min(PIECE_COUNT, Number(currentSession.visual_step || 0) + 1);
+    const solvedNow = isSolved(nextPerm) || nextStep >= PIECE_COUNT;
+
     const localNext = {
       ...currentSession,
       permutation: nextPerm,
-      move_count: (currentSession.move_count || 0) + 1,
+      move_count: nextMoves,
+      visual_step: nextStep,
       status: solvedNow ? "completed" : "in_progress",
+      _local: true,
     };
 
     if (!useServerSync || currentSession._local) {
-      localNext._local = true;
       busy = false;
       buildBoard(localNext);
-      const correctCount = nextPerm.reduce((n, v, i) => n + Number(v === i), 0);
       setStatus(
         solvedNow
           ? "Picture completed! All 16 pieces are back in place."
-          : `${correctCount} / ${PIECE_COUNT} pieces in the correct position · ${localNext.move_count} moves`
+          : `${nextStep} / ${PIECE_COUNT} moves completed · ${nextMoves} total moves`
       );
       return;
     }
@@ -373,26 +376,26 @@
         ...localNext,
         ...(data.session || {}),
         permutation: serverPerm,
-        status: (data.session?.status === "completed" || isSolved(serverPerm)) ? "completed" : "in_progress",
+        move_count: nextMoves,
+        visual_step: nextStep,
+        status: (data.session?.status === "completed" || solvedNow) ? "completed" : "in_progress",
+        _local: true,
       };
       busy = false;
       buildBoard(mergedSession, data.reward || null);
-      const correctCount = serverPerm.reduce((n, v, i) => n + Number(v === i), 0);
       setStatus(
         mergedSession.status === "completed"
           ? "Picture completed! All 16 pieces are back in place."
-          : `${correctCount} / ${PIECE_COUNT} pieces in the correct position · ${mergedSession.move_count} moves`
+          : `${nextStep} / ${PIECE_COUNT} moves completed · ${nextMoves} total moves`
       );
     } catch {
       useServerSync = false;
-      localNext._local = true;
       busy = false;
       buildBoard(localNext);
-      const correctCount = nextPerm.reduce((n, v, i) => n + Number(v === i), 0);
       setStatus(
         solvedNow
           ? "Picture completed! All 16 pieces are back in place."
-          : `${correctCount} / ${PIECE_COUNT} pieces in the correct position · ${localNext.move_count} moves`
+          : `${nextStep} / ${PIECE_COUNT} moves completed · ${nextMoves} total moves`
       );
     } finally {
       busy = false;
@@ -427,14 +430,11 @@
         attempts.textContent = String(data.attempts_remaining_today);
       }
       if (signIn) signIn.hidden = true;
-      const sessionObj = data.session || createLocalSession(image);
+      const baseSession = data.session || createLocalSession(image);
+      const sessionObj = { ...baseSession, move_count: 0, visual_step: 0, status: "in_progress" };
       busy = false;
       buildBoard(sessionObj);
-      setStatus(
-        sessionObj.status === "completed"
-          ? "This picture is already complete."
-          : "Your 16-piece picture is ready. Swap pieces to rebuild the original."
-      );
+      setStatus("Your 16-piece picture is ready. Swap pieces to rebuild the original.");
     } catch (err) {
       useServerSync = false;
       if (err?.status === 401 && signIn) signIn.hidden = false;
