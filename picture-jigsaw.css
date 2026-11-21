@@ -469,3 +469,12 @@
 [data-jigsaw-complete]:not([hidden]) {
   display: block !important;
 }
+
+
+/* === FORCE COMPLETION PANEL & BUTTONS VISIBILITY === */
+.jigsaw-complete:not([hidden]),
+[data-jigsaw-complete]:not([hidden]) {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}

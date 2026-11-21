@@ -243,6 +243,50 @@
     });
   };
 
+
+  const revealCompletionBanner = (session, reward = null) => {
+    const perm = session?.permutation || [];
+    const correctCount = perm.reduce((acc, val, idx) => acc + Number(Number(val) === idx), 0);
+    const total = session?.piece_count || perm.length || 16;
+    const done = session?.status === "completed" || (total > 0 && correctCount === total);
+    if (!done) return;
+
+    if (progress) progress.textContent = `${total} / ${total}`;
+    if (completePanel) {
+      completePanel.hidden = false;
+      completePanel.removeAttribute("hidden");
+      completePanel.style.setProperty("display", "block", "important");
+      completePanel.style.setProperty("visibility", "visible", "important");
+      completePanel.style.setProperty("opacity", "1", "important");
+    }
+    if (rewardMessage) {
+      rewardMessage.hidden = false;
+      rewardMessage.removeAttribute("hidden");
+      rewardMessage.style.setProperty("display", "block", "important");
+      if (reward) {
+        updateWallet({
+          coin_balance: reward.coin_balance,
+          earned_coin_balance: reward.earned_coin_balance,
+        });
+        rewardMessage.textContent = `+${reward.amount} Earned Coins credited. Earned balance: ${reward.earned_coin_balance}; total balance: ${reward.coin_balance}.`;
+      } else if (!rewardMessage.textContent.trim()) {
+        const curTotal = totalCoins?.textContent?.trim() || "0";
+        const curEarned = earnedCoins?.textContent?.trim() || "0";
+        rewardMessage.textContent = `Picture completed! Earned balance: ${curEarned} · Total balance: ${curTotal}.`;
+      }
+    }
+    if (playAgainButton) {
+      playAgainButton.hidden = false;
+      playAgainButton.removeAttribute("hidden");
+      playAgainButton.style.setProperty("display", "inline-flex", "important");
+    }
+    if (chooseButton) {
+      chooseButton.hidden = false;
+      chooseButton.removeAttribute("hidden");
+      chooseButton.style.setProperty("display", "inline-flex", "important");
+    }
+  };
+
   const buildBoard = (rawSession, reward = null) => {
     const session = normalizeSession(rawSession);
     currentSession = session;
@@ -339,6 +383,7 @@
     }
     board.setAttribute("aria-busy", "false");
     updateControls();
+    revealCompletionBanner(session, reward);
   };
 
   const swap = async (fromIndex, toIndex) => {
