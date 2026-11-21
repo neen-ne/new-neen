@@ -1059,7 +1059,7 @@ if (languageNavigation) {
       if (lookupId !== authLookupId) return;
       if (response.status === 401) {
         languageNavigation.querySelector("[data-owner-dashboard-link]")?.remove();
-        label.textContent = "Sign in / Join";
+        label.hidden = false; label.textContent = "Sign in / Join";
         status.hidden = true;
         username.hidden = true;
         accountLink.title = "Sign in or create an account";
@@ -1068,9 +1068,10 @@ if (languageNavigation) {
       if (!response.ok || result.success !== true || typeof result.data?.user?.username !== "string") {
         throw new Error("The account service could not verify the current session.");
       }
-      label.textContent = "Account";
-      status.textContent = "Signed in";
-      status.hidden = false;
+      label.textContent = "";
+      label.hidden = true;
+      status.textContent = "";
+      status.hidden = true;
       username.textContent = result.data.user.username;
       username.hidden = false;
       accountLink.title = `Signed in as ${result.data.user.username}`;
@@ -2196,5 +2197,33 @@ if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
     childList: true,
     subtree: true,
     characterData: true,
+  });
+})();
+
+
+(() => {
+  const syncOnlyAccountUsername = () => {
+    document.querySelectorAll("[data-account-link]").forEach((link) => {
+      const lbl = link.querySelector("[data-account-label]");
+      const st = link.querySelector("[data-account-status]");
+      const usr = link.querySelector("[data-account-username]");
+      if (usr && !usr.hidden && (usr.textContent || "").trim()) {
+        if (lbl) { lbl.textContent = ""; lbl.hidden = true; }
+        if (st) { st.textContent = ""; st.hidden = true; }
+      } else if (lbl) {
+        lbl.hidden = false;
+      }
+    });
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", syncOnlyAccountUsername);
+  } else {
+    syncOnlyAccountUsername();
+  }
+  new MutationObserver(syncOnlyAccountUsername).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["hidden"],
   });
 })();
