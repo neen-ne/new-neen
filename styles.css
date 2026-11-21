@@ -9041,3 +9041,33 @@ html[dir="rtl"] .back-to-top {
     font-size: 13px;
   }
 }
+
+
+/* === HOMEPAGE CARDS & 3D WALLET HUD REFINEMENT === */
+.arcade-grid .arcade-card,
+.arena-games-grid > a {
+  border-radius: 18px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.arcade-grid .arcade-card:hover,
+.arena-games-grid > a:hover {
+  transform: translateY(-3px);
+}
+
+.loot-hud-grid,
+.wallet-hud-panel {
+  gap: 16px;
+}
+
+.archive-grid img {
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+.video-highlights-grid img,
+.tiktok-grid img {
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+}

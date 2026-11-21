@@ -1984,3 +1984,32 @@ if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
   const obs = new MutationObserver(applyHomePolish);
   obs.observe(document.documentElement, { attributes: true, attributeFilter: ["dir", "lang"] });
 })();
+
+
+/* === HOMEPAGE HUD & REWARD ARABIC SYNC === */
+(() => {
+  const syncHudStrings = () => {
+    const ar = document.documentElement.dir === "rtl" || (localStorage.getItem("neen_lang") === "ar");
+    const statusNodes = document.querySelectorAll('[role="status"]');
+    statusNodes.forEach((el) => {
+      const txt = (el.textContent || "").trim();
+      if (ar && txt.includes("Interactive 3D coin preview")) {
+        el.textContent = "معاينة تفاعلية ثلاثية الأبعاد متزامنة مع توقيت UTC؛ المكافآت الرسمية تُضاف عبر اللعب الموثّق.";
+      } else if (!ar && txt.includes("معاينة تفاعلية ثلاثية الأبعاد")) {
+        el.textContent = "Interactive 3D coin preview synced to device UTC clock. Official rewards are credited through verified gameplay.";
+      }
+      if (ar && txt.includes("Sign in to sync your verified Coin balance")) {
+        el.textContent = "سجّل الدخول لمزامنة رصيد الجواهر/الكوينز الموثّق والمكافآت اليومية.";
+      } else if (!ar && txt.includes("سجّل الدخول لمزامنة رصيد")) {
+        el.textContent = "Sign in to sync your verified Coin balance and daily rewards.";
+      }
+    });
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", syncHudStrings);
+  } else {
+    syncHudStrings();
+  }
+  const obs = new MutationObserver(syncHudStrings);
+  obs.observe(document.documentElement, { attributes: true, attributeFilter: ["dir", "lang"] });
+})();
