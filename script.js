@@ -2119,3 +2119,34 @@ if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
     characterData: true,
   });
 })();
+
+
+(() => {
+  const syncAccountLinkOnlyName = () => {
+    document.querySelectorAll("[data-account-link]").forEach((link) => {
+      const lbl = link.querySelector("[data-account-label]");
+      const st = link.querySelector("[data-account-status]");
+      if (!st) return;
+      const rawSt = (st.textContent || "").trim();
+      const cleaned = rawSt.replace(/^(?:signed\s*in|تم\s*تسجيل\s*الدخول)\s*:?\s*/i, "").trim();
+      if (cleaned && !/^(?:checking|loading|جار)/i.test(cleaned)) {
+        if (lbl) {
+          lbl.textContent = "";
+          lbl.hidden = true;
+        }
+        if (st.textContent.trim() !== cleaned) {
+          st.textContent = cleaned;
+        }
+      } else if (lbl) {
+        lbl.hidden = false;
+      }
+    });
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", syncAccountLinkOnlyName);
+  } else {
+    syncAccountLinkOnlyName();
+  }
+  const o = new MutationObserver(syncAccountLinkOnlyName);
+  o.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+})();
